@@ -1,0 +1,9 @@
+itemGroup.geckolib_examples=Geckolib Examples
+item.potato_head.name=Wolf Armor Helmet
+item.potato_chest.name=Wolf Armor Chestplate
+item.potato_leggings.name=Wolf Armor Leggings
+item.potato_boots.name=Wolf Armor Boots
+
+item.jackintheboxitem.name=Jack In The Box
+tile.botariumblock.name=Botarium
+tile.fertilizerblock.name=Fertilizer

@@ -1,0 +1,18 @@
+[
+  {
+    "modid": "geckolib3",
+    "name": "GeckoLib",
+    "description": "Geckolib is an entity animation loader for Java Edition, which lets you export bedrock animations and play them automatically.",
+    "version": "${modVersion}",
+    "mcversion": "${minecraftVersion}",
+    "url": "http://berniesoftware.com/",
+    "updateUrl": "",
+    "authorList": [
+      "Gecko, Goodbird, Eliot, AzureDoom, McHorse, DerToaster"
+    ],
+    "credits": "",
+    "logoFile": "geckolib.png",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
