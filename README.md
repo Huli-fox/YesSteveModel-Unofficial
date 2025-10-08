@@ -1,6 +1,6 @@
 构建：
 
-gradlew setupDecompWorkspace idea 别的IDE可能有所不同
+克隆到IDEA，别的IDE应该也可以
 
 参考：
 
@@ -10,5 +10,12 @@ https://github.com/bernie-g/geckolib/wiki/Examples-(Geckolib-3)
 
 已实现效果：
 
-https://github.com/user-attachments/assets/32958c50-ce25-437c-8b31-d6b2715e5771
+https://youtu.be/eAdrT3XcUHU
 
+Todo:
+
+1.修复第一人称穿模
+
+2.修复模型闪烁
+
+3.修复潜行、飞行动画

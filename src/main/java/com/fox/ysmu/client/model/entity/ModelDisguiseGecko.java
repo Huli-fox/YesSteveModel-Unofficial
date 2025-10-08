@@ -35,8 +35,7 @@ public class ModelDisguiseGecko extends AnimatedTickingGeoModel<EntityDisguiseGe
     @Override
     public void setLivingAnimations(EntityDisguiseGecko entity, Integer uniqueID, AnimationEvent animationEvent) {
         super.setLivingAnimations(entity, uniqueID, animationEvent);
-        // 假设所有模型都有一个名为"head"的骨骼
-        IBone head = this.getAnimationProcessor().getBone("head");
+        IBone head = this.getAnimationProcessor().getBone("AllHead");
         if (head != null) {
             EntityModelData extraData = (EntityModelData) animationEvent.getExtraDataOfType(EntityModelData.class).get(0);
             head.setRotationX(extraData.headPitch * ((float) Math.PI / 180F));

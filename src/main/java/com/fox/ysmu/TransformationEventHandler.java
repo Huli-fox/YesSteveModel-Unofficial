@@ -77,6 +77,7 @@ public class TransformationEventHandler {
         );
         // 同步头部转动，这对于僵尸、骷髅等很重要
         targetDisguise.rotationYawHead = sourcePlayer.rotationYawHead;
+        targetDisguise.renderYawOffset = sourcePlayer.renderYawOffset;
 
         // 2. 运动状态
         targetDisguise.motionX = sourcePlayer.motionX;
@@ -305,6 +306,7 @@ public class TransformationEventHandler {
         float interpYaw = sourcePlayer.prevRotationYaw + (sourcePlayer.rotationYaw - sourcePlayer.prevRotationYaw) * partialTicks;
         float interpPitch = sourcePlayer.prevRotationPitch + (sourcePlayer.rotationPitch - sourcePlayer.prevRotationPitch) * partialTicks;
         float interpYawHead = sourcePlayer.prevRotationYawHead + (sourcePlayer.rotationYawHead - sourcePlayer.prevRotationYawHead) * partialTicks;
+        float interpRenderYawOffset = sourcePlayer.prevRenderYawOffset + (sourcePlayer.renderYawOffset - sourcePlayer.prevRenderYawOffset) * partialTicks;
 
         // 2. 直接设置伪装实体的位置和朝向，欺骗渲染引擎
         targetDisguise.posX = interpX;
@@ -318,6 +320,7 @@ public class TransformationEventHandler {
         targetDisguise.rotationYaw = interpYaw;
         targetDisguise.rotationPitch = interpPitch;
         targetDisguise.rotationYawHead = interpYawHead;
+        targetDisguise.renderYawOffset = interpRenderYawOffset;
 
         // 3. 实时同步动画变量 (这是无缝体验的关键！)
         // 注意：动画变量通常不需要插值，直接复制当前状态即可

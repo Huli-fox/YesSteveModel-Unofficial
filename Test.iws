@@ -4,19 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7907d7d2-5bac-49f6-b055-974524639f5b" name="更改" comment="用绿皮方法实现">
-      <change beforePath="$PROJECT_DIR$/.gradle/4.5/fileContent/fileContent.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/fileContent/fileContent.lock" afterDir="false" />
+    <list default="true" id="7907d7d2-5bac-49f6-b055-974524639f5b" name="更改" comment="修复模型读取问题">
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test.api.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.api.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Test.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Test.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test.main.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.main.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test.test.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.test.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/ysmu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/ysmu.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/TransformationEventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/TransformationEventHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/client/model/entity/ModelDisguiseGecko.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/client/model/entity/ModelDisguiseGecko.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/entity/EntityDisguiseGecko.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/entity/EntityDisguiseGecko.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -342,7 +339,7 @@
       <workItem from="1759924404070" duration="836000" />
       <workItem from="1759925293449" duration="74000" />
       <workItem from="1759925389815" duration="1123000" />
-      <workItem from="1759926534382" duration="3212000" />
+      <workItem from="1759926534382" duration="9607000" />
     </task>
     <task id="LOCAL-00001" summary="用绿皮方法实现">
       <option name="closed" value="true" />
@@ -352,7 +349,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759906860428</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="修复模型读取问题">
+      <option name="closed" value="true" />
+      <created>1759929867398</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1759929867398</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -371,7 +376,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="用绿皮方法实现" />
-    <option name="LAST_COMMIT_MESSAGE" value="用绿皮方法实现" />
+    <MESSAGE value="修复模型读取问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="修复模型读取问题" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
   </component>
 </project>
