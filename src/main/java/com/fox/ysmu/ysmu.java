@@ -7,14 +7,16 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import cpw.mods.fml.common.registry.EntityRegistry;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.entity.RenderManager; // 新增导入
+import net.minecraft.client.renderer.entity.RenderManager;
 import com.fox.ysmu.client.renderer.entity.RenderDisguiseGecko;
 import com.fox.ysmu.entity.EntityDisguiseGecko;
+import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.client.registry.RenderingRegistry;
+import net.minecraft.client.resources.FolderResourcePack;
+import net.minecraft.client.resources.IResourcePack;
 import java.io.File;
-import java.lang.reflect.Field; // 新增导入
-import java.util.List; // 新增导入
+import java.lang.reflect.Field;
+import java.util.List;
 
 
 @Mod(modid = "ysmu", name = "ysmu", version = "0.1")
@@ -25,20 +27,7 @@ public class ysmu {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         if (event.getSide().isClient()) {
-            File modelDir = new File(Minecraft.getMinecraft().mcDataDir, "model");
-            if (modelDir.exists() && modelDir.isDirectory()) {
-                try {
-                    // 使用反射来访问私有的 defaultResourcePacks 列表
-                    Field field = Minecraft.class.getDeclaredField("defaultResourcePacks");
-                    field.setAccessible(true);
-                    List defaultPacks = (List) field.get(Minecraft.getMinecraft());
-                    defaultPacks.add(modelDir);
-                    System.out.println("[ysmu] Successfully loaded external model directory!");
-                } catch (Exception e) {
-                    System.err.println("[ysmu] Failed to load external model directory via reflection!");
-                    e.printStackTrace();
-                }
-            }
+            injectExternalModelDirectory();
         }
 
         // 注册实体
@@ -64,7 +53,33 @@ public class ysmu {
         // 注册Forge事件（包含客户端专有的Render事件）
         MinecraftForge.EVENT_BUS.register(handler);
     }
+    private void injectExternalModelDirectory() {
+        File modelDir = new File(FMLClientHandler.instance().getClient().mcDataDir, "model");
+        if (!modelDir.exists() || !modelDir.isDirectory()) {
+            return;
+        }
 
+        try {
+            FolderResourcePack resourcePack = new FolderResourcePack(modelDir);
+
+            // 1. 获取 FML 内部的资源包列表
+            //    这个列表在cpw.mods.fml.client.FMLClientHandler中，字段名为 "resourcePackList"
+            Field resourcePackListField = FMLClientHandler.class.getDeclaredField("resourcePackList");
+            resourcePackListField.setAccessible(true);
+
+            @SuppressWarnings("unchecked")
+            List<IResourcePack> fmlResourcePacks = (List<IResourcePack>) resourcePackListField.get(FMLClientHandler.instance());
+
+            // 2. 将我们的资源包添加进去
+            fmlResourcePacks.add(resourcePack);
+
+            System.out.println("[TransformMod] Successfully injected external model directory via FMLClientHandler!");
+
+        } catch (Exception e) {
+            System.err.println("[TransformMod] Failed to inject external model directory!");
+            e.printStackTrace();
+        }
+    }
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new CommandTransform());

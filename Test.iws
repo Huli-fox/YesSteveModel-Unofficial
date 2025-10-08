@@ -4,28 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7907d7d2-5bac-49f6-b055-974524639f5b" name="更改" comment="">
+    <list default="true" id="7907d7d2-5bac-49f6-b055-974524639f5b" name="更改" comment="用绿皮方法实现">
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/fileContent/fileContent.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/fileContent/fileContent.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/4.5/taskHistory/taskHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Test.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test.api.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.api.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Test.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Test.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/TestMod.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/client/model/entity/CustomEntityModel.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/client/model/entity/PlayerGeoModel.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/client/renderer/entity/CustomEntityRenderer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/client/renderer/entity/PlayerGeoRenderer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/entity/CustomEntity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/test/entity/PlayerWrapper.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/assets/test/animations/main.animation.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/assets/ysmu/animations/main.animation.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/assets/test/geo/main.geo.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/assets/ysmu/geo/main.geo.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/assets/test/textures/model/entity/main.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/mcmod.info" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mcmod.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test.main.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.main.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test.test.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Test.test.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/ysmu.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/fox/ysmu/ysmu.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -163,6 +154,7 @@
   </component>
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
+    &quot;Gradle.Test [buildDependents].executor&quot;: &quot;Run&quot;,
     &quot;Gradle.Test [build].executor&quot;: &quot;Run&quot;,
     &quot;Gradle.构建 Test.executor&quot;: &quot;Run&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
@@ -179,7 +171,7 @@
     &quot;project.structure.last.edited&quot;: &quot;项目&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;vcs.Git&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;,
     &quot;应用程序.Minecraft Client.executor&quot;: &quot;Run&quot;
@@ -235,6 +227,28 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Test [buildDependents]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value="buildDependents" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>false</RunAsTest>
+      <method v="2" />
+    </configuration>
     <configuration name="Test [build]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -283,6 +297,7 @@
     <recent_temporary>
       <list>
         <item itemvalue="Gradle.Test [build]" />
+        <item itemvalue="Gradle.Test [buildDependents]" />
       </list>
     </recent_temporary>
   </component>
@@ -323,8 +338,21 @@
       <workItem from="1759770511505" duration="4161000" />
       <workItem from="1759799610200" duration="9014000" />
       <workItem from="1759887127194" duration="16678000" />
-      <workItem from="1759904030909" duration="1933000" />
+      <workItem from="1759904030909" duration="2468000" />
+      <workItem from="1759924404070" duration="836000" />
+      <workItem from="1759925293449" duration="74000" />
+      <workItem from="1759925389815" duration="1123000" />
+      <workItem from="1759926534382" duration="3212000" />
     </task>
+    <task id="LOCAL-00001" summary="用绿皮方法实现">
+      <option name="closed" value="true" />
+      <created>1759906860428</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1759906860428</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -342,6 +370,8 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
+    <MESSAGE value="用绿皮方法实现" />
+    <option name="LAST_COMMIT_MESSAGE" value="用绿皮方法实现" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
   </component>
 </project>
