@@ -1,5 +1,6 @@
 package com.fox.ysmu;
 
+import com.fox.ysmu.entity.EntityDisguiseGecko;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
@@ -46,6 +47,18 @@ public class TransformationEventHandler {
                 if (player != null) {
                     Entity disguise = getEntityById(entityId, player.worldObj);
 
+                    if (player.isRiding()) {
+                        // 如果玩家在骑乘，但伪装模型没有，就让它也骑上去
+                        if (disguise.ridingEntity == null || disguise.ridingEntity.getEntityId() != player.ridingEntity.getEntityId()) {
+                            disguise.mountEntity(player.ridingEntity);
+                        }
+                    } else {
+                        // 如果玩家没骑，但伪装模型还骑着，就让它下来
+                        if (disguise.ridingEntity != null) {
+                            disguise.mountEntity(null);
+                        }
+                    }
+
                     if (disguise instanceof EntityLivingBase) {
                         // 同步状态
                         syncEntityStateFromServer(player, (EntityLivingBase) disguise);
@@ -64,41 +77,47 @@ public class TransformationEventHandler {
      * @param targetDisguise 目标伪装实体
      */
     public static void syncEntityStateFromServer(EntityPlayer sourcePlayer, EntityLivingBase targetDisguise) {
-        // 1. 位置和朝向 (这是最重要的)
-        // 修正Y坐标以解决悬浮问题
-        double correctedY = sourcePlayer.posY - sourcePlayer.yOffset - targetDisguise.yOffset;
-        
-        targetDisguise.setPositionAndRotation(
-                sourcePlayer.posX,
-                correctedY, // 使用修正后的 Y 坐标
-                sourcePlayer.posZ,
-                sourcePlayer.rotationYaw,
-                sourcePlayer.rotationPitch
-        );
-        // 同步头部转动，这对于僵尸、骷髅等很重要
+        if (!sourcePlayer.isRiding()) {
+            double correctedY = sourcePlayer.posY - sourcePlayer.yOffset - targetDisguise.yOffset;
+            targetDisguise.setPositionAndRotation(sourcePlayer.posX, correctedY, sourcePlayer.posZ, sourcePlayer.rotationYaw, sourcePlayer.rotationPitch);
+            targetDisguise.renderYawOffset = sourcePlayer.renderYawOffset;
+            targetDisguise.motionX = sourcePlayer.motionX;
+            targetDisguise.motionY = sourcePlayer.motionY;
+            targetDisguise.motionZ = sourcePlayer.motionZ;
+        }
+        // 同步头部转动
         targetDisguise.rotationYawHead = sourcePlayer.rotationYawHead;
         targetDisguise.renderYawOffset = sourcePlayer.renderYawOffset;
-
-        // 2. 运动状态
-        targetDisguise.motionX = sourcePlayer.motionX;
-        targetDisguise.motionY = sourcePlayer.motionY;
-        targetDisguise.motionZ = sourcePlayer.motionZ;
 
         // 3. 动画状态 (这些是让实体"活"起来的关键)
         targetDisguise.limbSwing = sourcePlayer.limbSwing;
         targetDisguise.limbSwingAmount = sourcePlayer.limbSwingAmount;
+        targetDisguise.prevLimbSwingAmount = sourcePlayer.prevLimbSwingAmount;
         targetDisguise.swingProgress = sourcePlayer.swingProgress;
         targetDisguise.isSwingInProgress = sourcePlayer.isSwingInProgress;
 
         // 4. 其他状态
         targetDisguise.setSneaking(sourcePlayer.isSneaking());
         targetDisguise.setSprinting(sourcePlayer.isSprinting());
-        if (sourcePlayer.isBurning()) {
-            targetDisguise.setFire(10);
-        } else {
-            targetDisguise.extinguish();
+        targetDisguise.onGround = sourcePlayer.onGround;
+        if (targetDisguise instanceof EntityDisguiseGecko) {
+            EntityDisguiseGecko geckoDisguise = (EntityDisguiseGecko) targetDisguise;
+            // 1. 同步飞行状态
+            geckoDisguise.setFlying(sourcePlayer.capabilities.isFlying);
+            // 2. 同步睡觉状态
+            geckoDisguise.setSleeping(sourcePlayer.isPlayerSleeping());
         }
-        // 更多状态... (例如是否隐身，是否在骑乘等)
+        if (sourcePlayer.isRiding()) {
+            // 简单地同步ID可能不足以让客户端正确渲染，但这是服务器逻辑的基础
+            if (targetDisguise.ridingEntity == null || targetDisguise.ridingEntity.getEntityId() != sourcePlayer.ridingEntity.getEntityId()) {
+                // 注意：直接设置ridingEntity可能很复杂，更好的方式是让实体自己寻找并骑乘
+                // 但对于纯视觉模型，我们主要同步状态
+                targetDisguise.ridingEntity = sourcePlayer.ridingEntity;
+            }
+        } else {
+            targetDisguise.ridingEntity = null;
+        }
+        targetDisguise.isOnLadder();
     }
 
     // (此处省略 getPlayerByUUID 的实现，请参考上一问的代码)
@@ -130,62 +149,43 @@ public class TransformationEventHandler {
     @SideOnly(Side.CLIENT)
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent event) {
-        // 我们在每一帧的开始进行同步
-        if (event.phase == TickEvent.Phase.START) {
-            Minecraft mc = Minecraft.getMinecraft();
-            EntityPlayer localPlayer = mc.thePlayer;
-            World clientWorld = mc.theWorld;
-
-            if (localPlayer == null || clientWorld == null) return;
-
-            // 检查本地玩家是否正在变身
-            Integer disguiseId = transformationMap.get(localPlayer.getUniqueID());
-            if (disguiseId == null) return;
-
-            Entity disguise = getEntityById(disguiseId, clientWorld);
-
-            if (disguise instanceof EntityLivingBase) {
-                // 使用 partialTicks 进行平滑的、0延迟的同步
-                syncEntityStateFromClient(localPlayer, (EntityLivingBase) disguise, event.renderTickTime);
-            }
-        }
-    }
-
-    /**
-     * 在生物即将被渲染时进行拦截，用于处理第一人称穿模问题。
-     */
-    @SideOnly(Side.CLIENT)
-    @SubscribeEvent
-    public void onLivingRender(RenderLivingEvent.Pre event) {
-        // 获取即将被渲染的实体
-        EntityLivingBase entityBeingRendered = event.entity;
-
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer localPlayer = mc.thePlayer;
+        if (localPlayer == null || localPlayer.worldObj == null) return;
 
-        // 如果本地玩家不存在，或者游戏世界不存在，则不做任何事
-        if (localPlayer == null || mc.theWorld == null) {
-            return;
-        }
-
-        // 检查本地玩家是否正在变身
         Integer disguiseId = transformationMap.get(localPlayer.getUniqueID());
-        if (disguiseId == null) {
-            return; // 玩家没有变身，直接返回
+        if (disguiseId == null) return;
+
+        Entity disguise = localPlayer.worldObj.getEntityByID(disguiseId);
+        if (!(disguise instanceof EntityDisguiseGecko)) return;
+
+        // 在每一帧渲染开始时
+        if (event.phase == TickEvent.Phase.START) {
+            // 我们临时扩大伪装模型的边界框，让它能通过渲染管理器的可见性检查
+            disguise.boundingBox.setBounds(
+                    disguise.posX - 0.5D,
+                    disguise.posY,
+                    disguise.posZ - 0.5D,
+                    disguise.posX + 0.5D,
+                    disguise.posY + 2.0D,
+                    disguise.posZ + 0.5D
+            );
+        }
+        // 在每一帧渲染结束时
+        else if (event.phase == TickEvent.Phase.END) {
+            // 立刻将边界框恢复为0，确保它在下一个物理Tick中是完全隐形的
+            disguise.boundingBox.setBounds(
+                    disguise.posX, disguise.posY, disguise.posZ,
+                    disguise.posX, disguise.posY, disguise.posZ
+            );
         }
 
-        // 判断：即将被渲染的实体，是不是我们玩家的伪装实体？
-        if (entityBeingRendered.getEntityId() == disguiseId) {
-
-            // 关键判断：当前是否为第一人称视角？
-            // mc.gameSettings.thirdPersonView == 0 代表第一人称
-            if (mc.gameSettings.thirdPersonView == 0) {
-                // 是第一人称，且正在渲染我们自己的伪装模型，
-                // 那就取消这次渲染，防止看到模型内部！
-                event.setCanceled(true);
-            }
+        // --- 客户端的“0延迟”视觉同步逻辑也在这里 ---
+        if (disguise instanceof EntityLivingBase) {
+            syncEntityStateFromClient(localPlayer, (EntityLivingBase) disguise, event.renderTickTime);
         }
     }
+
 
     /**
      * 在每个客户端Tick的开始，修正鼠标指向的目标，解决交互穿透问题
@@ -250,41 +250,41 @@ public class TransformationEventHandler {
         }
     }
 
-    @SideOnly(Side.CLIENT)
-    @SubscribeEvent
-    public void onPlayerHurt(LivingHurtEvent event) {
-        // 我们只关心客户端的本地玩家
-        Minecraft mc = Minecraft.getMinecraft();
-        if (mc.thePlayer == null || event.entityLiving.getEntityId() != mc.thePlayer.getEntityId()) {
-            return;
-        }
-
-        // 检查玩家是否正在变身
-        Integer disguiseId = transformationMap.get(mc.thePlayer.getUniqueID());
-        if (disguiseId != null) {
-            Entity disguise = mc.theWorld.getEntityByID(disguiseId);
-            if (disguise instanceof EntityLivingBase) {
-                // 手动触发伪装模型的受伤动画
-                // performHurtAnimation 是一个纯客户端的视觉方法
-                ((EntityLivingBase) disguise).performHurtAnimation();
-            }
-        }
-    }
+//    @SideOnly(Side.CLIENT)
+//    @SubscribeEvent
+//    public void onPlayerHurt(LivingHurtEvent event) {
+//        // 我们只关心客户端的本地玩家
+//        Minecraft mc = Minecraft.getMinecraft();
+//        if (mc.thePlayer == null || event.entityLiving.getEntityId() != mc.thePlayer.getEntityId()) {
+//            return;
+//        }
+//
+//        // 检查玩家是否正在变身
+//        Integer disguiseId = transformationMap.get(mc.thePlayer.getUniqueID());
+//        if (disguiseId != null) {
+//            Entity disguise = mc.theWorld.getEntityByID(disguiseId);
+//            if (disguise instanceof EntityLivingBase) {
+//                // 手动触发伪装模型的受伤动画
+//                // performHurtAnimation 是一个纯客户端的视觉方法
+//                ((EntityLivingBase) disguise).performHurtAnimation();
+//            }
+//        }
+//    }
 
     // 这个事件处理器在服务器和客户端都会运行
-    @SubscribeEvent
-    public void onDisguiseHurt(LivingHurtEvent event) {
-        // 如果事件发生在客户端，或者受伤的实体不是一个生物，直接返回
-        if (event.entity.worldObj.isRemote || !(event.entityLiving instanceof EntityLivingBase)) {
-            return;
-        }
-
-        // 检查受伤的实体ID是否在我们的变身模型的ID列表中
-        if (transformationMap.containsValue(event.entityLiving.getEntityId())) {
-            // 如果是，取消这个伤害事件，让它免疫
-            event.setCanceled(true);
-        }
-    }
+//    @SubscribeEvent
+//    public void onDisguiseHurt(LivingHurtEvent event) {
+//        // 如果事件发生在客户端，或者受伤的实体不是一个生物，直接返回
+//        if (event.entity.worldObj.isRemote || !(event.entityLiving instanceof EntityLivingBase)) {
+//            return;
+//        }
+//
+//        // 检查受伤的实体ID是否在我们的变身模型的ID列表中
+//        if (transformationMap.containsValue(event.entityLiving.getEntityId())) {
+//            // 如果是，取消这个伤害事件，让它免疫
+//            event.setCanceled(true);
+//        }
+//    }
 
     /**
      * 客户端的"0延迟"视觉同步方法
@@ -294,51 +294,62 @@ public class TransformationEventHandler {
      */
     @SideOnly(Side.CLIENT)
     public static void syncEntityStateFromClient(EntityPlayer sourcePlayer, EntityLivingBase targetDisguise, float partialTicks) {
-        // 1. 计算玩家在当前帧的精确（插值）位置和朝向
-        double interpX = sourcePlayer.lastTickPosX + (sourcePlayer.posX - sourcePlayer.lastTickPosX) * partialTicks;
-        
-        // 计算包含 yOffset 的插值 Y 坐标以解决悬浮问题
-        double playerBaseInterpY = sourcePlayer.lastTickPosY + (sourcePlayer.posY - sourcePlayer.lastTickPosY) * partialTicks;
-        double interpY = playerBaseInterpY - sourcePlayer.yOffset - targetDisguise.yOffset;
+        if (!sourcePlayer.isRiding()) {
+            double interpX = sourcePlayer.lastTickPosX + (sourcePlayer.posX - sourcePlayer.lastTickPosX) * partialTicks;
+            double playerBaseInterpY = sourcePlayer.lastTickPosY + (sourcePlayer.posY - sourcePlayer.lastTickPosY) * partialTicks;
+            double interpY = playerBaseInterpY - sourcePlayer.yOffset - targetDisguise.yOffset;
+            double interpZ = sourcePlayer.lastTickPosZ + (sourcePlayer.posZ - sourcePlayer.lastTickPosZ) * partialTicks;
+            float interpYaw = sourcePlayer.prevRotationYaw + (sourcePlayer.rotationYaw - sourcePlayer.prevRotationYaw) * partialTicks;
+            float interpPitch = sourcePlayer.prevRotationPitch + (sourcePlayer.rotationPitch - sourcePlayer.prevRotationPitch) * partialTicks;
+            float interpRenderYawOffset = sourcePlayer.prevRenderYawOffset + (sourcePlayer.renderYawOffset - sourcePlayer.prevRenderYawOffset) * partialTicks;
+            // 直接设置伪装实体的位置和朝向，欺骗渲染引擎
+            targetDisguise.posX = interpX;
+            targetDisguise.posY = interpY; // 使用修正后的 Y 坐标
+            targetDisguise.posZ = interpZ;
+            // 同时也更新 lastTickPos，防止实体在下一帧"抖动"
+            targetDisguise.lastTickPosX = interpX;
+            targetDisguise.lastTickPosY = interpY; // 同样使用修正后的 Y 坐标
+            targetDisguise.lastTickPosZ = interpZ;
+            targetDisguise.rotationYaw = interpYaw;
+            targetDisguise.rotationPitch = interpPitch;
+            targetDisguise.prevRotationPitch = interpPitch;
+            targetDisguise.renderYawOffset = interpRenderYawOffset;
+            // ... (所有关于 interpX, Y, Z, Yaw, Pitch, renderYawOffset 的计算和设置都放在这里) ...
+        }
 
-        double interpZ = sourcePlayer.lastTickPosZ + (sourcePlayer.posZ - sourcePlayer.lastTickPosZ) * partialTicks;
-
-        float interpYaw = sourcePlayer.prevRotationYaw + (sourcePlayer.rotationYaw - sourcePlayer.prevRotationYaw) * partialTicks;
-        float interpPitch = sourcePlayer.prevRotationPitch + (sourcePlayer.rotationPitch - sourcePlayer.prevRotationPitch) * partialTicks;
+        // 头部转动和动画状态总是需要
         float interpYawHead = sourcePlayer.prevRotationYawHead + (sourcePlayer.rotationYawHead - sourcePlayer.prevRotationYawHead) * partialTicks;
-        float interpRenderYawOffset = sourcePlayer.prevRenderYawOffset + (sourcePlayer.renderYawOffset - sourcePlayer.prevRenderYawOffset) * partialTicks;
-
-        // 2. 直接设置伪装实体的位置和朝向，欺骗渲染引擎
-        targetDisguise.posX = interpX;
-        targetDisguise.posY = interpY; // 使用修正后的 Y 坐标
-        targetDisguise.posZ = interpZ;
-        // 同时也更新 lastTickPos，防止实体在下一帧"抖动"
-        targetDisguise.lastTickPosX = interpX;
-        targetDisguise.lastTickPosY = interpY; // 同样使用修正后的 Y 坐标
-        targetDisguise.lastTickPosZ = interpZ;
-
-        targetDisguise.rotationYaw = interpYaw;
-        targetDisguise.rotationPitch = interpPitch;
         targetDisguise.rotationYawHead = interpYawHead;
-        targetDisguise.renderYawOffset = interpRenderYawOffset;
+        targetDisguise.prevRotationYawHead = interpYawHead;
 
         // 3. 实时同步动画变量 (这是无缝体验的关键！)
         // 注意：动画变量通常不需要插值，直接复制当前状态即可
         targetDisguise.limbSwing = sourcePlayer.limbSwing;
         targetDisguise.limbSwingAmount = sourcePlayer.limbSwingAmount;
         targetDisguise.prevLimbSwingAmount = sourcePlayer.prevLimbSwingAmount; // 这个也很重要
-
         targetDisguise.swingProgress = sourcePlayer.swingProgress;
         targetDisguise.isSwingInProgress = sourcePlayer.isSwingInProgress;
-
-        // 4. 实时同步状态
         targetDisguise.setSneaking(sourcePlayer.isSneaking());
         targetDisguise.setSprinting(sourcePlayer.isSprinting());
-
-        // 如果是僵尸，可能需要手动设置手臂的姿态
-        if (targetDisguise instanceof net.minecraft.entity.monster.EntityZombie) {
-            // 你可以在这里根据玩家是否在攻击来设置僵尸的手臂举起状态
-            // ((net.minecraft.entity.monster.EntityZombie) targetDisguise).setArmsRaised(sourcePlayer.isSwingInProgress);
+        targetDisguise.onGround = sourcePlayer.onGround;
+        targetDisguise.motionY = sourcePlayer.motionY;
+        if (targetDisguise instanceof EntityDisguiseGecko) {
+            EntityDisguiseGecko geckoDisguise = (EntityDisguiseGecko) targetDisguise;
+            // 1. 同步飞行状态
+            geckoDisguise.setFlying(sourcePlayer.capabilities.isFlying);
+            // 2. 同步睡觉状态
+            geckoDisguise.setSleeping(sourcePlayer.isPlayerSleeping());
         }
+        if (sourcePlayer.isRiding()) {
+            // 简单地同步ID可能不足以让客户端正确渲染，但这是服务器逻辑的基础
+            if (targetDisguise.ridingEntity == null || targetDisguise.ridingEntity.getEntityId() != sourcePlayer.ridingEntity.getEntityId()) {
+                // 注意：直接设置ridingEntity可能很复杂，更好的方式是让实体自己寻找并骑乘
+                // 但对于纯视觉模型，我们主要同步状态
+                targetDisguise.ridingEntity = sourcePlayer.ridingEntity;
+            }
+        } else {
+            targetDisguise.ridingEntity = null;
+        }
+        targetDisguise.isOnLadder();
     }
 }
