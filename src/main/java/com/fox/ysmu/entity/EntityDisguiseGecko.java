@@ -192,25 +192,25 @@ public class EntityDisguiseGecko extends EntityLivingBase implements IAnimatable
             return PlayState.CONTINUE;
         }));
         data.addAnimationController(new AnimationController<>(this, "action_controller", 0, (event) -> {
+        AnimationController<?> controller = event.getController();
 
             // 触发条件: 玩家正在挥手 并且 控制器当前是空闲的
-            if (this.isSwingInProgress && event.getController().getAnimationState() == AnimationState.Stopped) {
+            if (this.isSwingInProgress && controller.getAnimationState() == AnimationState.Stopped) {
+                // 强制标记控制器需要重新加载动画
+                // 防止与上次相同动画名时被判定为“重复动画”而不触发
+                controller.markNeedsReload();
                 // 设置一次性动画
-                event.getController().setAnimation(new AnimationBuilder().addAnimation("use_mainhand", false));
+                controller.setAnimation(new AnimationBuilder().addAnimation("use_mainhand", false));
                 // 开始播放动画，并让控制器继续处理
                 return PlayState.CONTINUE;
-            }
+        }
+        // 若动画正在播放中，则保持继续播放
+        if (controller.getAnimationState() == AnimationState.Running) {
+            return PlayState.CONTINUE;
+        }
 
-            // 维持/重置条件:
-            // 如果上面的触发条件不满足（比如已经开始挥手，或者根本没挥手）
-            // 我们检查动画是否仍在播放。
-            if (event.getController().getAnimationState() == AnimationState.Running) {
-                // 如果动画正在播放，就让它继续，直到放完为止
-                return PlayState.CONTINUE;
-            }
-
-            // 默认条件: 如果既没有触发新动画，也没有动画在播放，就彻底停止并重置控制器
-            return PlayState.STOP;
+        // 默认条件: 如果既没有触发新动画，也没有动画在播放，就彻底停止并重置控制器
+        return PlayState.STOP;
         }));
     }
 
