@@ -2,11 +2,17 @@
 
 克隆到IDEA，别的IDE应该也可以
 
-参考：
+获取相关文件：
 
-https://github.com/Goodbird-git/Geckolib-Unofficial-1.7.10/wiki
+查看release与https://www.curseforge.com/minecraft/mc-mods/geckolib-unofficial-1-7-10
 
-https://github.com/bernie-g/geckolib/wiki/Examples-(Geckolib-3)
+使用：
+
+确保你的mods文件夹下有ysmu-0.1.jar、geckolib-unofficial-1.7.10-1.0.3.jar。
+
+解压model.zip至你的.minecraft目录下，形成.minecraft\model\assets\...的结构（如果你开启了版本隔离可能有所不同）。
+
+进入游戏后输入/transform main/night以切换模型，输入/transform clear换回原版模型。
 
 Todo:
 
