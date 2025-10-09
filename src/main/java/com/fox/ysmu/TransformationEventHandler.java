@@ -47,24 +47,27 @@ public class TransformationEventHandler {
                 if (player != null) {
                     Entity disguise = getEntityById(entityId, player.worldObj);
 
+                    // 关键修改：删除伪装实体的骑乘状态同步，仅保留玩家的骑乘状态用于动画
                     if (player.isRiding()) {
-                        // 如果玩家在骑乘，但伪装模型没有，就让它也骑上去
-                        if (disguise.ridingEntity == null || disguise.ridingEntity.getEntityId() != player.ridingEntity.getEntityId()) {
-                            disguise.mountEntity(player.ridingEntity);
-                        }
+                        // 直接同步伪装实体位置到玩家的骑乘位置（不建立骑乘关系）
+                        Entity vehicle = player.ridingEntity;
+                        // 计算玩家在交通工具上的相对位置
+                        double relX = player.posX - vehicle.posX;
+                        double relY = player.posY - vehicle.posY;
+                        double relZ = player.posZ - vehicle.posZ;
+                        // 伪装实体跟随玩家的相对位置
+                        disguise.setPosition(
+                                vehicle.posX + relX,
+                                vehicle.posY + relY,
+                                vehicle.posZ + relZ
+                        );
                     } else {
-                        // 如果玩家没骑，但伪装模型还骑着，就让它下来
-                        if (disguise.ridingEntity != null) {
-                            disguise.mountEntity(null);
+                        // 非骑乘状态正常同步位置
+                        if (disguise instanceof EntityLivingBase) {
+                            syncEntityStateFromServer(player, (EntityLivingBase) disguise);
+                        } else {
+                            disguise.setPositionAndRotation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
                         }
-                    }
-
-                    if (disguise instanceof EntityLivingBase) {
-                        // 同步状态
-                        syncEntityStateFromServer(player, (EntityLivingBase) disguise);
-                    } else if (disguise != null) {
-                        // 如果不是LivingBase，只同步基础位置信息
-                        disguise.setPositionAndRotation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
                     }
                 }
             }
@@ -84,6 +87,19 @@ public class TransformationEventHandler {
             targetDisguise.motionX = sourcePlayer.motionX;
             targetDisguise.motionY = sourcePlayer.motionY;
             targetDisguise.motionZ = sourcePlayer.motionZ;
+        } else {
+            // 骑乘时仅同步位置，不设置ridingEntity
+            Entity vehicle = sourcePlayer.ridingEntity;
+            if (vehicle != null) {
+                double relX = sourcePlayer.posX - vehicle.posX;
+                double relY = sourcePlayer.posY - vehicle.posY;
+                double relZ = sourcePlayer.posZ - vehicle.posZ;
+                targetDisguise.setPosition(vehicle.posX + relX, vehicle.posY + relY, vehicle.posZ + relZ);
+                targetDisguise.motionX = 0.0D;
+                targetDisguise.motionY = 0.0D;
+                targetDisguise.motionZ = 0.0D;
+                targetDisguise.onGround = true;
+            }
         }
         // 同步头部转动
         targetDisguise.rotationYawHead = sourcePlayer.rotationYawHead;
@@ -106,18 +122,32 @@ public class TransformationEventHandler {
             geckoDisguise.setFlying(sourcePlayer.capabilities.isFlying);
             // 2. 同步睡觉状态
             geckoDisguise.setSleeping(sourcePlayer.isPlayerSleeping());
-        }
-        if (sourcePlayer.isRiding()) {
-            // 简单地同步ID可能不足以让客户端正确渲染，但这是服务器逻辑的基础
-            if (targetDisguise.ridingEntity == null || targetDisguise.ridingEntity.getEntityId() != sourcePlayer.ridingEntity.getEntityId()) {
-                // 注意：直接设置ridingEntity可能很复杂，更好的方式是让实体自己寻找并骑乘
-                // 但对于纯视觉模型，我们主要同步状态
-                targetDisguise.ridingEntity = sourcePlayer.ridingEntity;
+            // 3. 同步骑乘状态
+            if (sourcePlayer.isRiding()) {
+                Entity vehicle = sourcePlayer.ridingEntity;
+                if (vehicle instanceof net.minecraft.entity.item.EntityMinecart || vehicle instanceof net.minecraft.entity.item.EntityBoat) {
+                    geckoDisguise.setRidingState(1); // 坐
+                } else if (vehicle instanceof net.minecraft.entity.passive.EntityHorse) {
+                    geckoDisguise.setRidingState(2); // 骑马
+                } else if (vehicle instanceof net.minecraft.entity.passive.EntityPig) {
+                    geckoDisguise.setRidingState(3); // 骑猪
+                } else {
+                    geckoDisguise.setRidingState(1); // 默认为坐
+                }
+            } else {
+                geckoDisguise.setRidingState(0); // 不骑乘
             }
-        } else {
-            targetDisguise.ridingEntity = null;
         }
+        targetDisguise.ridingEntity = null;
         targetDisguise.isOnLadder();
+
+        // 装备同步逻辑
+        if (targetDisguise instanceof EntityDisguiseGecko) {
+            for (int i = 0; i < 5; ++i) {
+                // 将玩家的装备复制到伪装实体中
+                ((EntityDisguiseGecko) targetDisguise).setCurrentItemOrArmor(i, sourcePlayer.getEquipmentInSlot(i));
+            }
+        }
     }
 
     // (此处省略 getPlayerByUUID 的实现，请参考上一问的代码)
@@ -315,6 +345,35 @@ public class TransformationEventHandler {
             targetDisguise.prevRotationPitch = interpPitch;
             targetDisguise.renderYawOffset = interpRenderYawOffset;
             // ... (所有关于 interpX, Y, Z, Yaw, Pitch, renderYawOffset 的计算和设置都放在这里) ...
+        } else {
+            Entity vehicle = sourcePlayer.ridingEntity;
+            if (vehicle != null) {
+                // 计算玩家的插值相对位置
+                double playerInterpX = sourcePlayer.lastTickPosX + (sourcePlayer.posX - sourcePlayer.lastTickPosX) * partialTicks;
+                double playerInterpY = sourcePlayer.lastTickPosY + (sourcePlayer.posY - sourcePlayer.lastTickPosY) * partialTicks;
+                double playerInterpZ = sourcePlayer.lastTickPosZ + (sourcePlayer.posZ - sourcePlayer.lastTickPosZ) * partialTicks;
+
+                // 计算交通工具的插值位置
+                double vehicleInterpX = vehicle.lastTickPosX + (vehicle.posX - vehicle.lastTickPosX) * partialTicks;
+                double vehicleInterpY = vehicle.lastTickPosY + (vehicle.posY - vehicle.lastTickPosY) * partialTicks;
+                double vehicleInterpZ = vehicle.lastTickPosZ + (vehicle.posZ - vehicle.lastTickPosZ) * partialTicks;
+
+                double relX = playerInterpX - vehicleInterpX;
+                double relY = playerInterpY - vehicleInterpY;
+                double relZ = playerInterpZ - vehicleInterpZ;
+
+                // 1. 手动同步插值后的位置，并应用Y轴偏移
+                double correctedRideY = vehicleInterpY + relY - sourcePlayer.yOffset - targetDisguise.yOffset;
+                targetDisguise.posX = vehicleInterpX + relX;
+                targetDisguise.posY = correctedRideY;
+                targetDisguise.posZ = vehicleInterpZ + relZ;
+
+                // 2. 【核心修复】冻结客户端的物理状态
+                targetDisguise.motionX = 0.0D;
+                targetDisguise.motionY = 0.0D;
+                targetDisguise.motionZ = 0.0D;
+                targetDisguise.onGround = true;
+            }
         }
 
         // 头部转动和动画状态总是需要
@@ -339,17 +398,29 @@ public class TransformationEventHandler {
             geckoDisguise.setFlying(sourcePlayer.capabilities.isFlying);
             // 2. 同步睡觉状态
             geckoDisguise.setSleeping(sourcePlayer.isPlayerSleeping());
-        }
-        if (sourcePlayer.isRiding()) {
-            // 简单地同步ID可能不足以让客户端正确渲染，但这是服务器逻辑的基础
-            if (targetDisguise.ridingEntity == null || targetDisguise.ridingEntity.getEntityId() != sourcePlayer.ridingEntity.getEntityId()) {
-                // 注意：直接设置ridingEntity可能很复杂，更好的方式是让实体自己寻找并骑乘
-                // 但对于纯视觉模型，我们主要同步状态
-                targetDisguise.ridingEntity = sourcePlayer.ridingEntity;
+            // 3. 同步骑乘状态
+            if (sourcePlayer.isRiding()) {
+                Entity vehicle = sourcePlayer.ridingEntity;
+                if (vehicle instanceof net.minecraft.entity.item.EntityMinecart || vehicle instanceof net.minecraft.entity.item.EntityBoat) {
+                    geckoDisguise.setRidingState(1); // 坐
+                } else if (vehicle instanceof net.minecraft.entity.passive.EntityHorse) {
+                    geckoDisguise.setRidingState(2); // 骑马
+                } else if (vehicle instanceof net.minecraft.entity.passive.EntityPig) {
+                    geckoDisguise.setRidingState(3); // 骑猪
+                } else {
+                    geckoDisguise.setRidingState(1); // 默认为坐
+                }
+            } else {
+                geckoDisguise.setRidingState(0); // 不骑乘
             }
-        } else {
-            targetDisguise.ridingEntity = null;
         }
         targetDisguise.isOnLadder();
+
+        // 装备同步逻辑
+        if (targetDisguise instanceof EntityDisguiseGecko) {
+            for (int i = 0; i < 5; ++i) {
+                ((EntityDisguiseGecko) targetDisguise).setCurrentItemOrArmor(i, sourcePlayer.getEquipmentInSlot(i));
+            }
+        }
     }
 }

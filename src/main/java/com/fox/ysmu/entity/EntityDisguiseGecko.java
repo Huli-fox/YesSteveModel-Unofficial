@@ -3,7 +3,15 @@ package com.fox.ysmu.entity;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityBoat;
+import net.minecraft.entity.item.EntityMinecart;
+import net.minecraft.entity.passive.EntityHorse;
+import net.minecraft.entity.passive.EntityPig;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
 import software.bernie.geckolib3.core.AnimationState;
@@ -15,13 +23,15 @@ import software.bernie.geckolib3.core.controller.AnimationController;
 import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 
-public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, IAnimationTickable {
+import java.util.UUID;
 
+public class EntityDisguiseGecko extends EntityLivingBase implements IAnimatable, IAnimationTickable {
+    private final ItemStack[] equipment = new ItemStack[5];
     private final AnimationFactory factory = new AnimationFactory(this);
     private static final int DATA_WATCHER_MODEL_NAME = 20;
     private static final int DATA_WATCHER_IS_FLYING = 21;
     private static final int DATA_WATCHER_IS_SLEEPING = 22;
-    public boolean prevSwingInProgress;
+    private static final int DATA_WATCHER_RIDING_STATE = 23;
 
     public EntityDisguiseGecko(World world) {
         super(world);
@@ -35,9 +45,17 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
         return true; // 直接告诉游戏，这个实体是无敌的
     }
     @Override
-    public boolean canBeCollidedWith() { return false; }
+    public void mountEntity(Entity entity) {
+        // 不执行任何操作，阻止伪装实体骑乘任何实体
+    }
     @Override
-    public AxisAlignedBB getCollisionBox(Entity other) { return null; }
+    public boolean canBeCollidedWith() {
+        return false; // 关闭碰撞检测，避免被交通工具视为障碍
+    }
+    @Override
+    public AxisAlignedBB getCollisionBox(Entity other) {
+        return null; // 无碰撞箱
+    }
 
     @Override
     protected void entityInit() {
@@ -46,6 +64,7 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
         // 为新状态注册DataWatcher。我们用Byte来存储boolean (0=false, 1=true)
         this.dataWatcher.addObject(DATA_WATCHER_IS_FLYING, (byte) 0);
         this.dataWatcher.addObject(DATA_WATCHER_IS_SLEEPING, (byte) 0);
+        this.dataWatcher.addObject(DATA_WATCHER_RIDING_STATE, 0);
     }
 
     public void setModel(String modelName) {
@@ -63,6 +82,30 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
     // --- 【新增】睡觉状态 Get/Set ---
     public void setSleeping(boolean isSleeping) { this.dataWatcher.updateObject(DATA_WATCHER_IS_SLEEPING, (byte) (isSleeping ? 1 : 0)); }
     public boolean isSleeping() { return this.dataWatcher.getWatchableObjectByte(DATA_WATCHER_IS_SLEEPING) == 1; }
+    
+    // --- 【新增】骑乘状态 Get/Set ---
+    public void setRidingState(int state) { this.dataWatcher.updateObject(DATA_WATCHER_RIDING_STATE, state); }
+    public int getRidingState() { return this.dataWatcher.getWatchableObjectInt(DATA_WATCHER_RIDING_STATE); }
+
+    /**
+     * 通过UUID获取玩家实体
+     * @param uuid 玩家的UUID
+     * @return 对应的EntityPlayer实体，如果找不到则返回null
+     */
+    private EntityPlayer getPlayerByUUID(UUID uuid) {
+        if (uuid == null) return null;
+        MinecraftServer server = MinecraftServer.getServer();
+        if (server != null) {
+            // 遍历所有玩家
+            for (Object playerObj : server.getConfigurationManager().playerEntityList) {
+                EntityPlayer player = (EntityPlayer) playerObj;
+                if (player.getUniqueID().equals(uuid)) {
+                    return player;
+                }
+            }
+        }
+        return null;
+    }
 
     @Override
     public void registerControllers(AnimationData data) {
@@ -73,18 +116,26 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
                 event.getController().setAnimation(new AnimationBuilder().addAnimation("sleep", true));
                 return PlayState.CONTINUE;
             }
-            // 优先级 1: 乘坐/骑乘
-            if (this.isRiding()) {
-                Entity ridingEntity = this.ridingEntity;
-                if (ridingEntity instanceof net.minecraft.entity.item.EntityMinecart || ridingEntity instanceof net.minecraft.entity.item.EntityBoat) {
-                    event.getController().setAnimation(new AnimationBuilder().addAnimation("boat", true));
-                } else if (ridingEntity instanceof net.minecraft.entity.passive.EntityHorse) {
-                    event.getController().setAnimation(new AnimationBuilder().addAnimation("ride", true));
-                } else if (ridingEntity instanceof net.minecraft.entity.passive.EntityPig) {
-                    event.getController().setAnimation(new AnimationBuilder().addAnimation("ride_pig", true));
-                } else {
-                    // 默认的乘坐姿势
-                    event.getController().setAnimation(new AnimationBuilder().addAnimation("sit", true));
+            // 通过玩家同步的状态判断是否骑乘（而非自身ridingEntity）
+            // 注意：需要在syncEntityStateFromServer中同步玩家的isRiding状态到伪装实体
+            EntityPlayer player = getPlayerByUUID(this.getUniqueID());
+            boolean isPlayerRiding = player != null && player.isRiding();
+            // 优先级 1: 乘坐/骑乘（基于玩家状态）
+            int rideState = this.getRidingState();
+            if (rideState > 0) { // 只要在骑乘...
+                switch (rideState) {
+                    case 1: // 坐
+                        event.getController().setAnimation(new AnimationBuilder().addAnimation("sit", true));
+                        break;
+                    case 2: // 骑马
+                        event.getController().setAnimation(new AnimationBuilder().addAnimation("ride", true));
+                        break;
+                    case 3: // 骑猪
+                        event.getController().setAnimation(new AnimationBuilder().addAnimation("ride_pig", true));
+                        break;
+                    default: // 默认也用坐姿
+                        event.getController().setAnimation(new AnimationBuilder().addAnimation("sit", true));
+                        break;
                 }
                 return PlayState.CONTINUE;
             }
@@ -141,18 +192,24 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
             return PlayState.CONTINUE;
         }));
         data.addAnimationController(new AnimationController<>(this, "action_controller", 0, (event) -> {
-            // 只要玩家正在挥手，我们就让这个控制器保持“继续”状态
-            if (this.isSwingInProgress) {
-                // 并且，仅在控制器处于“停止”状态时（即动作的开始），我们才设置动画
-                if (event.getController().getAnimationState() == AnimationState.Stopped) {
-                    event.getController().setAnimation(new AnimationBuilder().addAnimation("use_mainhand", false));
-                }
+
+            // 触发条件: 玩家正在挥手 并且 控制器当前是空闲的
+            if (this.isSwingInProgress && event.getController().getAnimationState() == AnimationState.Stopped) {
+                // 设置一次性动画
+                event.getController().setAnimation(new AnimationBuilder().addAnimation("use_mainhand", false));
+                // 开始播放动画，并让控制器继续处理
                 return PlayState.CONTINUE;
             }
 
-            // 一旦 isSwingInProgress 变为 false，我们就立即返回 STOP。
-            // 这会强制将控制器的状态重置为 AnimationState.Stopped，
-            // 为下一次挥手做好准备。
+            // 维持/重置条件:
+            // 如果上面的触发条件不满足（比如已经开始挥手，或者根本没挥手）
+            // 我们检查动画是否仍在播放。
+            if (event.getController().getAnimationState() == AnimationState.Running) {
+                // 如果动画正在播放，就让它继续，直到放完为止
+                return PlayState.CONTINUE;
+            }
+
+            // 默认条件: 如果既没有触发新动画，也没有动画在播放，就彻底停止并重置控制器
             return PlayState.STOP;
         }));
     }
@@ -174,6 +231,7 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
         nbt.setString("ModelName", getModelName());
         nbt.setBoolean("IsFlying", isFlying());
         nbt.setBoolean("IsSleeping", isSleeping());
+        nbt.setInteger("RidingState", getRidingState());
     }
 
 
@@ -184,5 +242,26 @@ public class EntityDisguiseGecko extends EntityCreature implements IAnimatable, 
         setModel(nbt.getString("ModelName"));
         setFlying(nbt.getBoolean("IsFlying"));
         setSleeping(nbt.getBoolean("IsSleeping"));
+        setRidingState(nbt.getInteger("RidingState"));
+    }
+
+    @Override
+    public ItemStack getHeldItem() {
+        return this.equipment[0];
+    }
+
+    @Override
+    public ItemStack getEquipmentInSlot(int slot) {
+        return this.equipment[slot];
+    }
+
+    @Override
+    public void setCurrentItemOrArmor(int slot, ItemStack stack) {
+        this.equipment[slot] = stack;
+    }
+
+    @Override
+    public ItemStack[] getLastActiveItems() {
+        return this.equipment;
     }
 }
