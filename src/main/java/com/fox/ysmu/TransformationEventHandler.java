@@ -19,6 +19,7 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class TransformationEventHandler {
@@ -38,40 +39,72 @@ public class TransformationEventHandler {
             MinecraftServer server = MinecraftServer.getServer();
             if (server == null) return;
 
-            for (Map.Entry<UUID, Integer> entry : transformationMap.entrySet()) {
+            Iterator<Map.Entry<UUID, Integer>> iterator = transformationMap.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<UUID, Integer> entry = iterator.next();
                 UUID playerUUID = entry.getKey();
                 Integer entityId = entry.getValue();
 
                 // 找到对应的玩家和实体
                 EntityPlayer player = getPlayerByUUID(playerUUID);
-                if (player != null) {
-                    Entity disguise = getEntityById(entityId, player.worldObj);
-
-                    // 关键修改：删除伪装实体的骑乘状态同步，仅保留玩家的骑乘状态用于动画
-                    if (player.isRiding()) {
-                        // 直接同步伪装实体位置到玩家的骑乘位置（不建立骑乘关系）
-                        Entity vehicle = player.ridingEntity;
-                        // 计算玩家在交通工具上的相对位置
-                        double relX = player.posX - vehicle.posX;
-                        double relY = player.posY - vehicle.posY;
-                        double relZ = player.posZ - vehicle.posZ;
-                        // 伪装实体跟随玩家的相对位置
-                        disguise.setPosition(
-                                vehicle.posX + relX,
-                                vehicle.posY + relY,
-                                vehicle.posZ + relZ
-                        );
-                    } else {
-                        // 非骑乘状态正常同步位置
-                        if (disguise instanceof EntityLivingBase) {
-                            syncEntityStateFromServer(player, (EntityLivingBase) disguise);
-                        } else {
-                            disguise.setPositionAndRotation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
-                        }
+                // 如果玩家不存在
+                if (player == null) {
+                    // 这个映射已失效，从Map中移除
+                    iterator.remove();
+                    // 顺便尝试移除可能残留的实体
+                    Entity oldDisguise = getEntityByIdAcrossAllWorlds(entityId);
+                    if (oldDisguise != null) {
+                        oldDisguise.setDead();
                     }
+                    continue; // 处理下一个
+                }
+
+                Entity disguise = getEntityById(entityId, player.worldObj);
+                // 如果实体不存在
+                if (disguise == null) {
+                    // 这个映射也已失效，移除它
+                    iterator.remove();
+                    continue; // 处理下一个
+                }
+
+                // 关键修改：删除伪装实体的骑乘状态同步，仅保留玩家的骑乘状态用于动画
+                if (player.isRiding()) {
+                    // 直接同步伪装实体位置到玩家的骑乘位置（不建立骑乘关系）
+                    Entity vehicle = player.ridingEntity;
+                    // 计算玩家在交通工具上的相对位置
+                    double relX = player.posX - vehicle.posX;
+                    double relY = player.posY - vehicle.posY;
+                    double relZ = player.posZ - vehicle.posZ;
+                    // 伪装实体跟随玩家的相对位置
+                    disguise.setPosition(
+                            vehicle.posX + relX,
+                            vehicle.posY + relY,
+                            vehicle.posZ + relZ
+                    );
+                } else {
+                    // 非骑乘状态正常同步位置
+                    if (disguise instanceof EntityLivingBase) {
+                        syncEntityStateFromServer(player, (EntityLivingBase) disguise);
+                    } else {
+                        disguise.setPositionAndRotation(player.posX, player.posY, player.posZ, player.rotationYaw, player.rotationPitch);
+                    }
+                }
+
+            }
+        }
+    }
+    //在玩家下线后清理实体
+    private Entity getEntityByIdAcrossAllWorlds(int entityId) {
+        MinecraftServer server = MinecraftServer.getServer();
+        if (server != null) {
+            for (net.minecraft.world.WorldServer world : server.worldServers) {
+                Entity entity = world.getEntityByID(entityId);
+                if (entity != null) {
+                    return entity;
                 }
             }
         }
+        return null;
     }
 
     /**
@@ -150,7 +183,6 @@ public class TransformationEventHandler {
         }
     }
 
-    // (此处省略 getPlayerByUUID 的实现，请参考上一问的代码)
     private EntityPlayer getPlayerByUUID(UUID uuid) {
         if (uuid == null) return null;
         MinecraftServer server = MinecraftServer.getServer();
@@ -237,8 +269,8 @@ public class TransformationEventHandler {
 
             // 检查当前鼠标是否正指向我们的伪装模型
             if (mc.objectMouseOver != null &&
-                mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.ENTITY &&
-                mc.objectMouseOver.entityHit.getEntityId() == disguiseId) {
+                    mc.objectMouseOver.typeOfHit == MovingObjectPosition.MovingObjectType.ENTITY &&
+                    mc.objectMouseOver.entityHit.getEntityId() == disguiseId) {
 
                 // 如果是，就进行一次"修正"计算
                 // 这个方法会暂时忽略伪装模型，重新进行一次射线追踪，
