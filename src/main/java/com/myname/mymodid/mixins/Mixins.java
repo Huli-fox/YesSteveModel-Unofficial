@@ -1,9 +1,9 @@
 package com.myname.mymodid.mixins;
 
+import javax.annotation.Nonnull;
+
 import com.gtnewhorizon.gtnhmixins.builders.IMixins;
 import com.gtnewhorizon.gtnhmixins.builders.MixinBuilder;
-
-import javax.annotation.Nonnull;
 
 public enum Mixins implements IMixins {
 
@@ -11,8 +11,7 @@ public enum Mixins implements IMixins {
 
     // You should declare all of your mixins early and late in this same enum
 
-    EXAMPLE(new MixinBuilder()
-        .setPhase(Phase.EARLY)
+    EXAMPLE(new MixinBuilder().setPhase(Phase.EARLY)
         .addClientMixins("MixinMinecraft_Example"));
 
     private final MixinBuilder builder;
