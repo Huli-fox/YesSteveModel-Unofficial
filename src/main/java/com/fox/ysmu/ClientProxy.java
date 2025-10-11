@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.fox.ysmu;
 
 public class ClientProxy extends CommonProxy {
 

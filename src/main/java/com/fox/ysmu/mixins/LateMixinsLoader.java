@@ -1,4 +1,4 @@
-package com.myname.mymodid.mixins;
+package com.fox.ysmu.mixins;
 
 import java.util.List;
 import java.util.Set;
@@ -19,8 +19,8 @@ public class LateMixinsLoader implements ILateMixinLoader {
     public String getMixinConfig() {
         // rename the associated .json file by replacing the "mymodid" with your own mod ID
         // in the .json file edit the "package" and "refmap" properties to match your mod
-        // also edit the "refmap" property in the "mixins.mymodid.json" file
-        return "mixins.mymodid.late.json";
+        // also edit the "refmap" property in the "mixins.ysmu.json" file
+        return "mixins.ysmu.late.json";
     }
 
     @Nonnull

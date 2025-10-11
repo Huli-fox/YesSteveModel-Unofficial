@@ -1,4 +1,4 @@
-package com.myname.mymodid.mixins;
+package com.fox.ysmu.mixins;
 
 import java.util.List;
 import java.util.Map;
@@ -39,8 +39,8 @@ public class EarlyMixinsLoader implements IFMLLoadingPlugin, IEarlyMixinLoader {
     public String getMixinConfig() {
         // rename the associated .json file by replacing the "mymodid" with your own mod ID
         // in the .json file edit the "package" and "refmap" properties to match your mod
-        // also edit the "refmap" property in the "mixins.mymodid.json" file
-        return "mixins.mymodid.early.json";
+        // also edit the "refmap" property in the "mixins.ysmu.json" file
+        return "mixins.ysmu.early.json";
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.fox.ysmu;
 
 import java.io.File;
 

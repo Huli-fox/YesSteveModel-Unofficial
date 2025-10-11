@@ -1,4 +1,4 @@
-package com.myname.mymodid.mixins;
+package com.fox.ysmu.mixins;
 
 import javax.annotation.Nonnull;
 
