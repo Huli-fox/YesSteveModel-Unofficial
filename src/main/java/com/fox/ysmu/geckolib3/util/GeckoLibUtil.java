@@ -1,20 +1,18 @@
 package com.fox.ysmu.geckolib3.util;
 
-import net.minecraft.item.ItemStack;
-import com.fox.ysmu.geckolib3.core.controller.AnimationController;
+import com.fox.ysmu.geckolib3.core.IAnimatable;
 import com.fox.ysmu.geckolib3.core.manager.AnimationFactory;
-
-import java.util.Objects;
+import com.fox.ysmu.geckolib3.core.manager.InstancedAnimationFactory;
+import com.fox.ysmu.geckolib3.core.manager.SingletonAnimationFactory;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public class GeckoLibUtil {
-    public static int getIDFromStack(ItemStack stack) {
-        return Objects.hash(stack.getItem(), stack.stackSize,
-            stack.hasTagCompound() ? stack.getTagCompound().toString() : 1);
+    public static AnimationFactory createFactory(IAnimatable animatable) {
+        return createFactory(animatable, !(animatable instanceof Entity) && !(animatable instanceof BlockEntity));
     }
 
-    @SuppressWarnings("rawtypes")
-    public static AnimationController getControllerForStack(AnimationFactory factory, ItemStack stack,
-                                                            String controllerName) {
-        return factory.getOrCreateAnimationData(getIDFromStack(stack)).getAnimationControllers().get(controllerName);
+    public static AnimationFactory createFactory(IAnimatable animatable, boolean singletonObject) {
+        return singletonObject ? new SingletonAnimationFactory(animatable) : new InstancedAnimationFactory(animatable);
     }
 }

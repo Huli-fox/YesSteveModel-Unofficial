@@ -1,53 +1,49 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
+/*
+ * Copyright (c) 2020.
+ * Author: Bernie G. (Gecko)
+ */
 
 package com.fox.ysmu.geckolib3.core.keyframe;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+
 import java.util.List;
 
-public class VectorKeyFrameList<T extends KeyFrame> implements Serializable {
-    private static final long serialVersionUID = 42L;
+/**
+ * 矢量关键帧列表是一个方便的类，用于存储 3 个关键帧列表：X、Y 和 Z 关键帧。
+ * 关键帧可以是旋转、缩放或位置。
+ */
+@SuppressWarnings("rawtypes")
+public class VectorKeyFrameList<T extends KeyFrame> {
     public List<T> xKeyFrames;
     public List<T> yKeyFrames;
     public List<T> zKeyFrames;
 
     public VectorKeyFrameList(List<T> XKeyFrames, List<T> YKeyFrames, List<T> ZKeyFrames) {
-        this.xKeyFrames = XKeyFrames;
-        this.yKeyFrames = YKeyFrames;
-        this.zKeyFrames = ZKeyFrames;
+        xKeyFrames = XKeyFrames;
+        yKeyFrames = YKeyFrames;
+        zKeyFrames = ZKeyFrames;
     }
 
     public VectorKeyFrameList() {
-        this.xKeyFrames = new ArrayList();
-        this.yKeyFrames = new ArrayList();
-        this.zKeyFrames = new ArrayList();
+        xKeyFrames = new ObjectArrayList<>();
+        yKeyFrames = new ObjectArrayList<>();
+        zKeyFrames = new ObjectArrayList<>();
     }
 
     public double getLastKeyframeTime() {
-        double xTime = 0.0;
-
-        KeyFrame frame;
-        for(Iterator var3 = this.xKeyFrames.iterator(); var3.hasNext(); xTime += frame.getLength()) {
-            frame = (KeyFrame)var3.next();
+        double xTime = 0;
+        for (T frame : xKeyFrames) {
+            xTime += frame.getLength();
         }
-
-        double yTime = 0.0;
-
-        for(Iterator var5 = this.yKeyFrames.iterator(); var5.hasNext(); yTime += frame.getLength()) {
-            frame = (KeyFrame)var5.next();
+        double yTime = 0;
+        for (T frame : yKeyFrames) {
+            yTime += frame.getLength();
         }
-
-        double zTime = 0.0;
-
-        for(Iterator var7 = this.zKeyFrames.iterator(); var7.hasNext(); zTime += frame.getLength()) {
-            frame = (KeyFrame)var7.next();
+        double zTime = 0;
+        for (T frame : zKeyFrames) {
+            zTime += frame.getLength();
         }
-
         return Math.max(xTime, Math.max(yTime, zTime));
     }
 }

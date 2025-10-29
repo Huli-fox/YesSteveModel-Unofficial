@@ -1,5 +1,6 @@
 package com.fox.ysmu.geckolib3.core.util;
 
 public enum Axis {
-	X, Y, Z
+    // 角度
+    X, Y, Z
 }

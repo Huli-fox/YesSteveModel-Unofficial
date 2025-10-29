@@ -20,6 +20,10 @@ public class SetPlayAnimation implements IMessage {
         this.extraAnimationId = extraAnimationId;
     }
 
+    public static SetPlayAnimation stop() {
+        return new SetPlayAnimation(STOP);
+    }
+
     @Override
     public void fromBytes(ByteBuf buf) {
         this.extraAnimationId = buf.readInt();

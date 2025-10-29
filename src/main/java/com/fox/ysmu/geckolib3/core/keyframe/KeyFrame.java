@@ -1,35 +1,31 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
+/*
+ * Copyright (c) 2020.
+ * Author: Bernie G. (Gecko)
+ */
 
 package com.fox.ysmu.geckolib3.core.keyframe;
 
-import java.io.Serializable;
-import java.util.ArrayList;
+import com.fox.ysmu.geckolib3.core.easing.EasingType;
+import com.fox.ysmu.util.Keep;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+
 import java.util.List;
 import java.util.Objects;
-import com.fox.ysmu.geckolib3.core.easing.EasingType;
 
-public class KeyFrame<T> implements Serializable {
-    private static final long serialVersionUID = 42L;
+public class KeyFrame<T> {
+    public EasingType easingType = EasingType.LINEAR;
+    public List<Double> easingArgs = new DoubleArrayList();
     private Double length;
     private T startValue;
     private T endValue;
-    public EasingType easingType;
-    public List<Double> easingArgs;
 
     public KeyFrame(Double length, T startValue, T endValue) {
-        this.easingType = EasingType.Linear;
-        this.easingArgs = new ArrayList();
         this.length = length;
         this.startValue = startValue;
         this.endValue = endValue;
     }
 
     public KeyFrame(Double length, T startValue, T endValue, EasingType easingType) {
-        this.easingType = EasingType.Linear;
-        this.easingArgs = new ArrayList();
         this.length = length;
         this.startValue = startValue;
         this.endValue = endValue;
@@ -37,8 +33,6 @@ public class KeyFrame<T> implements Serializable {
     }
 
     public KeyFrame(Double length, T startValue, T endValue, EasingType easingType, List<Double> easingArgs) {
-        this.easingType = EasingType.Linear;
-        this.easingArgs = new ArrayList();
         this.length = length;
         this.startValue = startValue;
         this.endValue = endValue;
@@ -47,7 +41,7 @@ public class KeyFrame<T> implements Serializable {
     }
 
     public Double getLength() {
-        return this.length;
+        return length;
     }
 
     public void setLength(Double length) {
@@ -55,7 +49,7 @@ public class KeyFrame<T> implements Serializable {
     }
 
     public T getStartValue() {
-        return this.startValue;
+        return startValue;
     }
 
     public void setStartValue(T startValue) {
@@ -63,18 +57,22 @@ public class KeyFrame<T> implements Serializable {
     }
 
     public T getEndValue() {
-        return this.endValue;
+        return endValue;
     }
 
     public void setEndValue(T endValue) {
         this.endValue = endValue;
     }
 
+    @Override
+    @Keep
     public int hashCode() {
-        return Objects.hash(new Object[]{this.length, this.startValue, this.endValue});
+        return Objects.hash(length, startValue, endValue);
     }
 
+    @Override
+    @Keep
     public boolean equals(Object obj) {
-        return obj instanceof KeyFrame && this.hashCode() == obj.hashCode();
+        return obj instanceof KeyFrame && hashCode() == obj.hashCode();
     }
 }

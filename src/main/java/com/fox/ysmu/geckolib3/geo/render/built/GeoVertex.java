@@ -1,13 +1,10 @@
 package com.fox.ysmu.geckolib3.geo.render.built;
 
+import org.joml.Vector3f;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
-import javax.vecmath.Vector3f;
-import java.io.Serializable;
-
-public class GeoVertex implements Serializable {
-    private static final long serialVersionUID = 42L;
+public class GeoVertex {
     public final Vector3f position;
     public float textureU;
     public float textureV;
@@ -20,6 +17,12 @@ public class GeoVertex implements Serializable {
         this.position = new Vector3f((float) x, (float) y, (float) z);
     }
 
+    public GeoVertex(Vector3f posIn, float texU, float texV) {
+        this.position = posIn;
+        this.textureU = texU;
+        this.textureV = texV;
+    }
+
     public GeoVertex setTextureUV(float texU, float texV) {
         return new GeoVertex(this.position, texU, texV);
     }
@@ -27,11 +30,5 @@ public class GeoVertex implements Serializable {
     public GeoVertex setTextureUV(double[] array) {
         Validate.validIndex(ArrayUtils.toObject(array), 1);
         return new GeoVertex(this.position, (float) array[0], (float) array[1]);
-    }
-
-    public GeoVertex(Vector3f posIn, float texU, float texV) {
-        this.position = posIn;
-        this.textureU = texU;
-        this.textureV = texV;
     }
 }

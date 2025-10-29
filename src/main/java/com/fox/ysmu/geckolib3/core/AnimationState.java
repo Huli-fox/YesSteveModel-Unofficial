@@ -6,5 +6,6 @@
 package com.fox.ysmu.geckolib3.core;
 
 public enum AnimationState {
-	Running, Transitioning, Stopped;
+    // 动画状态
+    RUNNING, TRANSITIONING, STOPPED;
 }

@@ -1,42 +1,37 @@
 package com.fox.ysmu.geckolib3.geo.raw.pojo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
-public class MinecraftGeometry {
+import java.io.Serializable;
+
+public class MinecraftGeometry implements Serializable {
+    @SerializedName("bones")
     private Bone[] bones;
+    @SerializedName("cape")
     private String cape;
+    @SerializedName("description")
     private ModelProperties modelProperties;
 
-    /**
-     * Bones define the 'skeleton' of the mob: the parts that can be animated, and
-     * to which geometry and other bones are attached.
-     */
-    @JsonProperty("bones")
     public Bone[] getBones() {
         return bones;
     }
 
-    @JsonProperty("bones")
     public void setBones(Bone[] value) {
         this.bones = value;
     }
 
-    @JsonProperty("cape")
     public String getCape() {
         return cape;
     }
 
-    @JsonProperty("cape")
     public void setCape(String value) {
         this.cape = value;
     }
 
-    @JsonProperty("description")
     public ModelProperties getProperties() {
         return modelProperties;
     }
 
-    @JsonProperty("description")
     public void setProperties(ModelProperties value) {
         this.modelProperties = value;
     }

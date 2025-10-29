@@ -5,53 +5,44 @@
 
 package com.fox.ysmu.geckolib3.core.keyframe;
 
-import com.eliotlash.mclib.math.IValue;
+import com.fox.ysmu.util.Keep;
 
+@SuppressWarnings("rawtypes")
 public class AnimationPoint {
-	/**
-	 * The current tick in the animation to lerp from
-	 */
-	public final Double currentTick;
-	/**
-	 * The tick that the current animation should end at
-	 */
-	public final Double animationEndTick;
-	/**
-	 * The Animation start value.
-	 */
-	public final Double animationStartValue;
-	/**
-	 * The Animation end value.
-	 */
-	public final Double animationEndValue;
+    /**
+     * 动画插值中要从中获取的当前 tick
+     */
+    public final double currentTick;
+    /**
+     * 当前动画结束的 tick
+     */
+    public final double animationEndTick;
+    /**
+     * 动画起始值
+     */
+    public final double animationStartValue;
+    /**
+     * 动画结束值
+     */
+    public final double animationEndValue;
 
-	/**
-	 * The current keyframe.
-	 */
+    /**
+     * 当前关键帧
+     */
+    public final KeyFrame keyframe;
 
-	public final KeyFrame<IValue> keyframe;
+    public AnimationPoint(KeyFrame keyframe, double tick, double animationEndTick, double animationStartValue, double animationEndValue) {
+        this.keyframe = keyframe;
+        this.currentTick = tick;
+        this.animationEndTick = animationEndTick;
+        this.animationStartValue = animationStartValue;
+        this.animationEndValue = animationEndValue;
+    }
 
-	public AnimationPoint(KeyFrame<IValue> keyframe, Double currentTick, Double animationEndTick,
-			Double animationStartValue, Double animationEndValue) {
-		this.keyframe = keyframe;
-		this.currentTick = currentTick;
-		this.animationEndTick = animationEndTick;
-		this.animationStartValue = animationStartValue;
-		this.animationEndValue = animationEndValue;
-	}
-
-	public AnimationPoint(KeyFrame<IValue> keyframe, double tick, double animationEndTick, float animationStartValue,
-			double animationEndValue) {
-		this.keyframe = keyframe;
-		this.currentTick = tick;
-		this.animationEndTick = animationEndTick;
-		this.animationStartValue = Double.valueOf(animationStartValue);
-		this.animationEndValue = animationEndValue;
-	}
-
-	@Override
-	public String toString() {
-		return "Tick: " + currentTick + " | End Tick: " + animationEndTick + " | Start Value: " + animationStartValue
-				+ " | End Value: " + animationEndValue;
-	}
+    @Override
+    @Keep
+    public String toString() {
+        return "Tick: " + currentTick + " | End Tick: " + animationEndTick + " | Start Value: " + animationStartValue
+                + " | End Value: " + animationEndValue;
+    }
 }

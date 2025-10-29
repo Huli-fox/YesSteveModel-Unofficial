@@ -1,55 +1,36 @@
 package com.fox.ysmu.geckolib3.geo.raw.pojo;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fox.ysmu.util.Keep;
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 
-import java.io.IOException;
+import java.io.Serializable;
+import java.lang.reflect.Type;
 
-@JsonDeserialize(using = LocatorValue.Deserializer.class)
-@JsonSerialize(using = LocatorValue.Serializer.class)
-public class LocatorValue {
+@JsonAdapter(LocatorValue.Serializer.class)
+public class LocatorValue implements Serializable {
     public LocatorClass locatorClassValue;
     public double[] doubleArrayValue;
 
-    static class Deserializer extends JsonDeserializer<LocatorValue> {
+    protected static class Serializer implements JsonSerializer<LocatorValue>, JsonDeserializer<LocatorValue> {
         @Override
-        public LocatorValue deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
-            throws IOException, JsonProcessingException {
-            LocatorValue value = new LocatorValue();
-            switch (jsonParser.getCurrentToken()) {
-                case START_ARRAY:
-                    value.doubleArrayValue = jsonParser.readValueAs(double[].class);
-                    break;
-                case START_OBJECT:
-                    value.locatorClassValue = jsonParser.readValueAs(LocatorClass.class);
-                    break;
-                default:
-                    throw new IOException("Cannot deserialize LocatorValue");
+        @Keep
+        public LocatorValue deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            LocatorValue result = new LocatorValue();
+            if (json.isJsonArray()) {
+                result.doubleArrayValue = context.deserialize(json, double[].class);
+            } else if (json.isJsonObject()) {
+                result.locatorClassValue = context.deserialize(json, LocatorClass.class);
             }
-            return value;
+            return result;
         }
-    }
 
-    static class Serializer extends JsonSerializer<LocatorValue> {
         @Override
-        public void serialize(LocatorValue obj, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
-            throws IOException {
-            if (obj.locatorClassValue != null) {
-                jsonGenerator.writeObject(obj.locatorClassValue);
-                return;
-            }
-            if (obj.doubleArrayValue != null) {
-                jsonGenerator.writeObject(obj.doubleArrayValue);
-                return;
-            }
-            throw new IOException("LocatorValue must not be null");
+        @Keep
+        public JsonElement serialize(LocatorValue src, Type typeOfSrc, JsonSerializationContext context) {
+            return src.locatorClassValue != null ?
+                    context.serialize(src.locatorClassValue) :
+                    context.serialize(src.doubleArrayValue);
         }
     }
 }

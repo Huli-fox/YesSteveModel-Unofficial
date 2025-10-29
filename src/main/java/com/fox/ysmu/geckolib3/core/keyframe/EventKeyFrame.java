@@ -1,27 +1,24 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
+/*
+ * Copyright (c) 2020.
+ * Author: Bernie G. (Gecko)
+ */
 
 package com.fox.ysmu.geckolib3.core.keyframe;
 
-import java.io.Serializable;
+public class EventKeyFrame<T> {
+    private final T eventData;
+    private final double startTick;
 
-public class EventKeyFrame<T> implements Serializable {
-    private static final long serialVersionUID = 42L;
-    private T eventData;
-    private Double startTick;
-
-    public EventKeyFrame(Double startTick, T eventData) {
+    public EventKeyFrame(double startTick, T eventData) {
         this.startTick = startTick;
         this.eventData = eventData;
     }
 
     public T getEventData() {
-        return this.eventData;
+        return eventData;
     }
 
-    public Double getStartTick() {
-        return this.startTick;
+    public double getStartTick() {
+        return startTick;
     }
 }

@@ -5,15 +5,16 @@
 
 package com.fox.ysmu.geckolib3.core.keyframe;
 
-import java.util.LinkedList;
-
 import com.fox.ysmu.geckolib3.core.processor.IBone;
 
+import java.io.Serial;
+import java.util.LinkedList;
+
 /**
- * An animation point queue holds a queue of Animation Points which are used in
- * the AnimatedEntityModel to lerp between values
+ * 动画点队列，这些动画点用于插值计算
  */
-@SuppressWarnings("serial")
 public class AnimationPointQueue extends LinkedList<AnimationPoint> {
-	public IBone model;
+    @Serial
+    private static final long serialVersionUID = 5472797438476621193L;
+    public IBone model;
 }

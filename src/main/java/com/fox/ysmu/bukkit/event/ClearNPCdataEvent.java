@@ -1,15 +1,14 @@
 package com.fox.ysmu.bukkit.event;
 
 import com.fox.ysmu.bukkit.client.NPCData;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
-@Mod.EventBusSubscriber(Dist.CLIENT)
-public class ClearNPCdataEvent {
+public class ClearNPCdataEvent { // 客户端
     @SubscribeEvent
-    public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+    public static void onPlayerLeave(PlayerLoggedOutEvent event) {
         NPCData.clear();
     }
 }

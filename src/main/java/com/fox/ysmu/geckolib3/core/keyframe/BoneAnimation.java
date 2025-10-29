@@ -1,21 +1,19 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by FernFlower decompiler)
-//
+/*
+ * Copyright (c) 2020.
+ * Author: Bernie G. (Gecko)
+ */
 
 package com.fox.ysmu.geckolib3.core.keyframe;
 
-import com.eliotlash.mclib.math.IValue;
+import com.fox.ysmu.mclib.math.IValue;
 
-import java.io.Serializable;
-
-public class BoneAnimation implements Serializable {
-    private static final long serialVersionUID = 42L;
-    public String boneName;
+public class BoneAnimation {
+    public final String boneName;
     public VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames;
     public VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames;
     public VectorKeyFrameList<KeyFrame<IValue>> scaleKeyFrames;
 
-    public BoneAnimation() {
+    public BoneAnimation(String boneName) {
+        this.boneName = boneName;
     }
 }

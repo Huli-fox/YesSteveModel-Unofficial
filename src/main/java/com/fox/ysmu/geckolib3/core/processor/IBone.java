@@ -1,77 +1,113 @@
 package com.fox.ysmu.geckolib3.core.processor;
 
 import com.fox.ysmu.geckolib3.core.snapshot.BoneSnapshot;
+import com.fox.ysmu.util.Keep;
 
 public interface IBone {
-	float getRotationX();
+    @Keep
+    float getRotationX();
 
-	float getRotationY();
+    @Keep
+    void setRotationX(float value);
 
-	float getRotationZ();
+    @Keep
+    float getRotationY();
 
-	float getPositionX();
+    @Keep
+    void setRotationY(float value);
 
-	float getPositionY();
+    @Keep
+    float getRotationZ();
 
-	float getPositionZ();
+    @Keep
+    void setRotationZ(float value);
 
-	float getScaleX();
+    @Keep
+    float getPositionX();
 
-	float getScaleY();
+    @Keep
+    void setPositionX(float value);
 
-	float getScaleZ();
+    @Keep
+    float getPositionY();
 
-	void setRotationX(float value);
+    @Keep
+    void setPositionY(float value);
 
-	void setRotationY(float value);
+    @Keep
+    float getPositionZ();
 
-	void setRotationZ(float value);
+    @Keep
+    void setPositionZ(float value);
 
-	void setPositionX(float value);
+    @Keep
+    float getScaleX();
 
-	void setPositionY(float value);
+    @Keep
+    void setScaleX(float value);
 
-	void setPositionZ(float value);
+    @Keep
+    float getScaleY();
 
-	void setScaleX(float value);
+    @Keep
+    void setScaleY(float value);
 
-	void setScaleY(float value);
+    @Keep
+    float getScaleZ();
 
-	void setScaleZ(float value);
+    @Keep
+    void setScaleZ(float value);
 
-	void setPivotX(float value);
+    @Keep
+    float getPivotX();
 
-	void setPivotY(float value);
+    @Keep
+    void setPivotX(float value);
 
-	void setPivotZ(float value);
+    @Keep
+    float getPivotY();
 
-	float getPivotX();
+    @Keep
+    void setPivotY(float value);
 
-	float getPivotY();
+    @Keep
+    float getPivotZ();
 
-	float getPivotZ();
+    @Keep
+    void setPivotZ(float value);
 
-	boolean isHidden();
+    @Keep
+    boolean isHidden();
 
-	boolean cubesAreHidden();
+    @Keep
+    void setHidden(boolean hidden);
 
-	boolean childBonesAreHiddenToo();
+    @Keep
+    boolean cubesAreHidden();
 
-	void setHidden(boolean hidden);
+    @Keep
+    boolean childBonesAreHiddenToo();
 
-	void setCubesHidden(boolean hidden);
+    @Keep
+    void setCubesHidden(boolean hidden);
 
-	void setHidden(boolean selfHidden, boolean skipChildRendering);
+    @Keep
+    void setHidden(boolean selfHidden, boolean skipChildRendering);
 
-	void setModelRendererName(String modelRendererName);
+    @Keep
+    void setModelRendererName(String modelRendererName);
 
-	void saveInitialSnapshot();
+    @Keep
+    void saveInitialSnapshot();
 
-	BoneSnapshot getInitialSnapshot();
+    @Keep
+    BoneSnapshot getInitialSnapshot();
 
-	default BoneSnapshot saveSnapshot() {
-		return new BoneSnapshot(this);
-	}
+    @Keep
+    default BoneSnapshot saveSnapshot() {
+        return new BoneSnapshot(this);
+    }
 
-	String getName();
+    @Keep
+    String getName();
 }

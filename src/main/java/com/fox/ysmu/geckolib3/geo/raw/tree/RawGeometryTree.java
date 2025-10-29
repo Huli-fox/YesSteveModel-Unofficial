@@ -1,19 +1,16 @@
 package com.fox.ysmu.geckolib3.geo.raw.tree;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.util.ResourceLocation;
 import com.fox.ysmu.geckolib3.geo.raw.pojo.Bone;
 import com.fox.ysmu.geckolib3.geo.raw.pojo.MinecraftGeometry;
 import com.fox.ysmu.geckolib3.geo.raw.pojo.ModelProperties;
 import com.fox.ysmu.geckolib3.geo.raw.pojo.RawGeoModel;
+import com.google.common.collect.Maps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class RawGeometryTree {
     public Map<String, RawBoneGroup> topLevelBones = new Object2ObjectOpenHashMap<>();
@@ -49,13 +46,12 @@ public class RawGeometryTree {
         return hierarchy;
     }
 
-
     public static boolean hasParent(Bone bone) {
         return bone.getParent() != null;
     }
 
     public static RawBoneGroup getGroupFromHierarchy(RawGeometryTree hierarchy, String bone) {
-        HashMap<String, RawBoneGroup> flatList = new HashMap<>();
+        HashMap<String, RawBoneGroup> flatList = Maps.newHashMap();
         for (RawBoneGroup group : hierarchy.topLevelBones.values()) {
             flatList.put(group.selfBone.getName(), group);
             traverse(flatList, group);

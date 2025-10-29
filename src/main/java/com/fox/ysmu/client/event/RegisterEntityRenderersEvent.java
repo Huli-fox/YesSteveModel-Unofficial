@@ -1,6 +1,5 @@
 package com.fox.ysmu.client.event;
 
-import com.fox.ysmu.ysmu;
 import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -11,12 +10,9 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD, modid = ysmu.MODID)
 public class RegisterEntityRenderersEvent {
     private static CustomPlayerRenderer CUSTOM_PLAYER_RENDERER;
 
