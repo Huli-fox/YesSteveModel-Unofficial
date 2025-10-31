@@ -1,7 +1,6 @@
 package com.fox.ysmu.client.gui;
 
 import com.fox.ysmu.Config;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.RenderUtil;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -29,7 +28,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         this.yawOffset = (float) Config.PLAYER_YAW_OFFSET;
     }
 
-    @Keep
+
     @Override
     public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
         int startX = this.posX;
@@ -69,7 +68,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         }
     }
 
-    @Keep
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         boolean xIn = this.posX - 5 < mouseX && mouseX < this.posX + 5;
@@ -87,7 +86,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @Keep
+
     @Override
     public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) {
         this.isChangePos = false;
@@ -95,7 +94,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         return super.mouseReleased(pMouseX, pMouseY, pButton);
     }
 
-    @Keep
+
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
         if (isChangeScale) {
@@ -116,7 +115,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         return false;
     }
 
-    @Keep
+
     @Override
     public boolean charTyped(char typedChar, int keyCode) {
         if (Character.toLowerCase(typedChar) == RESET_KEY && hasAltDown()) {
@@ -128,7 +127,7 @@ public class ExtraPlayerConfigScreen extends Screen {
         return super.charTyped(typedChar, keyCode);
     }
 
-    @Keep
+
     @Override
     public void onClose() {
         Config.PLAYER_POS_X = this.posX;

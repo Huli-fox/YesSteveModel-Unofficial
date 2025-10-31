@@ -1,6 +1,6 @@
 package com.fox.ysmu.data;
 
-
+import com.fox.ysmu.model.format.ServerModelInfo;
 import com.fox.ysmu.model.format.Type;
 
 import java.util.Map;

@@ -1,5 +1,15 @@
 package com.fox.ysmu.geckolib3.model;
 
+import com.fox.ysmu.molang.MolangParser;
+import cpw.mods.fml.common.FMLCommonHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Vec3;
+import com.fox.ysmu.geckolib3.animation.AnimationTicker;
 import com.fox.ysmu.geckolib3.core.IAnimatable;
 import com.fox.ysmu.geckolib3.core.IAnimatableModel;
 import com.fox.ysmu.geckolib3.core.builder.Animation;
@@ -8,24 +18,21 @@ import com.fox.ysmu.geckolib3.core.manager.AnimationData;
 import com.fox.ysmu.geckolib3.core.processor.AnimationProcessor;
 import com.fox.ysmu.geckolib3.core.processor.IBone;
 import com.fox.ysmu.geckolib3.file.AnimationFile;
-import com.fox.ysmu.geckolib3.geo.exception.GeckoLibException;
+import com.fox.ysmu.geckolib3.geo.exception.GeoModelException;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoBone;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoModel;
 import com.fox.ysmu.geckolib3.model.provider.GeoModelProvider;
 import com.fox.ysmu.geckolib3.model.provider.IAnimatableModelProvider;
+import com.fox.ysmu.geckolib3.molang.MolangRegistrar;
 import com.fox.ysmu.geckolib3.resource.GeckoLibCache;
-import com.fox.ysmu.geckolib3.util.AnimationTicker;
-import com.fox.ysmu.util.Keep;
-import cpw.mods.fml.common.FMLCommonHandler;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
+import com.fox.ysmu.geckolib3.util.MolangUtils;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelProvider<T> implements IAnimatableModel<T>, IAnimatableModelProvider<T> {
+public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelProvider<T>
+    implements IAnimatableModel<T>, IAnimatableModelProvider<T> {
     private final AnimationProcessor animationProcessor;
     private GeoModel currentModel;
 
@@ -35,94 +42,128 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 
     public void registerBone(GeoBone bone) {
         registerModelRenderer(bone);
+
         for (GeoBone childBone : bone.childBones) {
             registerBone(childBone);
         }
     }
 
     @Override
-    @Keep
-    public void setCustomAnimations(T animatable, int instanceId, AnimationEvent animationEvent) {
-        Minecraft mc = Minecraft.getMinecraft();
-        AnimationData manager = animatable.getFactory().getOrCreateAnimationData(instanceId);
+    public void setLivingAnimations(T entity, Integer uniqueID, @Nullable AnimationEvent customPredicate) {
+        // Each animation has it's own collection of animations (called the
+        // EntityAnimationManager), which allows for multiple independent animations
+        AnimationData manager = entity.getFactory().getOrCreateAnimationData(uniqueID);
+        if (manager.ticker == null) {
+            AnimationTicker ticker = new AnimationTicker(manager);
+            manager.ticker = ticker;
+            FMLCommonHandler.instance().bus().register(ticker);
+        }
+        if (!Minecraft.getMinecraft().isGamePaused() || manager.shouldPlayWhilePaused) {
+            seekTime = manager.tick + Minecraft.getMinecraft().timer.renderPartialTicks;
+        } else {
+            seekTime = manager.tick;
+        }
+
         AnimationEvent<T> predicate;
-        double currentTick = animatable instanceof Entity ? ((Entity) animatable).ticksExisted : getCurrentTick();
-        float partialTicks = mc.timer.renderPartialTicks;
-        if (manager.startTick == -1) {
-            manager.startTick = currentTick + partialTicks;
+        if (customPredicate == null) {
+            predicate = new AnimationEvent<T>(entity, 0, 0, (float) (manager.tick - lastGameTickTime), false, Collections.emptyList());
+        } else {
+            predicate = customPredicate;
         }
 
-        if (!mc.isGamePaused() || manager.shouldPlayWhilePaused) {
-            if (animatable instanceof EntityLivingBase) {
-                manager.tick = currentTick + partialTicks;
-                double gameTick = manager.tick;
-                double deltaTicks = gameTick - this.lastGameTickTime;
-                this.seekTime += deltaTicks;
-                this.lastGameTickTime = gameTick;
-                codeAnimations(animatable, instanceId, animationEvent);
-            } else {
-                manager.tick = currentTick - manager.startTick;
-                double gameTick = manager.tick;
-                double deltaTicks = gameTick - this.lastGameTickTime;
-                this.seekTime += deltaTicks;
-                this.lastGameTickTime = gameTick;
-            }
+        predicate.animationTick = seekTime;
+        animationProcessor.preAnimationSetup(predicate.getAnimatable(), seekTime);
+        if (!this.animationProcessor.getModelRendererList().isEmpty()) {
+            animationProcessor.tickAnimation(entity, uniqueID, seekTime, predicate, MolangRegistrar.getParser(),
+                shouldCrashOnMissing);
         }
-
-        predicate = animationEvent == null ? new AnimationEvent<T>(animatable, 0, 0, (float) (manager.tick - this.lastGameTickTime), false, Collections.emptyList()) : animationEvent;
-        predicate.animationTick = this.seekTime;
-        getAnimationProcessor().preAnimationSetup(predicate.getAnimatable(), this.seekTime);
-        if (!getAnimationProcessor().getModelRendererList().isEmpty()) {
-            getAnimationProcessor().tickAnimation(animatable, instanceId, this.seekTime, predicate, GeckoLibCache.getInstance().parser, this.shouldCrashOnMissing);
-        }
-    }
-
-    public void codeAnimations(T entity, Integer uniqueID, AnimationEvent<?> customPredicate) {
     }
 
     @Override
-    @Keep
     public AnimationProcessor getAnimationProcessor() {
         return this.animationProcessor;
     }
 
     public void registerModelRenderer(IBone modelRenderer) {
-        this.animationProcessor.registerModelRenderer(modelRenderer);
+        animationProcessor.registerModelRenderer(modelRenderer);
     }
 
     @Override
-    @Keep
     public Animation getAnimation(String name, IAnimatable animatable) {
-        AnimationFile animation = GeckoLibCache.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
-        if (animation == null) {
-            throw new GeckoLibException(this.getAnimationFileLocation((T) animatable), "Could not find animation file. Please double check name.");
+        AnimationFile file = GeckoLibCache.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
+        if (file != null) {
+            return file.getAnimation(name);
         }
-        return animation.getAnimation(name);
+        return null;
     }
 
     @Override
-    @Keep
     public GeoModel getModel(ResourceLocation location) {
         GeoModel model = super.getModel(location);
         if (model == null) {
-            throw new GeckoLibException(location, "Could not find model. If you are getting this with a built mod, please just restart your game.");
+            throw new GeoModelException(location, "Could not find model.");
         }
-        if (model != this.currentModel) {
+        if (model != currentModel) {
             this.animationProcessor.clearModelRendererList();
-            this.currentModel = model;
             for (GeoBone bone : model.topLevelBones) {
                 registerBone(bone);
             }
+            this.currentModel = model;
         }
         return model;
     }
 
-    public GeoModel getCurrentModel() {
-        return currentModel;
+    @Override
+    public void setMolangQueries(IAnimatable animatable, double currentTick) {
+        MolangParser parser = MolangRegistrar.getParser();
+        Minecraft minecraftInstance = Minecraft.getMinecraft();
+        float partialTick = minecraftInstance.timer.renderPartialTicks;
+
+        parser.setValue("query.actor_count", minecraftInstance.theWorld.loadedEntityList.size());
+        parser.setValue("query.time_of_day", MolangUtils.normalizeTime(minecraftInstance.theWorld.getTotalWorldTime()));
+        parser.setValue("query.moon_phase", minecraftInstance.theWorld.getMoonPhase());
+
+        if (animatable instanceof Entity) {
+            Entity entity = (Entity) animatable;
+            Entity camera = minecraftInstance.renderViewEntity;
+
+            Vec3 entityCamera = Vec3.createVectorHelper(camera.prevPosX + (camera.posX - camera.prevPosX) * partialTick,
+                camera.prevPosY + (camera.posY - camera.prevPosY) * partialTick,
+                camera.prevPosZ + (camera.posZ - camera.prevPosZ) * partialTick);
+            Vec3 entityPosition = Vec3.createVectorHelper(entity.prevPosX + (entity.posX - entity.prevPosX) * partialTick,
+                entity.prevPosY + (entity.posY - entity.prevPosY) * partialTick,
+                entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTick);
+            double distance = entityCamera.addVector(ActiveRenderInfo.objectX, ActiveRenderInfo.objectY, ActiveRenderInfo.objectZ).distanceTo(entityPosition);
+
+            parser.setValue("query.distance_from_camera", distance);
+            parser.setValue("query.is_on_ground", MolangUtils.booleanToFloat(((Entity) animatable).onGround));
+            parser.setValue("query.is_in_water", MolangUtils.booleanToFloat(((Entity) animatable).isInWater()));
+            // Should probably check specifically whether it's in rain?
+            parser.setValue("query.is_in_water_or_rain", MolangUtils.booleanToFloat(((Entity) animatable).isWet()));
+
+            if (animatable instanceof EntityLivingBase) {
+                EntityLivingBase livingEntity = (EntityLivingBase) animatable;
+                parser.setValue("query.health", livingEntity.getHealth());
+                parser.setValue("query.max_health", livingEntity.getMaxHealth());
+                parser.setValue("query.is_on_fire", MolangUtils.booleanToFloat(livingEntity.isBurning()));
+
+                double dx = livingEntity.motionX;
+                double dz = livingEntity.motionZ;
+                float groundSpeed = MathHelper.sqrt_double((dx * dx) + (dz * dz));
+                parser.setValue("query.ground_speed", groundSpeed);
+
+                float yawSpeed = this.getYaw(livingEntity, Minecraft.getMinecraft().timer.renderPartialTicks)
+                    - this.getYaw(livingEntity, (float) (Minecraft.getMinecraft().timer.renderPartialTicks - 0.1));
+                parser.setValue("query.yaw_speed", yawSpeed);
+            }
+        }
+    }
+
+    private float getYaw(EntityLivingBase entity, float tick) {
+        return entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * tick;
     }
 
     @Override
-    @Keep
     public double getCurrentTick() {
         return (Minecraft.getSystemTime() / 50d);
     }

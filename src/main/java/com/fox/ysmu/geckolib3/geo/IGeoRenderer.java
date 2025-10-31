@@ -1,251 +1,272 @@
 package com.fox.ysmu.geckolib3.geo;
 
-// [1.7.10] MODIFIED: 导入适配1.7.10的类
-import com.fox.ysmu.geckolib3.core.IAnimatable;
-import com.fox.ysmu.geckolib3.core.controller.AnimationController;
-import com.fox.ysmu.geckolib3.core.util.Color;
-import com.fox.ysmu.geckolib3.geo.render.built.*;
-import com.fox.ysmu.geckolib3.model.provider.GeoModelProvider;
-import com.fox.ysmu.geckolib3.util.EModelRenderCycle;
-import com.fox.ysmu.geckolib3.util.IRenderCycle;
-import com.fox.ysmu.geckolib3.util.MatrixStack;
-import com.fox.ysmu.util.Keep;
-import com.fox.ysmu.geckolib3.util.GlStateManager;
+import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import com.fox.ysmu.geckolib3.core.IAnimatable;
+import com.fox.ysmu.geckolib3.core.controller.AnimationController;
+import com.fox.ysmu.geckolib3.core.util.Color;
+import com.fox.ysmu.geckolib3.geo.render.built.GeoBone;
+import com.fox.ysmu.geckolib3.geo.render.built.GeoCube;
+import com.fox.ysmu.geckolib3.geo.render.built.GeoModel;
+import com.fox.ysmu.geckolib3.geo.render.built.GeoQuad;
+import com.fox.ysmu.geckolib3.geo.render.built.GeoVertex;
+import com.fox.ysmu.geckolib3.model.provider.GeoModelProvider;
+import com.fox.ysmu.geckolib3.particles.emitter.BedrockEmitter;
+import com.fox.ysmu.geckolib3.util.MatrixStack;
+import com.fox.ysmu.example.config.ConfigHandler;
+import com.fox.ysmu.geckolib3.util.PositionUtils;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Matrix4f;
+import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Map;
 
-// [1.7.10] NOTE: 以下高版本导入已被移除或替换:
-// import com.mojang.blaze3d.vertex.PoseStack;
-// import com.mojang.blaze3d.vertex.VertexConsumer;
-// import net.minecraft.client.renderer.LightTexture; // Replaced with OpenGlHelper
-// import net.minecraft.client.renderer.MultiBufferSource;
-// import net.minecraft.client.renderer.RenderType;
-// import org.joml.*; // Replaced with javax.vecmath
-
-@SuppressWarnings({"rawtypes", "unchecked"})
 public interface IGeoRenderer<T> {
-    // [1.7.10] ADDED: 1.7.10移植版使用自定义的MatrixStack进行变换，替代PoseStack。
-    MatrixStack MATRIX_STACK = new MatrixStack();
-    // [1.7.10] KEPT: 从高版本保留，用于辉光效果的逻辑。
-    String GLOW_PREFIX = "ysmGlow";
+    public static MatrixStack MATRIX_STACK = new MatrixStack();
 
-    @Keep
-    GeoModelProvider getGeoModelProvider();
-
-    @Keep
-    ResourceLocation getTextureLocation(T animatable);
-
-    @Keep
-    @Nullable
-    default GeoModel getGeoModel() {
-        return null;
-    }
-
-    // [1.7.10] MODIFIED: 主渲染方法。保留了高版本的签名以实现兼容性，但实现已完全替换为1.7.10的Tessellator逻辑。
-    // 高版本参数如PoseStack, RenderType, VertexConsumer等将被忽略。
-    @Keep
-    default void render(GeoModel model, T animatable, float partialTick, float red, float green, float blue, float alpha) {
-
-        // 1.7.10 GL状态设置
-        GlStateManager.pushMatrix();
+    default void render(GeoModel model, T animatable, float partialTicks, float red, float green, float blue,
+                        float alpha) {
         GlStateManager.disableCull();
         GlStateManager.enableRescaleNormal();
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.enableBlend();
         GL11.glEnable(GL11.GL_TEXTURE_2D);
+        renderEarly(model, animatable, partialTicks, red, green, blue, alpha);
 
-        // 调用生命周期方法
-        renderEarly(animatable, partialTick, red, green, blue, alpha);
+        renderLate(model, animatable, partialTicks, red, green, blue, alpha);
+        Tessellator tess = Tessellator.instance;
+        //BufferBuilder builder = Tessellator.instance.getBuffer();
 
-        renderLate(animatable, partialTick, red, green, blue, alpha);
-
-        // 使用Tessellator进行绘制
-        Tessellator tessellator = Tessellator.instance;
-        tessellator.startDrawing(GL11.GL_QUADS);
-
-        // 渲染所有根骨骼
+        //builder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
+        tess.startDrawing(GL11.GL_QUADS);//, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
+        // Render all top level bones
         for (GeoBone group : model.topLevelBones) {
-            renderRecursively(group, red, green, blue, alpha);
+            renderRecursively(tess, animatable, group, red, green, blue, alpha);
         }
 
-        tessellator.draw();
+        Tessellator.instance.draw();
 
-        // 恢复GL状态
+        renderAfter(model, animatable, partialTicks, red, green, blue, alpha);
+        //GlStateManager.disableRescaleNormal();
         GlStateManager.disableBlend();
         GlStateManager.enableCull();
-        GlStateManager.popMatrix();
-
-        // 设置渲染循环状态
-        setCurrentModelRenderCycle(EModelRenderCycle.REPEATED);
     }
 
-    // [1.7.10] MODIFIED: 骨骼递归渲染。签名保留，实现替换为1.7.10的MatrixStack逻辑。
-    // 使用packedLight参数来模拟辉光效果。
-    @Keep
-    default void renderRecursively(GeoBone bone, float red, float green, float blue, float alpha) {
-        boolean isGlowBone = bone.getName().startsWith(GLOW_PREFIX);
-        float lastLightmapX = 0, lastLightmapY = 0;
+    default boolean isBoneRenderOverriden(T animatable, GeoBone bone) {
+        return false;
+    }
 
-        // 处理辉光效果
-        if (isGlowBone) {
-            lastLightmapX = OpenGlHelper.lastBrightnessX;
-            lastLightmapY = OpenGlHelper.lastBrightnessY;
-            // 设置光照贴图坐标为最大亮度
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240, 240);
-        }
+    default void drawOverridenBone(T animatable, GeoBone bone) {
 
+    }
+
+    default void renderRecursively(Tessellator builder, T animatable, GeoBone bone, float red, float green, float blue,
+                                   float alpha) {
         MATRIX_STACK.push();
-        // 使用自定义MatrixStack应用骨骼变换
+
         MATRIX_STACK.translate(bone);
         MATRIX_STACK.moveToPivot(bone);
         MATRIX_STACK.rotate(bone);
         MATRIX_STACK.scale(bone);
         MATRIX_STACK.moveBackFromPivot(bone);
 
-        renderCubesOfBone(bone, red, green, blue, alpha);
-        renderChildBones(bone, red, green, blue, alpha);
-
-        MATRIX_STACK.pop();
-
-        // 恢复之前的光照
-        if (isGlowBone) {
-            OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, lastLightmapX, lastLightmapY);
-        }
-    }
-
-    // [1.7.10] MODIFIED: 保留高版本结构，实现替换为1.7.10逻辑。
-    @Keep
-    default void renderCubesOfBone(GeoBone bone, float red, float green, float blue, float alpha) {
-        if (bone.isHidden()) {
+        if (isBoneRenderOverriden(animatable, bone)) {
+            drawOverridenBone(animatable, bone);
+            MATRIX_STACK.pop();
             return;
         }
-        for (GeoCube cube : bone.childCubes) {
-            if (!bone.cubesAreHidden()) {
+
+        if (!bone.isHidden()) {
+            for (GeoCube cube : bone.childCubes) {
                 MATRIX_STACK.push();
-                renderCube(cube, red, green, blue, alpha);
-                MATRIX_STACK.pop();
+                GlStateManager.pushMatrix();
+                try {
+                    renderCube(builder, cube, red, green, blue, alpha);
+                } catch (Exception e) {
+                    if (ConfigHandler.debugPrintStacktraces) {
+                        e.printStackTrace();
+                    }
+                } finally {
+                    GlStateManager.popMatrix();
+                    MATRIX_STACK.pop();
+                }
             }
         }
+        if (!bone.childBonesAreHiddenToo()) {
+            for (GeoBone childBone : bone.childBones) {
+                renderRecursively(builder, animatable, childBone, red, green, blue, alpha);
+            }
+        }
+
+        MATRIX_STACK.pop();
     }
 
-    // [1.7.10] MODIFIED: 保留高版本结构，实现替换为1.7.10逻辑。
-    @Keep
-    default void renderChildBones(GeoBone bone, float red, float green, float blue, float alpha) {
-        if (bone.childBonesAreHiddenToo()) {
-            return;
-        }
-        for (GeoBone childBone : bone.childBones) {
-            renderRecursively(childBone, red, green, blue, alpha);
-        }
-    }
-
-    // [1.7.10] MODIFIED: Cube渲染。实现替换为1.7.10的MatrixStack和Tessellator逻辑。
-    // createVerticesOfQuad方法的逻辑被内联到此方法中。
-    @Keep
-    default void renderCube(GeoCube cube, float red, float green, float blue, float alpha) {
+    default void renderCube(Tessellator builder, GeoCube cube, float red, float green, float blue, float alpha) {
         MATRIX_STACK.moveToPivot(cube);
         MATRIX_STACK.rotate(cube);
         MATRIX_STACK.moveBackFromPivot(cube);
 
-        Matrix4f modelMatrix = MATRIX_STACK.getModelMatrix();
-        Matrix3f normalMatrix = MATRIX_STACK.getNormalMatrix();
-        Tessellator tessellator = Tessellator.instance;
-
-        boolean isFlat = cube.size.x == 0 || cube.size.y == 0 || cube.size.z == 0;
-        if (isFlat) {
+        boolean flat = cube.size.x == 0 || cube.size.y == 0 || cube.size.z == 0;
+        if (flat) {
             GlStateManager.enablePolygonOffset();
             GlStateManager.doPolygonOffset(-1.0F, -10.0F);
         }
 
         for (GeoQuad quad : cube.quads) {
-            if (quad == null) {
-                continue;
+            if (quad == null) continue;
+            Vector3f normal = new Vector3f(quad.normal.getX(), quad.normal.getY(), quad.normal.getZ());
+
+            MATRIX_STACK.getNormalMatrix().transform(normal);
+
+            /*
+             * Fix shading dark shading for flat cubes + compatibility wish Optifine shaders
+             */
+            if ((cube.size.y == 0 || cube.size.z == 0) && normal.x < 0) {
+                normal.x *= -1;
             }
-            Vector3f normal = new Vector3f(quad.normal.x, quad.normal.y, quad.normal.z);
-            normalMatrix.transform(normal);
-
-            // 修正平面方块的法线方向
-            if ((cube.size.y == 0 || cube.size.z == 0) && normal.x < 0) normal.x *= -1;
-            if ((cube.size.x == 0 || cube.size.z == 0) && normal.y < 0) normal.y *= -1;
-            if ((cube.size.x == 0 || cube.size.y == 0) && normal.z < 0) normal.z *= -1;
-
-            tessellator.setColorRGBA_F(red, green, blue, alpha);
-            tessellator.setNormal(normal.x, normal.y, normal.z);
+            if ((cube.size.x == 0 || cube.size.z == 0) && normal.y < 0) {
+                normal.y *= -1;
+            }
+            if ((cube.size.x == 0 || cube.size.y == 0) && normal.z < 0) {
+                normal.z *= -1;
+            }
 
             for (GeoVertex vertex : quad.vertices) {
-                Vector4f pos = new Vector4f(vertex.position.x, vertex.position.y, vertex.position.z, 1.0F);
-                modelMatrix.transform(pos);
-                // 1.7.10的Tessellator不支持直接传入光照和覆盖层参数，这些由全局GL状态控制
-                tessellator.addVertexWithUV(pos.x, pos.y, pos.z, vertex.textureU, vertex.textureV);
+                Vector4f vector4f = new Vector4f(vertex.position.x, vertex.position.y, vertex.position.z,
+                    1.0F);
+
+                MATRIX_STACK.getModelMatrix().transform(vector4f);
+                builder.setColorRGBA_F(red, green, blue, alpha);
+                builder.setNormal(normal.x, normal.y, normal.z);
+                builder.addVertexWithUV(vector4f.x, vector4f.y, vector4f.z, vertex.textureU, vertex.textureV);
             }
         }
 
-        if (isFlat) {
+        if (flat) {
             GlStateManager.disablePolygonOffset();
+            GlStateManager.doPolygonOffset(0.0F, 0.0F);
         }
     }
 
-    // [1.7.10] MODIFIED: 早期渲染回调。使用GlStateManager替代PoseStack进行缩放。
-    @Keep
-    default void renderEarly(T animatable, float partialTick, float red, float green, float blue, float alpha) {
-        if (getCurrentModelRenderCycle() == EModelRenderCycle.INITIAL) {
-            float width = getWidthScale(animatable);
-            float height = getHeightScale(animatable);
-            GlStateManager.scale(width, height, width);
-        }
+    /*
+    (-0.4095761, 0.5882118, 0.70710677, 1.0)
+    (0.409576, 1.1617882, 0.70710677, 1.0)
+    (0.0039961934, 1.7410161, -5.9604645E-8, 1.0)
+    (-0.81515586, 1.1674397, -5.9604645E-8, 1.0)
+    (-0.003996223, 0.008983791, -5.9604645E-8, 1.0)
+    (0.81515586, 0.5825603, -5.9604645E-8, 1.0)
+    (0.40957603, 1.1617882, -0.7071068, 1.0)
+    (-0.40957603, 0.5882118, -0.7071068, 1.0)
+     */
+    @SuppressWarnings("rawtypes")
+    GeoModelProvider getGeoModelProvider();
+
+    ResourceLocation getTextureLocation(T instance);
+
+    default void renderEarly(GeoModel model, T animatable, float ticks, float red, float green, float blue, float alpha) {
     }
 
-    // [1.7.10] KEPT: 晚期渲染回调，两个版本中均为空实现。
-    @Keep
-    default void renderLate(T animatable, float partialTick, float red, float green, float blue, float alpha) {
+    default void renderLate(GeoModel model, T animatable, float ticks, float red, float green, float blue, float alpha) {
     }
 
-    // [1.7.10] MODIFIED: 签名保留，实现简化，因为多数参数在1.7.10中无用。
-    @Keep
-    default Color getRenderColor(T animatable, float partialTick) {
-        return Color.WHITE;
+    default void renderAfter(GeoModel model, T animatable, float ticks, float red, float green, float blue, float alpha) {
+        drawParticles(model, animatable, ticks);
     }
 
-    // [1.7.10] KEPT: 实例ID获取，两个版本逻辑一致。
-    @Keep
-    default int getInstanceId(T animatable) {
+    default Color getRenderColor(T animatable, float partialTicks) {
+        return Color.ofRGBA(255, 255, 255, 255);
+    }
+
+    default Integer getUniqueID(T animatable) {
         return animatable.hashCode();
     }
 
-    // [1.7.10] KEPT: 渲染循环状态控制，对缩放逻辑很重要。
-    @Nonnull
-    @Keep
-    default IRenderCycle getCurrentModelRenderCycle() {
-        return EModelRenderCycle.INITIAL;
+    default void drawParticles(GeoModel model, T animatableArg, float ticks) {
+        if (!(animatableArg instanceof IAnimatable)) return;
+        IAnimatable animatable = (IAnimatable) animatableArg;
+        Map<String, AnimationController> controllerMap = animatable.getFactory().getOrCreateAnimationData(getUniqueID(animatableArg)).getAnimationControllers();
+        for (AnimationController controller : controllerMap.values()) {
+            for (int i = 0; i < controller.emitters.size(); i++) {
+                BedrockEmitter emitter = (BedrockEmitter) controller.emitters.get(i);
+                String locator = ((BedrockEmitter) controller.emitters.get(i)).locator + "_locator";//emitter.locator+"_locator";
+                if (emitter.locator != null && model.getBone(locator).isPresent()) {
+                    GeoBone bone = model.getBone(locator).get();
+                    renderParticle(emitter, bone, ticks);
+                }
+            }
+        }
     }
 
-    // [1.7.10] KEPT: 渲染循环状态控制。
-    @Keep
-    default void setCurrentModelRenderCycle(IRenderCycle cycle) {
+    default void renderParticle(BedrockEmitter emitter, GeoBone locator, float ticks) {
+        emitter.prevGlobal.x = emitter.lastGlobal.x;
+        emitter.prevGlobal.y = emitter.lastGlobal.y;
+        emitter.prevGlobal.z = emitter.lastGlobal.z;
+
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
+        Vector3d position = PositionUtils.getCurrentRenderPos();
+        //Vector3d position = new Vector3d(0,0,0);
+        double posX = position.x;//-376.5;
+        double posY = position.y;//8;
+        double posZ = position.z;//569.5;
+
+        emitter.lastGlobal.x = posX; //TODO
+        emitter.lastGlobal.y = posY; //TODO
+        emitter.lastGlobal.z = posZ; //TODO
+        RenderHelper.disableStandardItemLighting();
+
+        GL11.glPushMatrix();
+
+        Matrix4f curRot = PositionUtils.getCurrentMatrix();
+
+        PositionUtils.setInitialWorldPos();
+
+        Matrix4f cur2 = PositionUtils.getCurrentRotation(curRot, PositionUtils.getCurrentMatrix());
+
+        emitter.rotation.setIdentity();
+
+        MATRIX_STACK.push();
+        MATRIX_STACK.getModelMatrix().mul(new Matrix4f(cur2.m00, cur2.m01, cur2.m02, 0, cur2.m10, cur2.m11, cur2.m12, 0, cur2.m20, cur2.m21, cur2.m22, 0, 0, 0, 0, 1));
+        GeoBone[] bonePath = getPathFromRoot(locator);
+        for (int i = 0; i < bonePath.length; i++) {
+            GeoBone bone = bonePath[i];
+            MATRIX_STACK.translate(bone);
+            MATRIX_STACK.moveToPivot(bone);
+            MATRIX_STACK.rotate(bone);
+            MATRIX_STACK.scale(bone);
+            MATRIX_STACK.moveBackFromPivot(bone);
+        }
+        MATRIX_STACK.moveToPivot(locator);
+        //MATRIX_STACK.translate(6f/16f,16f/16f,0);
+        //MATRIX_STACK.rotateX((float) (Math.PI/2));
+        //MATRIX_STACK.scale(0.5f,0.5f,0.5f);
+
+        Matrix4f full = MATRIX_STACK.getModelMatrix();
+        emitter.rotation = new Matrix3f(full.m00, full.m01, full.m02, full.m10, full.m11, full.m12, full.m20, full.m21, full.m22);
+        emitter.lastGlobal.x += full.m03;
+        emitter.lastGlobal.y += full.m13;
+        emitter.lastGlobal.z += full.m23;
+
+        MATRIX_STACK.pop();
+        emitter.render(Minecraft.getMinecraft().timer.renderPartialTicks);
+        RenderHelper.enableStandardItemLighting();
+        GL11.glPopMatrix();
     }
 
-    // [1.7.10] KEPT: 用于renderEarly中的模型缩放。
-    @Keep
-    default float getWidthScale(T animatable) {
-        return 1F;
-    }
-
-    // [1.7.10] KEPT: 用于renderEarly中的模型缩放。
-    @Keep
-    default float getHeightScale(T entity) {
-        return 1F;
+    default GeoBone[] getPathFromRoot(GeoBone bone) {
+        ArrayList<GeoBone> bones = new ArrayList<>();
+        while (bone != null) {
+            bones.add(0, bone);
+            bone = bone.parent;
+        }
+        return bones.toArray(new GeoBone[0]);
     }
 }

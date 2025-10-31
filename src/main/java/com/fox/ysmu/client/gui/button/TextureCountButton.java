@@ -2,7 +2,6 @@ package com.fox.ysmu.client.gui.button;
 
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.client.ClientModelManager;
-import com.fox.ysmu.util.Keep;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -15,7 +14,7 @@ public class TextureCountButton extends FlatColorButton {
     }
 
     @Override
-    @Keep
+
     public Component getMessage() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {

@@ -11,12 +11,10 @@ import com.fox.ysmu.geckolib3.geo.render.built.GeoBone;
 import com.fox.ysmu.geckolib3.model.AnimatedGeoModel;
 import com.fox.ysmu.geckolib3.model.provider.data.EntityModelData;
 import com.fox.ysmu.geckolib3.resource.GeckoLibCache;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.ModelIdUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.ModList;
+import net.minecraft.entity.player.EntityPlayer;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -26,11 +24,10 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     public static final ResourceLocation DEFAULT_MAIN_MODEL = ModelIdUtil.getMainId(new ResourceLocation(ysmu.MODID, "default"));
     public static final ResourceLocation DEFAULT_MAIN_ANIMATION = ModelIdUtil.getMainId(new ResourceLocation(ysmu.MODID, "default"));
     public static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(ysmu.MODID, "default/default.png");
-    public static final String FIRST_PERSON_MOD_ID = "firstpersonmod";
     public static float FIRST_PERSON_HEAD_POS;
 
     @Override
-    @Keep
+
     public ResourceLocation getModelLocation(Object object) {
         if (object instanceof CustomPlayerEntity customPlayer) {
             return customPlayer.getMainModel();
@@ -39,7 +36,7 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     }
 
     @Override
-    @Keep
+
     public ResourceLocation getTextureLocation(Object object) {
         if (object instanceof CustomPlayerEntity customPlayer) {
             return customPlayer.getTexture();
@@ -48,7 +45,7 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     }
 
     @Override
-    @Keep
+
     public ResourceLocation getAnimationFileLocation(Object object) {
         if (object instanceof CustomPlayerEntity customPlayer) {
             return customPlayer.getAnimation();
@@ -57,13 +54,13 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     }
 
     @Override
-    @Keep
+
     public void setCustomAnimations(IAnimatable animatable, int instanceId, AnimationEvent animationEvent) {
         List extraData = animationEvent.getExtraData();
         MolangParser parser = GeckoLibCache.getInstance().parser;
-        if (!Minecraft.getInstance().isPaused() && extraData.size() == 1 && extraData.get(0) instanceof EntityModelData data
+        if (!Minecraft.getMinecraft().isGamePaused() && extraData.size() == 1 && extraData.get(0) instanceof EntityModelData data
                 && animatable instanceof CustomPlayerEntity customPlayer && customPlayer.getPlayer() != null) {
-            Player player = customPlayer.getPlayer();
+            EntityPlayer player = customPlayer.getPlayer();
             AnimationRegister.setParserValue(animationEvent, parser, data, player);
             super.setCustomAnimations(animatable, instanceId, animationEvent);
             this.codeAnimation(animationEvent, data, player);
@@ -72,7 +69,7 @@ public class CustomPlayerModel extends AnimatedGeoModel {
         }
     }
 
-    private void codeAnimation(AnimationEvent animationEvent, EntityModelData data, Player player) {
+    private void codeAnimation(AnimationEvent animationEvent, EntityModelData data, EntityPlayer player) {
         // FIXME: 2023/6/21 这一块设计应该改成 molang 的，而且这个寻找效率低下
         IBone head = getBone("Head");
         FIRST_PERSON_HEAD_POS = 24;
@@ -89,14 +86,14 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     }
 
     @Override
-    @Keep
+
     @Nullable
     public IBone getBone(String boneName) {
         return getAnimationProcessor().getBone(boneName);
     }
 
     @Override
-    @Keep
+
     public void setMolangQueries(IAnimatable animatable, double seekTime) {
     }
 }

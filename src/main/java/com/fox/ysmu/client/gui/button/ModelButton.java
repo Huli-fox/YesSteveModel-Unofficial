@@ -7,7 +7,6 @@ import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.bukkit.message.OpenModelGuiMessage;
 import com.fox.ysmu.network.message.SetModelAndTexture;
 import com.fox.ysmu.bukkit.message.SetNpcModelAndTexture;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.RenderUtil;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -44,7 +43,7 @@ public class ModelButton extends Button {
     }
 
     @Override
-    @Keep
+
     public void onPress() {
         if (needAuth) {
             return;
@@ -62,7 +61,7 @@ public class ModelButton extends Button {
     }
 
     @Override
-    @Keep
+
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;
@@ -114,7 +113,7 @@ public class ModelButton extends Button {
 
 
     @Override
-    @Keep
+
     protected boolean clicked(double pMouseX, double pMouseY) {
         return !this.needAuth && super.clicked(pMouseX, pMouseY);
     }

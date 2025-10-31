@@ -1,7 +1,5 @@
 package com.fox.ysmu.mclib.math;
 
-import com.fox.ysmu.util.Keep;
-
 public class Ternary implements IValue {
     public IValue condition;
     public IValue ifTrue;
@@ -14,13 +12,13 @@ public class Ternary implements IValue {
     }
 
     @Override
-    @Keep
+
     public double get() {
         return this.condition.get() != 0 ? this.ifTrue.get() : this.ifFalse.get();
     }
 
     @Override
-    @Keep
+
     public String toString() {
         return this.condition.toString() + " ? " + this.ifTrue.toString() + " : " + this.ifFalse.toString();
     }

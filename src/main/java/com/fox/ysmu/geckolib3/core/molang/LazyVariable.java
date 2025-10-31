@@ -1,7 +1,6 @@
 package com.fox.ysmu.geckolib3.core.molang;
 
 import com.fox.ysmu.mclib.math.Variable;
-import com.fox.ysmu.util.Keep;
 
 import java.util.function.DoubleSupplier;
 
@@ -27,7 +26,7 @@ public class LazyVariable extends Variable {
     }
 
     @Override
-    @Keep
+
     public void set(double value) {
         this.valueSupplier = () -> value;
     }
@@ -37,7 +36,7 @@ public class LazyVariable extends Variable {
     }
 
     @Override
-    @Keep
+
     public double get() {
         return this.valueSupplier.getAsDouble();
     }

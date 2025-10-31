@@ -1,42 +1,53 @@
 package com.fox.ysmu.geckolib3.core.util;
 
+import java.util.function.Function;
+
 import com.fox.ysmu.geckolib3.core.easing.EasingManager;
 import com.fox.ysmu.geckolib3.core.easing.EasingType;
 import com.fox.ysmu.geckolib3.core.keyframe.AnimationPoint;
 
-import java.util.function.Function;
-
-@SuppressWarnings("all")
 public class MathUtil {
-    /**
-     * 对一个 AnimationPoint 进行线性插值计算
-     *
-     * @param animationPoint 动画信息
-     * @return 线性插值
-     */
-    public static float lerpValues(AnimationPoint animationPoint, EasingType easingType, Function<Double, Double> customEasingMethod) {
-        if (animationPoint.currentTick >= animationPoint.animationEndTick) {
-            return (float) animationPoint.animationEndValue;
-        }
-        if (animationPoint.currentTick == 0 && animationPoint.animationEndTick == 0) {
-            return (float) animationPoint.animationEndValue;
-        }
-        if (easingType == EasingType.CUSTOM && customEasingMethod != null) {
-            return lerpValues(customEasingMethod.apply(animationPoint.currentTick / animationPoint.animationEndTick),
-                    animationPoint.animationStartValue, animationPoint.animationEndValue);
-        } else if (easingType == EasingType.NONE && animationPoint.keyframe != null) {
-            easingType = animationPoint.keyframe.easingType;
-        }
-        double ease = EasingManager.ease(animationPoint.currentTick / animationPoint.animationEndTick, easingType,
-                animationPoint.keyframe == null ? null : animationPoint.keyframe.easingArgs);
-        return lerpValues(ease, animationPoint.animationStartValue, animationPoint.animationEndValue);
-    }
+	/**
+	 * Lerps an AnimationPoint
+	 *
+	 * @param animationPoint The animation point
+	 * @return the resulting lerped value
+	 */
+	public static float lerpValues(AnimationPoint animationPoint, EasingType easingType,
+			Function<Double, Double> customEasingMethod) {
+		if (animationPoint.currentTick >= animationPoint.animationEndTick) {
+			return animationPoint.animationEndValue.floatValue();
+		}
+		if (animationPoint.currentTick == 0 && animationPoint.animationEndTick == 0) {
+			return animationPoint.animationEndValue.floatValue();
+		}
 
-    public static float lerpValues(double percentCompleted, double startValue, double endValue) {
-        return (float) lerp(percentCompleted, startValue, endValue);
-    }
+		if (easingType == EasingType.CUSTOM && customEasingMethod != null) {
+			return lerpValues(customEasingMethod.apply(animationPoint.currentTick / animationPoint.animationEndTick),
+					animationPoint.animationStartValue, animationPoint.animationEndValue);
+		} else if (easingType == EasingType.NONE && animationPoint.keyframe != null) {
+			easingType = animationPoint.keyframe.easingType;
+		}
+		double ease = EasingManager.ease(animationPoint.currentTick / animationPoint.animationEndTick, easingType,
+				animationPoint.keyframe == null ? null : animationPoint.keyframe.easingArgs);
+		return lerpValues(ease, animationPoint.animationStartValue, animationPoint.animationEndValue);
+	}
 
-    public static double lerp(double pct, double start, double end) {
-        return start + pct * (end - start);
-    }
+	/**
+	 * This is the actual function that smoothly interpolates (lerp) between
+	 * keyframes
+	 *
+	 * @param startValue The animation's start value
+	 * @param endValue   The animation's end value
+	 * @return The interpolated value
+	 */
+	public static float lerpValues(double percentCompleted, double startValue, double endValue) {
+		// current tick / position should be between 0 and 1 and represent the
+		// percentage of the lerping that has completed
+		return (float) lerp(percentCompleted, startValue, endValue);
+	}
+
+	public static double lerp(double pct, double start, double end) {
+		return start + pct * (end - start);
+	}
 }

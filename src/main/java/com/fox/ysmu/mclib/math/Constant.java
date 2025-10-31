@@ -1,7 +1,5 @@
 package com.fox.ysmu.mclib.math;
 
-import com.fox.ysmu.util.Keep;
-
 public class Constant implements IValue {
     private double value;
 
@@ -10,7 +8,7 @@ public class Constant implements IValue {
     }
 
     @Override
-    @Keep
+
     public double get() {
         return this.value;
     }
@@ -20,7 +18,7 @@ public class Constant implements IValue {
     }
 
     @Override
-    @Keep
+
     public String toString() {
         return String.valueOf(this.value);
     }

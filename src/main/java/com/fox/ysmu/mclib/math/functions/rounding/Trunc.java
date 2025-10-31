@@ -2,7 +2,6 @@ package com.fox.ysmu.mclib.math.functions.rounding;
 
 import com.fox.ysmu.mclib.math.IValue;
 import com.fox.ysmu.mclib.math.functions.Function;
-import com.fox.ysmu.util.Keep;
 
 public class Trunc extends Function {
     public Trunc(IValue[] values, String name) throws Exception {
@@ -10,13 +9,13 @@ public class Trunc extends Function {
     }
 
     @Override
-    @Keep
+
     public int getRequiredArguments() {
         return 1;
     }
 
     @Override
-    @Keep
+
     public double get() {
         double value = this.getArg(0);
 

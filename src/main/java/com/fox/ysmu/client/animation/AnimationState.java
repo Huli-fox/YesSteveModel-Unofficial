@@ -3,8 +3,8 @@ package com.fox.ysmu.client.animation;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.geckolib3.core.builder.ILoopType;
 import com.fox.ysmu.geckolib3.core.event.predicate.AnimationEvent;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.MathHelper;
 
 import java.util.function.BiPredicate;
 
@@ -12,16 +12,16 @@ public class AnimationState {
     private final String animationName;
     private final ILoopType loopType;
     private final int priority;
-    private final BiPredicate<Player, AnimationEvent<CustomPlayerEntity>> predicate;
+    private final BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> predicate;
 
-    public AnimationState(String animationName, ILoopType loopType, int priority, BiPredicate<Player, AnimationEvent<CustomPlayerEntity>> predicate) {
+    public AnimationState(String animationName, ILoopType loopType, int priority, BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> predicate) {
         this.animationName = animationName;
         this.loopType = loopType;
-        this.priority = Mth.clamp(priority, Priority.HIGHEST, Priority.LOWEST);
+        this.priority = MathHelper.clamp_int(priority, Priority.HIGHEST, Priority.LOWEST);
         this.predicate = predicate;
     }
 
-    public BiPredicate<Player, AnimationEvent<CustomPlayerEntity>> getPredicate() {
+    public BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> getPredicate() {
         return predicate;
     }
 

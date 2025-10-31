@@ -5,7 +5,6 @@ import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.SetStarModel;
-import com.fox.ysmu.util.Keep;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -24,7 +23,7 @@ public class StarButton extends FlatColorButton {
     }
 
     @Override
-    @Keep
+
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
         super.renderWidget(graphics, mouseX, mouseY, pPartialTick);
         int startX = (this.width - 16) / 2;
@@ -45,7 +44,7 @@ public class StarButton extends FlatColorButton {
     }
 
     @Override
-    @Keep
+
     public void onPress() {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null) {

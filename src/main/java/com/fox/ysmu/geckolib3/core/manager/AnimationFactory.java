@@ -1,25 +1,33 @@
 package com.fox.ysmu.geckolib3.core.manager;
 
+import java.util.HashMap;
 import com.fox.ysmu.geckolib3.core.IAnimatable;
-import com.fox.ysmu.util.Keep;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 public class AnimationFactory {
     protected final IAnimatable animatable;
-    private final Int2ObjectOpenHashMap<AnimationData> animationDataMap = new Int2ObjectOpenHashMap<>();
+	private final HashMap<Integer, AnimationData> animationDataMap = new HashMap<>();
 
-    @Deprecated
-    public AnimationFactory(IAnimatable animatable) {
-        this.animatable = animatable;
-    }
+	public AnimationFactory(IAnimatable animatable) {
+		this.animatable = animatable;
+	}
 
-    @Keep
-    public AnimationData getOrCreateAnimationData(int uniqueID) {
-        if (!this.animationDataMap.containsKey(uniqueID)) {
-            AnimationData data = new AnimationData();
-            this.animatable.registerControllers(data);
-            this.animationDataMap.put(uniqueID, data);
-        }
-        return animationDataMap.get(uniqueID);
-    }
+	/**
+	 * This creates or gets the cached animation manager for any unique ID. For
+	 * itemstacks, this is typically a hashcode of their nbt. For entities it should
+	 * be their unique uuid. For tile entities you can use nbt or just one constant
+	 * value since they are not singletons.
+	 *
+	 * @param uniqueID A unique integer ID. For every ID the same animation manager
+	 *                 will be returned.
+	 * @return the animatable manager
+	 */
+
+	public AnimationData getOrCreateAnimationData(Integer uniqueID) {
+		if (!this.animationDataMap.containsKey(uniqueID)) {
+			AnimationData data = new AnimationData();
+			this.animatable.registerControllers(data);
+			this.animationDataMap.put(uniqueID, data);
+		}
+		return animationDataMap.get(uniqueID);
+	}
 }

@@ -1,17 +1,18 @@
 package com.fox.ysmu.geckolib3.core.easing;
 
-import java.util.Locale;
-
 public enum EasingType {
-    // 插值类型
-    NONE, CUSTOM, LINEAR, STEP;
+	NONE, CUSTOM, Linear, Step, EaseInSine, EaseOutSine, EaseInOutSine, EaseInQuad, EaseOutQuad, EaseInOutQuad,
+	EaseInCubic, EaseOutCubic, EaseInOutCubic, EaseInQuart, EaseOutQuart, EaseInOutQuart, EaseInQuint, EaseOutQuint,
+	EaseInOutQuint, EaseInExpo, EaseOutExpo, EaseInOutExpo, EaseInCirc, EaseOutCirc, EaseInOutCirc, EaseInBack,
+	EaseOutBack, EaseInOutBack, EaseInElastic, EaseOutElastic, EaseInOutElastic, EaseInBounce, EaseOutBounce,
+	EaseInOutBounce, Catmullrom;
 
-    public static EasingType getEasingTypeFromString(String search) {
-        return switch (search.toLowerCase(Locale.ROOT)) {
-            default -> NONE;
-            case "custom" -> CUSTOM;
-            case "linear" -> LINEAR;
-            case "step" -> STEP;
-        };
-    }
+	public static EasingType getEasingTypeFromString(String search) {
+		for (EasingType each : EasingType.values()) {
+			if (each.name().compareToIgnoreCase(search) == 0) {
+				return each;
+			}
+		}
+		return null;
+	}
 }

@@ -5,7 +5,6 @@ import com.fox.ysmu.client.ClientModelManager;
 import com.fox.ysmu.client.gui.button.FlatColorButton;
 import com.fox.ysmu.client.gui.button.FlatIconButton;
 import com.fox.ysmu.client.gui.button.TextureButton;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.RenderUtil;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.Window;
@@ -66,7 +65,7 @@ public class PlayerTextureScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     protected void init() {
         this.clearWidgets();
 
@@ -150,7 +149,7 @@ public class PlayerTextureScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         graphics.fillGradient(x, y + 22, x + 90, y + 235, 0xff_222222, 0xff_222222);
@@ -186,7 +185,7 @@ public class PlayerTextureScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (minecraft == null || !inViewRange(mouseX, mouseY)) {
             return false;
@@ -203,7 +202,7 @@ public class PlayerTextureScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (minecraft == null) {
             return false;
@@ -285,7 +284,7 @@ public class PlayerTextureScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean isPauseScreen() {
         return false;
     }

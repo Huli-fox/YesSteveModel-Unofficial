@@ -1,33 +1,31 @@
 package com.fox.ysmu.mclib.utils;
 
-import com.fox.ysmu.util.Keep;
-
 public enum Interpolation {
     // 插值类型
     LINEAR("linear") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             return Interpolations.lerp(a, b, x);
         }
     },
     QUAD_IN("quad_in") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             return a + (b - a) * x * x;
         }
     },
     QUAD_OUT("quad_out") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             return a - (b - a) * x * (x - 2);
         }
     },
     QUAD_INOUT("quad_inout") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             x *= 2;
             if (x < 1F) {
@@ -39,14 +37,14 @@ public enum Interpolation {
     },
     CUBIC_IN("cubic_in") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             return a + (b - a) * x * x * x;
         }
     },
     CUBIC_OUT("cubic_out") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             x -= 1;
             return a + (b - a) * (x * x * x + 1);
@@ -54,7 +52,7 @@ public enum Interpolation {
     },
     CUBIC_INOUT("cubic_inout") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             x *= 2;
             if (x < 1F) {
@@ -66,21 +64,21 @@ public enum Interpolation {
     },
     EXP_IN("exp_in") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             return a + (b - a) * (float) Math.pow(2, 10 * (x - 1));
         }
     },
     EXP_OUT("exp_out") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             return a + (b - a) * (float) (-Math.pow(2, -10 * x) + 1);
         }
     },
     EXP_INOUT("exp_inout") {
         @Override
-        @Keep
+
         public float interpolate(float a, float b, float x) {
             if (x == 0) {
                 return a;

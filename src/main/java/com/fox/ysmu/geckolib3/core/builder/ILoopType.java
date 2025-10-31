@@ -1,12 +1,17 @@
+//
+// Source code recreated from a .class file by IntelliJ IDEA
+// (powered by FernFlower decompiler)
+//
+
 package com.fox.ysmu.geckolib3.core.builder;
 
-import com.fox.ysmu.util.Keep;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
+import java.io.Serializable;
 import java.util.Locale;
 
-public interface ILoopType {
+public interface ILoopType extends Serializable {
     /**
      * 从动画文件读取播放类型
      *
@@ -42,16 +47,12 @@ public interface ILoopType {
      *
      * @return 是否在动画结束后重复
      */
-    @Keep
     boolean isRepeatingAfterEnd();
-
+    static final long serialVersionUID = 42L;
     enum EDefaultLoopTypes implements ILoopType {
-        /**
-         * 动画播放类型
-         */
         LOOP(true),
         PLAY_ONCE,
-        HOLD_ON_LAST_FRAME;
+        HOLD_ON_LAST_FRAME(true);
 
         private final boolean looping;
 
@@ -63,8 +64,6 @@ public interface ILoopType {
             this(false);
         }
 
-        @Override
-        @Keep
         public boolean isRepeatingAfterEnd() {
             return this.looping;
         }

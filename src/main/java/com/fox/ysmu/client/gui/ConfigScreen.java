@@ -3,7 +3,6 @@ package com.fox.ysmu.client.gui;
 import com.fox.ysmu.client.gui.button.ConfigCheckBox;
 import com.fox.ysmu.client.gui.button.FlatColorButton;
 import com.fox.ysmu.Config;
-import com.fox.ysmu.util.Keep;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -17,7 +16,7 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     protected void init() {
         int x = (width - 420) / 2;
         int y = (height - 235) / 2;
@@ -32,7 +31,7 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(graphics);
         super.render(graphics, pMouseX, pMouseY, pPartialTick);

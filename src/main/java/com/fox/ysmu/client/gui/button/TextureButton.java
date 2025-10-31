@@ -5,7 +5,6 @@ import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.bukkit.message.OpenModelGuiMessage;
 import com.fox.ysmu.network.message.SetModelAndTexture;
 import com.fox.ysmu.bukkit.message.SetNpcModelAndTexture;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.util.RenderUtil;
 import com.mojang.blaze3d.platform.Window;
@@ -38,7 +37,7 @@ public class TextureButton extends Button {
     }
 
     @Override
-    @Keep
+
     public void onPress() {
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
         if (eep != null) {
@@ -53,7 +52,7 @@ public class TextureButton extends Button {
     }
 
     @Override
-    @Keep
+
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;

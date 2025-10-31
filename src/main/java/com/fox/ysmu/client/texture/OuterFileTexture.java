@@ -1,6 +1,5 @@
 package com.fox.ysmu.client.texture;
 
-import com.fox.ysmu.util.Keep;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -19,7 +18,7 @@ public class OuterFileTexture extends AbstractTexture {
     }
 
     @Override
-    @Keep
+
     public void load(@NotNull ResourceManager resourceManager) {
         if (!RenderSystem.isOnRenderThreadOrInit()) {
             RenderSystem.recordRenderCall(this::doLoad);

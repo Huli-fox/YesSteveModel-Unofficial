@@ -1,7 +1,6 @@
 package com.fox.ysmu.client.gui;
 
 import com.fox.ysmu.Config;
-import com.fox.ysmu.util.Keep;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -24,7 +23,7 @@ public class DisclaimerScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     protected void init() {
         this.clearWidgets();
 
@@ -49,7 +48,7 @@ public class DisclaimerScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(graphics);
         graphics.drawWordWrap(font, Component.translatable("gui.yes_steve_model.disclaimer.text"), x, y, 400, 0xffffffff);

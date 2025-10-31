@@ -6,7 +6,6 @@ import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
 import com.fox.ysmu.client.ClientModelManager;
 import com.fox.ysmu.client.gui.button.*;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -94,7 +93,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     protected void init() {
         this.clearWidgets();
         this.calculateModelList();
@@ -196,7 +195,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     @SuppressWarnings("all")
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         renderBackground(graphics);
@@ -245,7 +244,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public void resize(Minecraft minecraft, int width, int height) {
         String value = this.textField.getValue();
         super.resize(minecraft, width, height);
@@ -253,13 +252,13 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public void tick() {
         this.textField.tick();
     }
 
     @Override
-    @Keep
+
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.textField.mouseClicked(mouseX, mouseY, button)) {
             this.setFocused(this.textField);
@@ -269,7 +268,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean charTyped(char codePoint, int modifiers) {
         if (textField == null) {
             return false;
@@ -286,7 +285,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         boolean hasKeyCode = InputConstants.getKey(keyCode, scanCode).getNumericKeyValue().isPresent();
         String preText = this.textField.getValue();
@@ -305,7 +304,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     protected void insertText(String text, boolean overwrite) {
         if (overwrite) {
             this.textField.setValue(text);
@@ -315,7 +314,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
         if (minecraft == null) {
             return false;
@@ -347,7 +346,7 @@ public class PlayerModelScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean isPauseScreen() {
         return false;
     }

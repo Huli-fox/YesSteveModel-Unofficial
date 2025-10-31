@@ -2,11 +2,31 @@
  * Copyright (c) 2020.
  * Author: Bernie G. (Gecko)
  */
-
+// TODO AnimationController 尚未检查完
 package com.fox.ysmu.geckolib3.core.controller;
 
-import com.fox.ysmu.ysmu;
-import com.fox.ysmu.geckolib3.core.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
+
+import com.fox.ysmu.mclib.math.IValue;
+import com.fox.ysmu.geckolib3.core.molang.MolangParser;
+import com.fox.ysmu.geckolib3.core.AnimationState;
+import com.fox.ysmu.geckolib3.core.ConstantValue;
+import com.fox.ysmu.geckolib3.core.IAnimatable;
+import com.fox.ysmu.geckolib3.core.IAnimatableModel;
+import com.fox.ysmu.geckolib3.core.PlayState;
 import com.fox.ysmu.geckolib3.core.builder.Animation;
 import com.fox.ysmu.geckolib3.core.builder.AnimationBuilder;
 import com.fox.ysmu.geckolib3.core.builder.ILoopType;
@@ -15,612 +35,720 @@ import com.fox.ysmu.geckolib3.core.event.CustomInstructionKeyframeEvent;
 import com.fox.ysmu.geckolib3.core.event.ParticleKeyFrameEvent;
 import com.fox.ysmu.geckolib3.core.event.SoundKeyframeEvent;
 import com.fox.ysmu.geckolib3.core.event.predicate.AnimationEvent;
-import com.fox.ysmu.geckolib3.core.keyframe.*;
-import com.fox.ysmu.geckolib3.core.molang.MolangParser;
+import com.fox.ysmu.geckolib3.core.keyframe.AnimationPoint;
+import com.fox.ysmu.geckolib3.core.keyframe.BoneAnimation;
+import com.fox.ysmu.geckolib3.core.keyframe.BoneAnimationQueue;
+import com.fox.ysmu.geckolib3.core.keyframe.EventKeyFrame;
+import com.fox.ysmu.geckolib3.core.keyframe.KeyFrame;
+import com.fox.ysmu.geckolib3.core.keyframe.KeyFrameLocation;
+import com.fox.ysmu.geckolib3.core.keyframe.ParticleEventKeyFrame;
+import com.fox.ysmu.geckolib3.core.keyframe.VectorKeyFrameList;
 import com.fox.ysmu.geckolib3.core.processor.IBone;
 import com.fox.ysmu.geckolib3.core.snapshot.BoneSnapshot;
 import com.fox.ysmu.geckolib3.core.util.Axis;
-import com.fox.ysmu.mclib.math.IValue;
-import it.unimi.dsi.fastutil.doubles.Double2DoubleFunction;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import org.apache.commons.lang3.tuple.Pair;
 
-import javax.annotation.Nullable;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
+/**
+ * The type Animation controller.
+ *
+ * @param <T> the type parameter
+ */
 public class AnimationController<T extends IAnimatable> {
-    private static final List<ModelFetcher<?>> modelFetchers = new ObjectArrayList<>();
-    /**
-     * 动画控制器名称
-     */
-    private final String name;
-    private final HashMap<String, BoneAnimationQueue> boneAnimationQueues = new HashMap<>();
-    private final HashMap<String, BoneSnapshot> boneSnapshots = new HashMap<>();
-    private final Set<EventKeyFrame<?>> executedKeyFrames = new ObjectOpenHashSet<>();
-    /**
-     * 在动画之间过渡需要多长时间
-     */
-    public double transitionLengthTicks;
-    public boolean isJustStarting = false;
-    public double tickOffset;
-    public Double2DoubleFunction customEasingMethod;
-    public double animationSpeed = 1D;
-    /**
-     * 默认情况下，动画将使用关键帧的 EasingType <br>
-     * 复写此数值将用于全局
-     */
-    public EasingType easingType = EasingType.NONE;
-    /**
-     * 实体对象
-     */
-    protected T animatable;
-    /**
-     * 动画谓词，每次触发前都会调用一次
-     */
-    protected IAnimationPredicate<T> animationPredicate;
-    protected AnimationState animationState = AnimationState.STOPPED;
-    protected Queue<Animation> animationQueue = new LinkedList<>();
-    protected Animation currentAnimation;
-    protected AnimationBuilder currentAnimationBuilder = new AnimationBuilder();
-    public boolean shouldResetTick = false;
-    protected boolean justStartedTransition = false;
-    protected boolean needsAnimationReload = false;
-    /**
-     * 播放声音关键帧时触发的 Sound Listener
-     */
-    private ISoundListener<T> soundListener;
-    /**
-     * 播放粒子关键帧时触发的 Particle Listener
-     */
-    private IParticleListener<T> particleListener;
-    /**
-     * 播放指令关键帧时触发的 Instruction Listener
-     */
-    private ICustomInstructionListener<T> customInstructionListener;
-    private boolean justStopped = false;
+	static List<ModelFetcher<?>> modelFetchers = new ArrayList<>();
+	/**
+	 * The Entity.
+	 */
+	protected T animatable;
+	/**
+	 * The animation predicate, is tested in every process call (i.e. every frame)
+	 */
+	protected IAnimationPredicate<T> animationPredicate;
 
-    /**
-     * 实例化动画控制器，每个控制器同一时间只能播放一个动画 <br>
-     * 你可以为一个实体附加多个动画控制器 <br>
-     * 比如一个控制器控制实体大小，另一个控制移动，攻击等等
-     *
-     * @param animatable            实体
-     * @param name                  动画控制器名称
-     * @param transitionLengthTicks 动画过渡时间（tick）
-     */
-    public AnimationController(T animatable, String name, float transitionLengthTicks,
-                               IAnimationPredicate<T> animationPredicate) {
-        this.animatable = animatable;
-        this.name = name;
-        this.transitionLengthTicks = transitionLengthTicks;
-        this.animationPredicate = animationPredicate;
-        this.tickOffset = 0.0d;
-    }
+	/**
+	 * The name of the animation controller
+	 */
+	private final String name;
 
-    /**
-     * 实例化动画控制器，每个控制器同一时间只能播放一个动画 <br>
-     * 你可以为一个实体附加多个动画控制器 <br>
-     * 比如一个控制器控制实体大小，另一个控制移动，攻击等等
-     *
-     * @param animatable            实体
-     * @param name                  动画控制器名称
-     * @param transitionLengthTicks 动画过渡时间（tick）
-     * @param easingtype            动画过渡插值类型，默认没有
-     */
-    public AnimationController(T animatable, String name, float transitionLengthTicks, EasingType easingtype,
-                               IAnimationPredicate<T> animationPredicate) {
-        this.animatable = animatable;
-        this.name = name;
-        this.transitionLengthTicks = transitionLengthTicks;
-        this.easingType = easingtype;
-        this.animationPredicate = animationPredicate;
-        this.tickOffset = 0.0d;
-    }
+	protected AnimationState animationState = AnimationState.Stopped;
 
-    /**
-     * 实例化动画控制器，每个控制器同一时间只能播放一个动画 <br>
-     * 你可以为一个实体附加多个动画控制器 <br>
-     * 比如一个控制器控制实体大小，另一个控制移动，攻击等等
-     *
-     * @param animatable            实体
-     * @param name                  动画控制器名称
-     * @param transitionLengthTicks 动画过渡时间（tick）
-     * @param customEasingMethod    自定义过渡插值类型，参数输入和输出均为 0-1
-     *                              {@link com.fox.ysmu.geckolib3.core.easing.EasingManager}
-     */
-    public AnimationController(T animatable, String name, float transitionLengthTicks,
-                               Double2DoubleFunction customEasingMethod, IAnimationPredicate<T> animationPredicate) {
-        this.animatable = animatable;
-        this.name = name;
-        this.transitionLengthTicks = transitionLengthTicks;
-        this.customEasingMethod = customEasingMethod;
-        this.easingType = EasingType.CUSTOM;
-        this.animationPredicate = animationPredicate;
-        this.tickOffset = 0.0d;
-    }
+	/**
+	 * How long it takes to transition between animations
+	 */
+	public double transitionLengthTicks;
 
-    public static void addModelFetcher(ModelFetcher<?> fetcher) {
-        modelFetchers.add(fetcher);
-    }
+	/**
+	 * The sound listener is called every time a sound keyframe is encountered (i.e.
+	 * every frame)
+	 */
+	private ISoundListener<T> soundListener;
 
-    public static void removeModelFetcher(ModelFetcher<?> fetcher) {
-        Objects.requireNonNull(fetcher);
-        modelFetchers.remove(fetcher);
-    }
+	/**
+	 * The particle listener is called every time a particle keyframe is encountered
+	 * (i.e. every frame)
+	 */
+	private IParticleListener<T> particleListener;
 
-    /**
-     * 此方法使用 AnimationBuilder 设置当前动画
-     * 你可以每帧运行此方法，如果每次都传入相同的 AnimationBuilder，它将不会重新启动。
-     * 此外，它还可以在动画状态之间平滑过渡
-     */
-    public void setAnimation(AnimationBuilder builder) {
-        IAnimatableModel<T> model = getModel(this.animatable);
-        if (model != null) {
-            if (builder == null || builder.getRawAnimationList().size() == 0) {
-                this.animationState = AnimationState.STOPPED;
-            } else if (!builder.getRawAnimationList().equals(this.currentAnimationBuilder.getRawAnimationList()) || this.needsAnimationReload) {
-                AtomicBoolean encounteredError = new AtomicBoolean(false);
-                // 将动画名称列表转换为实际列表，并在此过程中跟踪循环布尔值
-                LinkedList<Animation> animations = builder.getRawAnimationList().stream().map((rawAnimation) -> {
-                    Animation animation = model.getAnimation(rawAnimation.animationName, animatable);
-                    if (animation == null) {
-                        ysmu.LOG.warn("Could not load animation: {}. Is it missing?", rawAnimation.animationName);
-                        encounteredError.set(true);
-                    }
-                    if (animation != null && rawAnimation.loopType != null) {
-                        animation.loop = rawAnimation.loopType;
-                    }
-                    return animation;
-                }).collect(Collectors.toCollection(LinkedList::new));
-                if (encounteredError.get()) {
-                    return;
-                }
-                this.animationQueue = animations;
-                this.currentAnimationBuilder = builder;
-                // 下一个动画调用时，将其重置为 0
-                this.shouldResetTick = true;
-                this.animationState = AnimationState.TRANSITIONING;
-                this.justStartedTransition = true;
-                this.needsAnimationReload = false;
-            }
-        }
-    }
+	/**
+	 * The custom instruction listener is called every time a custom instruction
+	 * keyframe is encountered (i.e. every frame)
+	 */
+	private ICustomInstructionListener<T> customInstructionListener;
+    public List emitters;
+	public boolean isJustStarting = false;
+    public int particleUpdatesPerSecond = 20;
 
-    /**
-     * 获取动画控制器名称
-     */
-    public String getName() {
-        return this.name;
-    }
+	public static void addModelFetcher(ModelFetcher<?> fetcher) {
+		modelFetchers.add(fetcher);
+	}
 
-    /**
-     * 当前动画，可以为 null
-     */
-    @Nullable
-    public Animation getCurrentAnimation() {
-        return this.currentAnimation;
-    }
+	public static void removeModelFetcher(ModelFetcher<?> fetcher) {
+		Objects.requireNonNull(fetcher);
+		modelFetchers.remove(fetcher);
+	}
 
-    /**
-     * 当前动画控制器状态
-     */
-    public AnimationState getAnimationState() {
-        return this.animationState;
-    }
+	/**
+	 * An AnimationPredicate is run every render frame for ever AnimationController.
+	 * The "test" method is where you should change animations, stop animations,
+	 * restart, etc.
+	 */
+	@FunctionalInterface
+	public interface IAnimationPredicate<P extends IAnimatable> {
+		/**
+		 * An AnimationPredicate is run every render frame for ever AnimationController.
+		 * The "test" method is where you should change animations, stop animations,
+		 * restart, etc.
+		 *
+		 * @return CONTINUE if the animation should continue, STOP if it should stop.
+		 */
+		PlayState test(AnimationEvent<P> event);
+	}
 
-    /**
-     * 当前动画骨骼动画队列
-     */
-    public HashMap<String, BoneAnimationQueue> getBoneAnimationQueues() {
-        return this.boneAnimationQueues;
-    }
+	/**
+	 * Sound Listeners are run when a sound keyframe is hit. You can either return
+	 * the SoundEvent and geckolib will play the sound for you, or return null and
+	 * handle the sounds yourself.
+	 */
+	@FunctionalInterface
+	public interface ISoundListener<A extends IAnimatable> {
+		/**
+		 * Sound Listeners are run when a sound keyframe is hit. You can either return
+		 * the SoundEvent and geckolib will play the sound for you, or return null and
+		 * handle the sounds yourself.
+		 */
+		void playSound(SoundKeyframeEvent<A> event);
+	}
 
-    /**
-     * 注册 Sound Listener
-     */
-    public void registerSoundListener(ISoundListener<T> soundListener) {
-        this.soundListener = soundListener;
-    }
+	/**
+	 * Particle Listeners are run when a sound keyframe is hit. You need to handle
+	 * the actual playing of the particle yourself.
+	 */
+	@FunctionalInterface
+	public interface IParticleListener<A extends IAnimatable> {
+		/**
+		 * Particle Listeners are run when a sound keyframe is hit. You need to handle
+		 * the actual playing of the particle yourself.
+		 */
+		void summonParticle(ParticleKeyFrameEvent<A> event);
+	}
 
-    /**
-     * 注册 Particle Listener
-     */
-    public void registerParticleListener(IParticleListener<T> particleListener) {
-        this.particleListener = particleListener;
-    }
+	/**
+	 * Custom instructions can be added in blockbench by enabling animation effects
+	 * in Animation - Animate Effects. You can then add custom instruction keyframes
+	 * and use them as timecodes/events to handle in code.
+	 */
+	@FunctionalInterface
+	public interface ICustomInstructionListener<A extends IAnimatable> {
+		/**
+		 * Custom instructions can be added in blockbench by enabling animation effects
+		 * in Animation - Animate Effects. You can then add custom instruction keyframes
+		 * and use them as timecodes/events to handle in code.
+		 */
+		void executeInstruction(CustomInstructionKeyframeEvent<A> event);
+	}
 
-    /**
-     * 注册 Custom Instruction Listener.
-     */
-    public void registerCustomInstructionListener(ICustomInstructionListener<T> customInstructionListener) {
-        this.customInstructionListener = customInstructionListener;
-    }
+	private final HashMap<String, BoneAnimationQueue> boneAnimationQueues = new HashMap<>();
+	public double tickOffset;
+	protected Queue<Animation> animationQueue = new LinkedList<>();
+	public Animation currentAnimation;
+	public AnimationBuilder currentAnimationBuilder = new AnimationBuilder();
+	protected boolean shouldResetTick = false;
+	private final HashMap<String, BoneSnapshot> boneSnapshots = new HashMap<>();
+	private boolean justStopped = false;
+	protected boolean justStartedTransition = false;
+	public Function<Double, Double> customEasingMethod;
+	protected boolean needsAnimationReload = false;
+	public double animationSpeed = 1D;
+	private final Set<EventKeyFrame<?>> executedKeyFrames = new HashSet<>();
 
-    /**
-     * 此方法每帧调用一次，以便填充动画点队列并处理动画状态逻辑。
-     *
-     * @param tick                   当前 tick + 插值 tick
-     * @param event                  动画测试事件
-     * @param modelRendererList      所有的 AnimatedModelRender 列表
-     * @param boneSnapshotCollection boneSnapshot 集合
-     */
-    public void process(final double tick, AnimationEvent<T> event, List<IBone> modelRendererList,
-                        Map<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection, MolangParser parser,
-                        boolean crashWhenCantFindBone) {
-        parser.setValue("query.life_time", () -> tick / 20);
-        if (this.currentAnimation != null) {
-            IAnimatableModel<T> model = getModel(this.animatable);
-            if (model != null) {
-                Animation animation = model.getAnimation(currentAnimation.animationName, this.animatable);
-                if (animation != null) {
-                    ILoopType loop = this.currentAnimation.loop;
-                    this.currentAnimation = animation;
-                    this.currentAnimation.loop = loop;
+	/**
+	 * This method sets the current animation with an animation builder. You can run
+	 * this method every frame, if you pass in the same animation builder every
+	 * time, it won't restart. Additionally, it smoothly transitions between
+	 * animation states.
+	 */
+	public void setAnimation(AnimationBuilder builder) {
+        ///ADDED
+        if(builder!=null && !builder.getRawAnimationList().isEmpty()){
+            if(builder.getRawAnimationList().equals(this.currentAnimationBuilder.getRawAnimationList()) && !this.needsAnimationReload){
+                if(builder.getRawAnimationList().get(builder.getRawAnimationList().size()-1).loopType == ILoopType.EDefaultLoopTypes.LOOP && currentAnimation==null){
+                    needsAnimationReload = true;
                 }
             }
         }
-        createInitialQueues(modelRendererList);
+        ///END ADDED
+		IAnimatableModel<T> model = getModel(this.animatable);
+		if (model != null) {
+			if (builder == null || builder.getRawAnimationList().size() == 0) {
+				animationState = AnimationState.Stopped;
+			} else if (!builder.getRawAnimationList().equals(currentAnimationBuilder.getRawAnimationList())
+					|| needsAnimationReload) {
+				AtomicBoolean encounteredError = new AtomicBoolean(false);
+				// Convert the list of animation names to the actual list, keeping track of the
+				// loop boolean along the way
+				LinkedList<Animation> animations = builder.getRawAnimationList().stream().map((rawAnimation) -> {
+					Animation animation = model.getAnimation(rawAnimation.animationName, animatable);
+					if (animation == null) {
+						System.out.printf("Could not load animation: %s. Is it missing?", rawAnimation.animationName);
+						encounteredError.set(true);
+					}
+					if (animation != null && rawAnimation.loopType != null) {
+						animation.loop = rawAnimation.loopType;
+					}
+					return animation;
+				}).collect(Collectors.toCollection(LinkedList::new));
 
-        double adjustedTick = adjustTick(tick);
-        // 过渡结束，重置 tick 并将动画设置为运行
-        if (animationState == AnimationState.TRANSITIONING && adjustedTick >= this.transitionLengthTicks) {
-            this.shouldResetTick = true;
-            this.animationState = AnimationState.RUNNING;
-            adjustedTick = adjustTick(tick);
-        }
-        assert adjustedTick >= 0 : "GeckoLib: Tick was less than zero";
+				if (encounteredError.get()) {
+					return;
+				} else {
+					animationQueue = animations;
+				}
+				currentAnimationBuilder = builder;
 
-        // 测试动画谓词
-        PlayState playState = this.testAnimationPredicate(event);
-        if (playState == PlayState.STOP || (this.currentAnimation == null && this.animationQueue.size() == 0)) {
-            // 动画过渡到模型的初始状态
-            this.animationState = AnimationState.STOPPED;
-            this.justStopped = true;
-            return;
-        }
+				// Reset the adjusted tick to 0 on next animation process call
+				shouldResetTick = true;
+				this.animationState = AnimationState.Transitioning;
+				justStartedTransition = true;
+				needsAnimationReload = false;
+			}
+		}
+	}
 
-        if (this.justStartedTransition && (this.shouldResetTick || this.justStopped)) {
-            this.justStopped = false;
-            adjustedTick = adjustTick(tick);
-        } else if (this.currentAnimation == null && this.animationQueue.size() != 0) {
-            this.shouldResetTick = true;
-            this.animationState = AnimationState.TRANSITIONING;
-            this.justStartedTransition = true;
-            this.needsAnimationReload = false;
-            adjustedTick = adjustTick(tick);
-        } else if (this.animationState != AnimationState.TRANSITIONING) {
-            this.animationState = AnimationState.RUNNING;
-        }
+	/**
+	 * By default Geckolib uses the easing types of every keyframe. If you want to
+	 * override that for an entire AnimationController, change this value.
+	 */
+	public EasingType easingType = EasingType.NONE;
 
-        // 处理过渡到其他动画（或仅开始一个动画）
-        if (this.animationState == AnimationState.TRANSITIONING) {
-            // 刚开始过渡，所以将当前动画设置为第一个
-            if (adjustedTick == 0 || this.isJustStarting) {
-                this.justStartedTransition = false;
-                this.currentAnimation = animationQueue.poll();
-                resetEventKeyFrames();
-                saveSnapshotsForAnimation(this.currentAnimation, boneSnapshotCollection);
-            }
-            if (this.currentAnimation != null) {
-                setAnimTime(parser, 0);
-                for (BoneAnimation boneAnimation : this.currentAnimation.boneAnimations) {
-                    BoneAnimationQueue boneAnimationQueue = this.boneAnimationQueues.get(boneAnimation.boneName);
-                    BoneSnapshot boneSnapshot = this.boneSnapshots.get(boneAnimation.boneName);
-                    Optional<IBone> first = Optional.empty();
-                    for (IBone bone : modelRendererList) {
-                        if (bone.getName().equals(boneAnimation.boneName)) {
-                            first = Optional.of(bone);
-                            break;
-                        }
-                    }
-                    if (first.isEmpty()) {
-                        if (crashWhenCantFindBone) {
-                            throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
-                        }
-                        continue;
-                    }
-                    BoneSnapshot initialSnapshot = first.get().getInitialSnapshot();
-                    // assert boneSnapshot != null : "Bone snapshot was null";
-                    // fixme: Null?
-                    if (boneSnapshot == null) {
-                        continue;
-                    }
+	/**
+	 * Instantiates a new Animation controller. Each animation controller can run
+	 * one animation at a time. You can have several animation controllers for each
+	 * entity, i.e. one animation to control the entity's size, one to control
+	 * movement, attacks, etc.
+	 *
+	 * @param animatable            The entity
+	 * @param name                  Name of the animation controller
+	 *                              (move_controller, size_controller,
+	 *                              attack_controller, etc.)
+	 * @param transitionLengthTicks How long it takes to transition between
+	 *                              animations (IN TICKS!!)
+	 */
+	public AnimationController(T animatable, String name, float transitionLengthTicks,
+			IAnimationPredicate<T> animationPredicate) {
+		this.animatable = animatable;
+		this.name = name;
+		this.transitionLengthTicks = transitionLengthTicks;
+		this.animationPredicate = animationPredicate;
+		tickOffset = 0.0d;
+	}
 
-                    VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
-                    VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames = boneAnimation.positionKeyFrames;
-                    VectorKeyFrameList<KeyFrame<IValue>> scaleKeyFrames = boneAnimation.scaleKeyFrames;
+	/**
+	 * Instantiates a new Animation controller. Each animation controller can run
+	 * one animation at a time. You can have several animation controllers for each
+	 * entity, i.e. one animation to control the entity's size, one to control
+	 * movement, attacks, etc.
+	 *
+	 * @param animatable            The entity
+	 * @param name                  Name of the animation controller
+	 *                              (move_controller, size_controller,
+	 *                              attack_controller, etc.)
+	 * @param transitionLengthTicks How long it takes to transition between
+	 *                              animations (IN TICKS!!)
+	 * @param easingtype            The method of easing to use. The other
+	 *                              constructor defaults to no easing.
+	 */
+	public AnimationController(T animatable, String name, float transitionLengthTicks, EasingType easingtype,
+			IAnimationPredicate<T> animationPredicate) {
+		this.animatable = animatable;
+		this.name = name;
+		this.transitionLengthTicks = transitionLengthTicks;
+		this.easingType = easingtype;
+		this.animationPredicate = animationPredicate;
+		tickOffset = 0.0d;
+	}
 
-                    // 添加即将出现的动画的初始位置，以便模型转换到新动画的初始状态
-                    if (!rotationKeyFrames.xKeyFrames.isEmpty()) {
-                        AnimationPoint xPoint = getAnimationPointAtTick(rotationKeyFrames.xKeyFrames, 0, true, Axis.X);
-                        AnimationPoint yPoint = getAnimationPointAtTick(rotationKeyFrames.yKeyFrames, 0, true, Axis.Y);
-                        AnimationPoint zPoint = getAnimationPointAtTick(rotationKeyFrames.zKeyFrames, 0, true, Axis.Z);
-                        boneAnimationQueue.rotationXQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.rotationValueX - initialSnapshot.rotationValueX,
-                                xPoint.animationStartValue));
-                        boneAnimationQueue.rotationYQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.rotationValueY - initialSnapshot.rotationValueY,
-                                yPoint.animationStartValue));
-                        boneAnimationQueue.rotationZQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.rotationValueZ - initialSnapshot.rotationValueZ,
-                                zPoint.animationStartValue));
-                    }
+	/**
+	 * Instantiates a new Animation controller. Each animation controller can run
+	 * one animation at a time. You can have several animation controllers for each
+	 * entity, i.e. one animation to control the entity's size, one to control
+	 * movement, attacks, etc.
+	 *
+	 * @param animatable            The entity
+	 * @param name                  Name of the animation controller
+	 *                              (move_controller, size_controller,
+	 *                              attack_controller, etc.)
+	 * @param transitionLengthTicks How long it takes to transition between
+	 *                              animations (IN TICKS!!)
+	 * @param customEasingMethod    If you want to use an easing method that's not
+	 *                              included in the EasingType enum, pass your
+	 *                              method into here. The parameter that's passed in
+	 *                              will be a number between 0 and 1. Return a
+	 *                              number also within 0 and 1. Take a look at
+	 *                              {@link com.fox.ysmu.geckolib3.core.easing.EasingManager}
+	 */
+	public AnimationController(T animatable, String name, float transitionLengthTicks,
+			Function<Double, Double> customEasingMethod, IAnimationPredicate<T> animationPredicate) {
+		this.animatable = animatable;
+		this.name = name;
+		this.transitionLengthTicks = transitionLengthTicks;
+		this.customEasingMethod = customEasingMethod;
+		this.easingType = EasingType.CUSTOM;
+		this.animationPredicate = animationPredicate;
+		tickOffset = 0.0d;
+	}
 
-                    if (!positionKeyFrames.xKeyFrames.isEmpty()) {
-                        AnimationPoint xPoint = getAnimationPointAtTick(positionKeyFrames.xKeyFrames, 0, false, Axis.X);
-                        AnimationPoint yPoint = getAnimationPointAtTick(positionKeyFrames.yKeyFrames, 0, false, Axis.Y);
-                        AnimationPoint zPoint = getAnimationPointAtTick(positionKeyFrames.zKeyFrames, 0, false, Axis.Z);
-                        boneAnimationQueue.positionXQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.positionOffsetX, xPoint.animationStartValue));
-                        boneAnimationQueue.positionYQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.positionOffsetY, yPoint.animationStartValue));
-                        boneAnimationQueue.positionZQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.positionOffsetZ, zPoint.animationStartValue));
-                    }
+	/**
+	 * Gets the controller's name.
+	 *
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
 
-                    if (!scaleKeyFrames.xKeyFrames.isEmpty()) {
-                        AnimationPoint xPoint = getAnimationPointAtTick(scaleKeyFrames.xKeyFrames, 0, false, Axis.X);
-                        AnimationPoint yPoint = getAnimationPointAtTick(scaleKeyFrames.yKeyFrames, 0, false, Axis.Y);
-                        AnimationPoint zPoint = getAnimationPointAtTick(scaleKeyFrames.zKeyFrames, 0, false, Axis.Z);
-                        boneAnimationQueue.scaleXQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.scaleValueX, xPoint.animationStartValue));
-                        boneAnimationQueue.scaleYQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.scaleValueY, yPoint.animationStartValue));
-                        boneAnimationQueue.scaleZQueue().add(new AnimationPoint(null, adjustedTick, this.transitionLengthTicks,
-                                boneSnapshot.scaleValueZ, zPoint.animationStartValue));
-                    }
-                }
-            }
-        } else if (getAnimationState() == AnimationState.RUNNING) {
-            // 开始运行动画
-            processCurrentAnimation(adjustedTick, tick, parser, crashWhenCantFindBone);
-        }
-    }
+	/**
+	 * Gets the current animation. Can be null
+	 *
+	 * @return the current animation
+	 */
 
-    private void setAnimTime(MolangParser parser, final double tick) {
-        parser.setValue("query.anim_time", () -> tick / 20);
-    }
+	public Animation getCurrentAnimation() {
+		return currentAnimation;
+	}
 
-    @SuppressWarnings("unchecked")
-    private IAnimatableModel<T> getModel(T animatable) {
-        for (ModelFetcher<?> modelFetcher : modelFetchers) {
-            IAnimatableModel<T> model = (IAnimatableModel<T>) modelFetcher.apply(animatable);
-            if (model != null) {
-                return model;
-            }
-        }
-        ysmu.LOG.warn("Could not find suitable model for animatable of type {}. Did you register a Model Fetcher?", animatable.getClass());
-        return null;
-    }
+	/**
+	 * Returns the current state of this animation controller.
+	 */
+	public AnimationState getAnimationState() {
+		return animationState;
+	}
 
-    protected PlayState testAnimationPredicate(AnimationEvent<T> event) {
-        return this.animationPredicate.test(event);
-    }
+	/**
+	 * Gets the current animation's bone animation queues.
+	 *
+	 * @return the bone animation queues
+	 */
+	public HashMap<String, BoneAnimationQueue> getBoneAnimationQueues() {
+		return boneAnimationQueues;
+	}
 
-    // 在开始新的过渡时，将模型的初始旋转、位置和缩放存储为快照
-    private void saveSnapshotsForAnimation(Animation animation, Map<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection) {
-        for (Pair<IBone, BoneSnapshot> snapshot : boneSnapshotCollection.values()) {
-            if (animation != null && animation.boneAnimations != null) {
-                for (BoneAnimation boneAnimation : animation.boneAnimations) {
-                    if (boneAnimation.boneName.equals(snapshot.getLeft().getName())) {
-                        this.boneSnapshots.put(boneAnimation.boneName, new BoneSnapshot(snapshot.getRight()));
-                        break;
-                    }
-                }
-            }
-        }
-    }
+	/**
+	 * Registers a sound listener.
+	 */
+	public void registerSoundListener(ISoundListener<T> soundListener) {
+		this.soundListener = soundListener;
+	}
 
-    private void processCurrentAnimation(double tick, double actualTick, MolangParser parser, boolean crashWhenCantFindBone) {
-        assert currentAnimation != null;
-        // 如果动画已经结束了
-        if (tick >= this.currentAnimation.animationLength) {
-            resetEventKeyFrames();
-            // 如果动画为循环播放，继续重头播放
-            if (!this.currentAnimation.loop.isRepeatingAfterEnd()) {
-                // 从队列中提取下一个动画
-                Animation peek = this.animationQueue.peek();
-                if (peek == null) {
-                    // 没有动画了，那么停止
-                    this.animationState = AnimationState.STOPPED;
-                    return;
-                } else {
-                    // 否则，将状态设置为过渡并开始过渡到下一个动画为下一帧
-                    this.animationState = AnimationState.TRANSITIONING;
-                    this.shouldResetTick = true;
-                    this.currentAnimation = this.animationQueue.peek();
-                }
-            } else {
-                // 重置 tick，以便下一个动画从刻度 0 开始
-                this.shouldResetTick = true;
-                tick = adjustTick(actualTick);
-            }
-        }
-        setAnimTime(parser, tick);
+	/**
+	 * Registers a particle listener.
+	 */
+	public void registerParticleListener(IParticleListener<T> particleListener) {
+		this.particleListener = particleListener;
+	}
 
-        // 循环遍历当前动画中的每个骨骼动画并处理值
-        List<BoneAnimation> boneAnimations = currentAnimation.boneAnimations;
-        for (BoneAnimation boneAnimation : boneAnimations) {
-            BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneAnimation.boneName);
-            if (boneAnimationQueue == null) {
-                if (crashWhenCantFindBone) {
-                    throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
-                }
-                continue;
-            }
+	/**
+	 * Registers a custom instruction listener.
+	 */
+	public void registerCustomInstructionListener(ICustomInstructionListener<T> customInstructionListener) {
+		this.customInstructionListener = customInstructionListener;
+	}
 
-            VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
-            VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames = boneAnimation.positionKeyFrames;
-            VectorKeyFrameList<KeyFrame<IValue>> scaleKeyFrames = boneAnimation.scaleKeyFrames;
+	/**
+	 * This method is called every frame in order to populate the animation point
+	 * queues, and process animation state logic.
+	 *
+	 * @param tick                   The current tick + partial tick
+	 * @param event                  The animation test event
+	 * @param modelRendererList      The list of all AnimatedModelRender's
+	 * @param boneSnapshotCollection The bone snapshot collection
+	 */
+	public void process(double tick, AnimationEvent<T> event, List<IBone> modelRendererList,
+			HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection, MolangParser parser,
+			boolean crashWhenCantFindBone) {
+		parser.setValue("query.life_time", tick / 20);
+		if (currentAnimation != null) {
+			IAnimatableModel<T> model = getModel(this.animatable);
+			if (model != null) {
+				Animation animation = model.getAnimation(currentAnimation.animationName, this.animatable);
+				if (animation != null) {
+					ILoopType loop = currentAnimation.loop;
+					currentAnimation = animation;
+					currentAnimation.loop = loop;
+				}
+			}
+		}
 
-            if (!rotationKeyFrames.xKeyFrames.isEmpty()) {
-                boneAnimationQueue.rotationXQueue()
-                        .add(getAnimationPointAtTick(rotationKeyFrames.xKeyFrames, tick, true, Axis.X));
-                boneAnimationQueue.rotationYQueue()
-                        .add(getAnimationPointAtTick(rotationKeyFrames.yKeyFrames, tick, true, Axis.Y));
-                boneAnimationQueue.rotationZQueue()
-                        .add(getAnimationPointAtTick(rotationKeyFrames.zKeyFrames, tick, true, Axis.Z));
-            }
+		createInitialQueues(modelRendererList);
 
-            if (!positionKeyFrames.xKeyFrames.isEmpty()) {
-                boneAnimationQueue.positionXQueue()
-                        .add(getAnimationPointAtTick(positionKeyFrames.xKeyFrames, tick, false, Axis.X));
-                boneAnimationQueue.positionYQueue()
-                        .add(getAnimationPointAtTick(positionKeyFrames.yKeyFrames, tick, false, Axis.Y));
-                boneAnimationQueue.positionZQueue()
-                        .add(getAnimationPointAtTick(positionKeyFrames.zKeyFrames, tick, false, Axis.Z));
-            }
+		double actualTick = tick;
+		tick = adjustTick(tick);
 
-            if (!scaleKeyFrames.xKeyFrames.isEmpty()) {
-                boneAnimationQueue.scaleXQueue()
-                        .add(getAnimationPointAtTick(scaleKeyFrames.xKeyFrames, tick, false, Axis.X));
-                boneAnimationQueue.scaleYQueue()
-                        .add(getAnimationPointAtTick(scaleKeyFrames.yKeyFrames, tick, false, Axis.Y));
-                boneAnimationQueue.scaleZQueue()
-                        .add(getAnimationPointAtTick(scaleKeyFrames.zKeyFrames, tick, false, Axis.Z));
-            }
-        }
+		// Transition period has ended, reset the tick and set the animation to running
+		if (animationState == AnimationState.Transitioning && tick >= transitionLengthTicks) {
+			this.shouldResetTick = true;
+			animationState = AnimationState.Running;
+			tick = adjustTick(actualTick);
+		}
 
-        if (this.soundListener != null || this.particleListener != null || this.customInstructionListener != null) {
-            for (EventKeyFrame<String> soundKeyFrame : this.currentAnimation.soundKeyFrames) {
-                if (!this.executedKeyFrames.contains(soundKeyFrame) && tick >= soundKeyFrame.getStartTick()) {
-                    SoundKeyframeEvent<T> event = new SoundKeyframeEvent<>(this.animatable, tick, soundKeyFrame.getEventData(), this);
-                    this.soundListener.playSound(event);
-                    this.executedKeyFrames.add(soundKeyFrame);
-                }
-            }
-            for (ParticleEventKeyFrame particleEventKeyFrame : this.currentAnimation.particleKeyFrames) {
-                if (!this.executedKeyFrames.contains(particleEventKeyFrame) && tick >= particleEventKeyFrame.getStartTick()) {
-                    ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick, particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script, this);
-                    this.particleListener.summonParticle(event);
-                    this.executedKeyFrames.add(particleEventKeyFrame);
-                }
-            }
-            for (EventKeyFrame<String> customInstructionKeyFrame : currentAnimation.customInstructionKeyframes) {
-                if (!this.executedKeyFrames.contains(customInstructionKeyFrame) && tick >= customInstructionKeyFrame.getStartTick()) {
-                    CustomInstructionKeyframeEvent<T> event = new CustomInstructionKeyframeEvent<>(this.animatable, tick, customInstructionKeyFrame.getEventData(), this);
-                    this.customInstructionListener.executeInstruction(event);
-                    this.executedKeyFrames.add(customInstructionKeyFrame);
-                }
-            }
-        }
+		assert tick >= 0 : "GeckoLib: Tick was less than zero";
 
-        if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.TRANSITIONING) {
-            this.currentAnimation = animationQueue.poll();
-        }
-    }
+		// This tests the animation predicate
+		PlayState playState = this.testAnimationPredicate(event);
+		if (playState == PlayState.STOP || (currentAnimation == null && animationQueue.size() == 0)) {
+			// The animation should transition to the model's initial state
+			animationState = AnimationState.Stopped;
+			justStopped = true;
+			return;
+		}
+		if (justStartedTransition && (shouldResetTick || justStopped)) {
+			justStopped = false;
+			tick = adjustTick(actualTick);
+		} else if (currentAnimation == null && this.animationQueue.size() != 0) {
+			this.shouldResetTick = true;
+			this.animationState = AnimationState.Transitioning;
+			justStartedTransition = true;
+			needsAnimationReload = false;
+			tick = adjustTick(actualTick);
+		} else {
+			if (animationState != AnimationState.Transitioning) {
+				animationState = AnimationState.Running;
+			}
+		}
 
-    // 填充所有初始动画点队列
-    private void createInitialQueues(List<IBone> modelRendererList) {
-        this.boneAnimationQueues.clear();
-        for (IBone modelRenderer : modelRendererList) {
-            this.boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
-        }
-    }
+		// Handle transitioning to a different animation (or just starting one)
+		if (animationState == AnimationState.Transitioning) {
+			// Just started transitioning, so set the current animation to the first one
+			if (tick == 0 || isJustStarting) {
+				justStartedTransition = false;
+				this.currentAnimation = animationQueue.poll();
+				resetEventKeyFrames();
+				saveSnapshotsForAnimation(currentAnimation, boneSnapshotCollection);
+			}
+			if (currentAnimation != null) {
+				setAnimTime(parser, 0);
+				for (BoneAnimation boneAnimation : currentAnimation.boneAnimations) {
+					BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneAnimation.boneName);
+					BoneSnapshot boneSnapshot = this.boneSnapshots.get(boneAnimation.boneName);
+					Optional<IBone> first = modelRendererList.stream()
+							.filter(x -> x.getName().equals(boneAnimation.boneName)).findFirst();
+					if (!first.isPresent()) {
+						if (crashWhenCantFindBone) {
+							throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
+						} else {
+							continue;
+						}
+					}
+					BoneSnapshot initialSnapshot = first.get().getInitialSnapshot();
+					assert boneSnapshot != null : "Bone snapshot was null";
 
-    // 在新动画开始、过渡开始或者其他情况下重置 tick
-    public double adjustTick(double tick) {
-        if (this.shouldResetTick) {
-            if (getAnimationState() == AnimationState.TRANSITIONING) {
-                this.tickOffset = tick;
-            } else if (getAnimationState() == AnimationState.RUNNING) {
-                this.tickOffset = tick;
-            }
-            this.shouldResetTick = false;
-            return 0;
-        } else {
-            return this.animationSpeed * Math.max(tick - this.tickOffset, 0.0D);
-        }
-    }
+					VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
+					VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames = boneAnimation.positionKeyFrames;
+					VectorKeyFrameList<KeyFrame<IValue>> scaleKeyFrames = boneAnimation.scaleKeyFrames;
 
-    // 将关键帧位置转换为动画点
-    private AnimationPoint getAnimationPointAtTick(List<KeyFrame<IValue>> frames, double tick, boolean isRotation, Axis axis) {
-        KeyFrameLocation<KeyFrame<IValue>> location = getCurrentKeyFrameLocation(frames, tick);
-        KeyFrame<IValue> currentFrame = location.currentFrame;
-        double startValue = currentFrame.getStartValue().get();
-        double endValue = currentFrame.getEndValue().get();
+					// Adding the initial positions of the upcoming animation, so the model
+					// transitions to the initial state of the new animation
+					if (!rotationKeyFrames.xKeyFrames.isEmpty()) {
+						AnimationPoint xPoint = getAnimationPointAtTick(rotationKeyFrames.xKeyFrames, 0, true, Axis.X);
+						AnimationPoint yPoint = getAnimationPointAtTick(rotationKeyFrames.yKeyFrames, 0, true, Axis.Y);
+						AnimationPoint zPoint = getAnimationPointAtTick(rotationKeyFrames.zKeyFrames, 0, true, Axis.Z);
+						boneAnimationQueue.rotationXQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.rotationValueX - initialSnapshot.rotationValueX,
+								xPoint.animationStartValue));
+						boneAnimationQueue.rotationYQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.rotationValueY - initialSnapshot.rotationValueY,
+								yPoint.animationStartValue));
+						boneAnimationQueue.rotationZQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.rotationValueZ - initialSnapshot.rotationValueZ,
+								zPoint.animationStartValue));
+					}
 
-        if (isRotation) {
-            if (!(currentFrame.getStartValue() instanceof ConstantValue)) {
-                startValue = Math.toRadians(startValue);
-                if (axis == Axis.X || axis == Axis.Y) {
-                    startValue *= -1;
-                }
-            }
-            if (!(currentFrame.getEndValue() instanceof ConstantValue)) {
-                endValue = Math.toRadians(endValue);
-                if (axis == Axis.X || axis == Axis.Y) {
-                    endValue *= -1;
-                }
-            }
-        }
-        return new AnimationPoint(currentFrame, location.currentTick, currentFrame.getLength(), startValue, endValue);
-    }
+					if (!positionKeyFrames.xKeyFrames.isEmpty()) {
+						AnimationPoint xPoint = getAnimationPointAtTick(positionKeyFrames.xKeyFrames, 0, false, Axis.X);
+						AnimationPoint yPoint = getAnimationPointAtTick(positionKeyFrames.yKeyFrames, 0, false, Axis.Y);
+						AnimationPoint zPoint = getAnimationPointAtTick(positionKeyFrames.zKeyFrames, 0, false, Axis.Z);
+						boneAnimationQueue.positionXQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.positionOffsetX, xPoint.animationStartValue));
+						boneAnimationQueue.positionYQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.positionOffsetY, yPoint.animationStartValue));
+						boneAnimationQueue.positionZQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.positionOffsetZ, zPoint.animationStartValue));
+					}
 
-    /**
-     * 返回当前关键帧，以及上一个关键帧耗时
-     **/
-    private KeyFrameLocation<KeyFrame<IValue>> getCurrentKeyFrameLocation(List<KeyFrame<IValue>> frames, double ageInTicks) {
-        double totalTimeTracker = 0;
-        for (KeyFrame<IValue> frame : frames) {
-            totalTimeTracker += frame.getLength();
-            if (totalTimeTracker > ageInTicks) {
-                double tick = (ageInTicks - (totalTimeTracker - frame.getLength()));
-                return new KeyFrameLocation<>(frame, tick);
-            }
-        }
-        return new KeyFrameLocation<>(frames.get(frames.size() - 1), ageInTicks);
-    }
+					if (!scaleKeyFrames.xKeyFrames.isEmpty()) {
+						AnimationPoint xPoint = getAnimationPointAtTick(scaleKeyFrames.xKeyFrames, 0, false, Axis.X);
+						AnimationPoint yPoint = getAnimationPointAtTick(scaleKeyFrames.yKeyFrames, 0, false, Axis.Y);
+						AnimationPoint zPoint = getAnimationPointAtTick(scaleKeyFrames.zKeyFrames, 0, false, Axis.Z);
+						boneAnimationQueue.scaleXQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.scaleValueX, xPoint.animationStartValue));
+						boneAnimationQueue.scaleYQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.scaleValueY, yPoint.animationStartValue));
+						boneAnimationQueue.scaleZQueue.add(new AnimationPoint(null, tick, transitionLengthTicks,
+								boneSnapshot.scaleValueZ, zPoint.animationStartValue));
+					}
+				}
+			}
+		} else if (getAnimationState() == AnimationState.Running) {
+			// Actually run the animation
+			processCurrentAnimation(tick, actualTick, parser, crashWhenCantFindBone);
+		}
+	}
 
-    private void resetEventKeyFrames() {
-        this.executedKeyFrames.clear();
-    }
+	private void setAnimTime(MolangParser parser, double tick) {
+		parser.setValue("query.anim_time", tick / 20);
+	}
 
-    public void markNeedsReload() {
-        this.needsAnimationReload = true;
-    }
+	private IAnimatableModel<T> getModel(T animatable) {
+		for (ModelFetcher<?> modelFetcher : modelFetchers) {
+			IAnimatableModel<T> model = (IAnimatableModel<T>) modelFetcher.apply(animatable);
+			if (model != null) {
+				return model;
+			}
+		}
+		System.out.printf(
+				"Could not find suitable model for animatable of type %s. Did you register a Model Fetcher?%n",
+				animatable.getClass());
+		return null;
+	}
 
-    public void clearAnimationCache() {
-        this.currentAnimationBuilder = new AnimationBuilder();
-    }
+	protected PlayState testAnimationPredicate(AnimationEvent<T> event) {
+		return this.animationPredicate.test(event);
+	}
 
-    public double getAnimationSpeed() {
-        return this.animationSpeed;
-    }
+	// At the beginning of a new transition, save a snapshot of the model's
+	// rotation, position, and scale values as the initial value to lerp from
+	private void saveSnapshotsForAnimation(Animation animation,
+			HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection) {
+		for (Pair<IBone, BoneSnapshot> snapshot : boneSnapshotCollection.values()) {
+			if (animation != null && animation.boneAnimations != null) {
+				if (animation.boneAnimations.stream().anyMatch(x -> x.boneName.equals(snapshot.getLeft().getName()))) {
+					this.boneSnapshots.put(snapshot.getLeft().getName(), new BoneSnapshot(snapshot.getRight()));
+				}
+			}
+		}
+	}
 
-    public void setAnimationSpeed(double animationSpeed) {
-        this.animationSpeed = animationSpeed;
-    }
+	private void processCurrentAnimation(double tick, double actualTick, MolangParser parser,
+			boolean crashWhenCantFindBone) {
+		assert currentAnimation != null;
+		// Animation has ended
+		if (tick >= currentAnimation.animationLength) {
+			resetEventKeyFrames();
+			// If the current animation is set to loop, keep it as the current animation and
+			// just start over
+			if (!currentAnimation.loop.isRepeatingAfterEnd()) {
+				// Pull the next animation from the queue
+				Animation peek = animationQueue.peek();
+				if (peek == null) {
+					// No more animations left, stop the animation controller
+					this.animationState = AnimationState.Stopped;
+					return;
+				} else {
+					// Otherwise, set the state to transitioning and start transitioning to the next
+					// animation next frame
+					this.animationState = AnimationState.Transitioning;
+					shouldResetTick = true;
+					currentAnimation = this.animationQueue.peek();
+				}
+			} else {
+				// Reset the adjusted tick so the next animation starts at tick 0
+				shouldResetTick = true;
+				tick = adjustTick(actualTick);
+			}
+		}
+		setAnimTime(parser, tick);
 
-    /**
-     * 每个 AnimationController 每个关键帧都会运行一次 AnimationPredicate
-     * test 方法就是你改变动画、停止动画、重置的地方
-     */
-    @FunctionalInterface
-    public interface IAnimationPredicate<P extends IAnimatable> {
-        PlayState test(AnimationEvent<P> event);
-    }
+		// Loop through every boneanimation in the current animation and process the
+		// values
+		List<BoneAnimation> boneAnimations = currentAnimation.boneAnimations;
+		for (BoneAnimation boneAnimation : boneAnimations) {
+			BoneAnimationQueue boneAnimationQueue = boneAnimationQueues.get(boneAnimation.boneName);
+			if (boneAnimationQueue == null) {
+				if (crashWhenCantFindBone) {
+					throw new RuntimeException("Could not find bone: " + boneAnimation.boneName);
+				} else {
+					continue;
+				}
+			}
 
-    @FunctionalInterface
-    public interface ISoundListener<A extends IAnimatable> {
-        void playSound(SoundKeyframeEvent<A> event);
-    }
+			VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
+			VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames = boneAnimation.positionKeyFrames;
+			VectorKeyFrameList<KeyFrame<IValue>> scaleKeyFrames = boneAnimation.scaleKeyFrames;
 
-    @FunctionalInterface
-    public interface IParticleListener<A extends IAnimatable> {
-        void summonParticle(ParticleKeyFrameEvent<A> event);
-    }
+			if (!rotationKeyFrames.xKeyFrames.isEmpty()) {
+				boneAnimationQueue.rotationXQueue
+						.add(getAnimationPointAtTick(rotationKeyFrames.xKeyFrames, tick, true, Axis.X));
+				boneAnimationQueue.rotationYQueue
+						.add(getAnimationPointAtTick(rotationKeyFrames.yKeyFrames, tick, true, Axis.Y));
+				boneAnimationQueue.rotationZQueue
+						.add(getAnimationPointAtTick(rotationKeyFrames.zKeyFrames, tick, true, Axis.Z));
+			}
 
-    @FunctionalInterface
-    public interface ICustomInstructionListener<A extends IAnimatable> {
-        void executeInstruction(CustomInstructionKeyframeEvent<A> event);
-    }
+			if (!positionKeyFrames.xKeyFrames.isEmpty()) {
+				boneAnimationQueue.positionXQueue
+						.add(getAnimationPointAtTick(positionKeyFrames.xKeyFrames, tick, false, Axis.X));
+				boneAnimationQueue.positionYQueue
+						.add(getAnimationPointAtTick(positionKeyFrames.yKeyFrames, tick, false, Axis.Y));
+				boneAnimationQueue.positionZQueue
+						.add(getAnimationPointAtTick(positionKeyFrames.zKeyFrames, tick, false, Axis.Z));
+			}
 
-    @FunctionalInterface
-    public interface ModelFetcher<T> extends Function<IAnimatable, IAnimatableModel<T>> {
-    }
+			if (!scaleKeyFrames.xKeyFrames.isEmpty()) {
+				boneAnimationQueue.scaleXQueue
+						.add(getAnimationPointAtTick(scaleKeyFrames.xKeyFrames, tick, false, Axis.X));
+				boneAnimationQueue.scaleYQueue
+						.add(getAnimationPointAtTick(scaleKeyFrames.yKeyFrames, tick, false, Axis.Y));
+				boneAnimationQueue.scaleZQueue
+						.add(getAnimationPointAtTick(scaleKeyFrames.zKeyFrames, tick, false, Axis.Z));
+			}
+		}
+
+		if (soundListener != null || particleListener != null || customInstructionListener != null) {
+			for (EventKeyFrame<String> soundKeyFrame : currentAnimation.soundKeyFrames) {
+				if (!this.executedKeyFrames.contains(soundKeyFrame) && tick >= soundKeyFrame.getStartTick()) {
+					SoundKeyframeEvent<T> event = new SoundKeyframeEvent<>(this.animatable, tick,
+							soundKeyFrame.getEventData(), this);
+					soundListener.playSound(event);
+
+					this.executedKeyFrames.add(soundKeyFrame);
+				}
+			}
+
+			for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
+				if (!this.executedKeyFrames.contains(particleEventKeyFrame)
+						&& tick >= particleEventKeyFrame.getStartTick()) {
+					ParticleKeyFrameEvent<T> event = new ParticleKeyFrameEvent<>(this.animatable, tick,
+							particleEventKeyFrame.effect, particleEventKeyFrame.locator, particleEventKeyFrame.script,
+							this);
+					particleListener.summonParticle(event);
+
+					this.executedKeyFrames.add(particleEventKeyFrame);
+				}
+			}
+
+			for (EventKeyFrame<String> customInstructionKeyFrame : currentAnimation.customInstructionKeyframes) {
+				if (!this.executedKeyFrames.contains(customInstructionKeyFrame)
+						&& tick >= customInstructionKeyFrame.getStartTick()) {
+					CustomInstructionKeyframeEvent<T> event = new CustomInstructionKeyframeEvent<>(this.animatable,
+							tick, customInstructionKeyFrame.getEventData(), this);
+					customInstructionListener.executeInstruction(event);
+
+					this.executedKeyFrames.add(customInstructionKeyFrame);
+				}
+			}
+		}
+
+		if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.Transitioning) {
+			this.currentAnimation = animationQueue.poll();
+		}
+	}
+
+	// Helper method to populate all the initial animation point queues
+	private void createInitialQueues(List<IBone> modelRendererList) {
+		boneAnimationQueues.clear();
+		for (IBone modelRenderer : modelRendererList) {
+			boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
+		}
+	}
+
+	// Used to reset the "tick" everytime a new animation starts, a transition
+	// starts, or something else of importance happens
+	protected double adjustTick(double tick) {
+		if (shouldResetTick) {
+			if (getAnimationState() == AnimationState.Transitioning) {
+				this.tickOffset = tick;
+			} else if (getAnimationState() == AnimationState.Running) {
+				this.tickOffset = tick;
+			}
+			shouldResetTick = false;
+			return 0;
+		} else {
+			// assert tick - this.tickOffset >= 0;
+			return animationSpeed * Math.max(tick - tickOffset, 0.0D);
+		}
+	}
+
+	// Helper method to transform a KeyFrameLocation to an AnimationPoint
+	private AnimationPoint getAnimationPointAtTick(List<KeyFrame<IValue>> frames, double tick, boolean isRotation,
+			Axis axis) {
+		KeyFrameLocation<KeyFrame<IValue>> location = getCurrentKeyFrameLocation(frames, tick);
+		KeyFrame<IValue> currentFrame = location.currentFrame;
+		double startValue = currentFrame.getStartValue().get();
+		double endValue = currentFrame.getEndValue().get();
+
+		if (isRotation) {
+			if (!(currentFrame.getStartValue() instanceof ConstantValue)) {
+				startValue = Math.toRadians(startValue);
+				if (axis == Axis.X || axis == Axis.Y) {
+					startValue *= -1;
+				}
+			}
+			if (!(currentFrame.getEndValue() instanceof ConstantValue)) {
+				endValue = Math.toRadians(endValue);
+				if (axis == Axis.X || axis == Axis.Y) {
+					endValue *= -1;
+				}
+			}
+		}
+
+		return new AnimationPoint(currentFrame, location.currentTick, currentFrame.getLength(), startValue, endValue);
+	}
+
+	/**
+	 * Returns the current keyframe object, plus how long the previous keyframes
+	 * have taken (aka elapsed animation time)
+	 **/
+	private KeyFrameLocation<KeyFrame<IValue>> getCurrentKeyFrameLocation(List<KeyFrame<IValue>> frames,
+			double ageInTicks) {
+		double totalTimeTracker = 0;
+		for (KeyFrame<IValue> frame : frames) {
+			totalTimeTracker += frame.getLength();
+			if (totalTimeTracker > ageInTicks) {
+				double tick = (ageInTicks - (totalTimeTracker - frame.getLength()));
+				return new KeyFrameLocation<>(frame, tick);
+			}
+		}
+		return new KeyFrameLocation<>(frames.get(frames.size() - 1), ageInTicks);
+	}
+
+	private void resetEventKeyFrames() {
+		this.executedKeyFrames.clear();
+	}
+
+	public void markNeedsReload() {
+		this.needsAnimationReload = true;
+	}
+
+	public void clearAnimationCache() {
+		this.currentAnimationBuilder = new AnimationBuilder();
+	}
+
+	public double getAnimationSpeed() {
+		return animationSpeed;
+	}
+
+	public void setAnimationSpeed(double animationSpeed) {
+		this.animationSpeed = animationSpeed;
+	}
+
+	@FunctionalInterface
+	public interface ModelFetcher<T> extends Function<IAnimatable, IAnimatableModel<T>> {
+	}
 }

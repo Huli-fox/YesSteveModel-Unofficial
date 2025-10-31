@@ -1,38 +1,37 @@
 package com.fox.ysmu.geckolib3.core;
 
 import com.fox.ysmu.mclib.math.IValue;
-import com.fox.ysmu.util.Keep;
 
 public class ConstantValue implements IValue {
-    private final double value;
+	private final double value;
 
-    public ConstantValue(double value) {
-        this.value = value;
-    }
+	public ConstantValue(double value) {
+		this.value = value;
+	}
 
-    public static ConstantValue fromDouble(double d) {
-        return new ConstantValue(d);
-    }
+	@Override
+	public double get() {
+		return value;
+	}
 
-    public static ConstantValue fromFloat(float d) {
-        return new ConstantValue(d);
-    }
+	public static ConstantValue fromDouble(double d) {
+		return new ConstantValue(d);
+	}
 
-    public static ConstantValue parseDouble(String s) {
-        return new ConstantValue(Double.parseDouble(s));
-    }
+	public static ConstantValue fromFloat(float d) {
+		return new ConstantValue(d);
+	}
 
-    public static ConstantValue parseFloat(String s) {
-        return new ConstantValue(Float.parseFloat(s));
-    }
+	public static ConstantValue parseDouble(String s) {
+		return new ConstantValue(Double.parseDouble(s));
+	}
 
-    public static ConstantValue subtract(IValue first, IValue second) {
-        return ConstantValue.fromDouble(first.get() - second.get());
-    }
+	public static ConstantValue parseFloat(String s) {
+		return new ConstantValue(Float.parseFloat(s));
+	}
 
-    @Override
-    @Keep
-    public double get() {
-        return value;
-    }
+	public static ConstantValue subtract(IValue first, IValue second) {
+		return ConstantValue.fromDouble(first.get() - second.get());
+	}
+
 }

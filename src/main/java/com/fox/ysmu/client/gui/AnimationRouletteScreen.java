@@ -6,7 +6,6 @@ import com.fox.ysmu.client.input.ExtraAnimationKey;
 import com.fox.ysmu.Config;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.SetPlayAnimation;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -36,7 +35,7 @@ public class AnimationRouletteScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     protected void init() {
         this.x = width / 2;
         this.y = height / 2 - 8;
@@ -53,14 +52,14 @@ public class AnimationRouletteScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
         drawRoulette(graphics.pose(), pMouseX, pMouseY);
         drawRouletteText(graphics);
     }
 
     @Override
-    @Keep
+
     public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
         if (-1 < selectId && selectId < 8 && minecraft != null) {
             minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
@@ -74,7 +73,7 @@ public class AnimationRouletteScreen extends Screen {
     }
 
     @Override
-    @Keep
+
     public boolean isPauseScreen() {
         return false;
     }

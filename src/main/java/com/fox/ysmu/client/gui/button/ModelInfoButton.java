@@ -3,7 +3,6 @@ package com.fox.ysmu.client.gui.button;
 import com.fox.ysmu.model.format.Type;
 import com.fox.ysmu.network.message.RequestServerModelInfo;
 import com.fox.ysmu.util.FileSizeUtils;
-import com.fox.ysmu.util.Keep;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -21,7 +20,7 @@ public class ModelInfoButton extends Button {
     }
 
     @Override
-    @Keep
+
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         Font font = minecraft.font;

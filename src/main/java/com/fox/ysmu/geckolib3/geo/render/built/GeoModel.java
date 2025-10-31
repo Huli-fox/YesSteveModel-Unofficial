@@ -4,11 +4,14 @@ import com.fox.ysmu.geckolib3.geo.raw.pojo.ModelProperties;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import javax.annotation.Nullable;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class GeoModel {
-    public List<GeoBone> topLevelBones = new ObjectArrayList<>();
+public class GeoModel implements Serializable {
+    private static final long serialVersionUID = 42L;
+    public List<GeoBone> topLevelBones = new ArrayList<>();
     public List<GeoBone> leftHandBones = new ObjectArrayList<>();
     public List<GeoBone> rightHandBones = new ObjectArrayList<>();
     public List<GeoBone> elytraBones = new ObjectArrayList<>();

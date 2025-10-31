@@ -6,21 +6,29 @@
 package com.fox.ysmu.geckolib3.core.keyframe;
 
 /**
- * 为动画存储一个时间，并返回需要执行的关键帧
+ * This class stores a location in an animation, and returns the keyframe that
+ * should be executed.
+ *
  */
-@SuppressWarnings("rawtypes")
 public class KeyFrameLocation<T extends KeyFrame> {
-    /**
-     * 当前关键帧
-     */
-    public T currentFrame;
-    /**
-     * 这是之前所有关键帧的总时间
-     */
-    public double currentTick;
+	/**
+	 * The curent frame.
+	 */
+	public T currentFrame;
 
-    public KeyFrameLocation(T currentFrame, double currentTick) {
-        this.currentFrame = currentFrame;
-        this.currentTick = currentTick;
-    }
+	/**
+	 * This is the combined total time of all the previous keyframes
+	 */
+	public double currentTick;
+
+	/**
+	 * Instantiates a new Key frame location.
+	 *
+	 * @param currentFrame the current frame
+	 * @param currentTick  the current animation tick
+	 */
+	public KeyFrameLocation(T currentFrame, double currentTick) {
+		this.currentFrame = currentFrame;
+		this.currentTick = currentTick;
+	}
 }

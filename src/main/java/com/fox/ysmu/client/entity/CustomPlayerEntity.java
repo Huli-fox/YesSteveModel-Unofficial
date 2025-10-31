@@ -13,10 +13,9 @@ import com.fox.ysmu.geckolib3.core.manager.AnimationData;
 import com.fox.ysmu.geckolib3.core.manager.AnimationFactory;
 import com.fox.ysmu.geckolib3.resource.GeckoLibCache;
 import com.fox.ysmu.geckolib3.util.GeckoLibUtil;
-import com.fox.ysmu.util.Keep;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.EntityPlayer;
+import com.fox.ysmu.client.animation.condition.ConditionArmor;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +26,7 @@ public class CustomPlayerEntity implements IAnimatable {
     private ResourceLocation mainModel = CustomPlayerModel.DEFAULT_MAIN_MODEL;
     private ResourceLocation texture = CustomPlayerModel.DEFAULT_TEXTURE;
     private String previewAnimation = "";
-    private Player player = null;
+    private EntityPlayer player = null;
 
     @NotNull
     private static <P extends IAnimatable> PlayState playLoopAnimation(AnimationEvent<P> event, String animationName) {
@@ -39,7 +38,7 @@ public class CustomPlayerEntity implements IAnimatable {
      * 越往后优先级越高
      */
     @Override
-    @Keep
+
     @SuppressWarnings("all")
     public void registerControllers(AnimationData data) {
         AnimationManager manager = AnimationManager.getInstance();
@@ -58,11 +57,11 @@ public class CustomPlayerEntity implements IAnimatable {
             String animationName = String.format("parallel%d", i);
             data.addAnimationController(new AnimationController<>(this, controllerName, 0, e -> manager.predicateParallel(e, animationName)));
         }
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getType() == EquipmentSlot.Type.ARMOR) {
-                String controllerName = String.format("%s_controller", slot.getName());
-                data.addAnimationController(new AnimationController(this, controllerName, 0, e -> manager.predicateArmor(e, slot)));
-            }
+        // 为每个盔甲槽位注册控制器，使用1-4的索引值
+        for (int slotIndex = 1; slotIndex <= 4; slotIndex++) {
+            String controllerName = String.format("%s_controller", ConditionArmor.getSlotNameFromIndex(slotIndex));
+            int finalSlotIndex = slotIndex;
+            data.addAnimationController(new AnimationController(this, controllerName, 0, e -> manager.predicateArmor(e, finalSlotIndex)));
         }
         data.addAnimationController(new AnimationController(this, CAP_CONTROLLER, 2, manager::predicateCap));
     }
@@ -99,16 +98,16 @@ public class CustomPlayerEntity implements IAnimatable {
         return 0.7f;
     }
 
-    public Player getPlayer() {
+    public EntityPlayer getPlayer() {
         return player;
     }
 
-    public void setPlayer(Player player) {
+    public void setPlayer(EntityPlayer player) {
         this.player = player;
     }
 
     @Override
-    @Keep
+
     public AnimationFactory getFactory() {
         return this.factory;
     }

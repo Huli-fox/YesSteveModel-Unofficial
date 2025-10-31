@@ -10,7 +10,6 @@ import com.fox.ysmu.event.api.SpecialPlayerRenderEvent;
 import com.fox.ysmu.geckolib3.geo.GeoReplacedEntityRenderer;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoModel;
 import com.fox.ysmu.geckolib3.resource.GeckoLibCache;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -42,7 +41,7 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     }
 
     @Override
-    @Keep
+
     public void render(Entity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         if (this.animatable != null && entity instanceof Player player) {
             ExtendedModelInfo eep = ExtendedModelInfo.get(player);
@@ -70,13 +69,13 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     }
 
     @Override
-    @Keep
+
     public RenderType getRenderType(Object animatable, float partialTick, PoseStack poseStack, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, int packedLight, ResourceLocation texture) {
         return RenderType.entityTranslucent(texture);
     }
 
     @Override
-    @Keep
+
     public boolean shouldShowName(Entity entity) {
         double distance = this.entityRenderDispatcher.distanceToSqr(entity);
         float renderDistance = entity.isDiscrete() ? 32.0F : 64.0F;
@@ -108,7 +107,7 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     }
 
     @Override
-    @Keep
+
     @SuppressWarnings("all")
     protected void renderNameTag(Entity entity, Component displayName, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         double distance = this.entityRenderDispatcher.distanceToSqr(entity);
@@ -127,7 +126,7 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     }
 
     @Override
-    @Keep
+
     public float getWidthScale(Object animatable) {
         if (this.animatable != null) {
             return this.animatable.getWidthScale();
@@ -136,7 +135,7 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     }
 
     @Override
-    @Keep
+
     public float getHeightScale(Object animatable) {
         if (this.animatable != null) {
             return this.animatable.getHeightScale();

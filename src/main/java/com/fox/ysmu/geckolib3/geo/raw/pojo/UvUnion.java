@@ -1,37 +1,60 @@
 package com.fox.ysmu.geckolib3.geo.raw.pojo;
 
-import com.fox.ysmu.util.Keep;
-import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import java.io.Serializable;
-import java.lang.reflect.Type;
+import java.io.IOException;
 
-@JsonAdapter(UvUnion.Serializer.class)
-public class UvUnion implements Serializable {
+@JsonDeserialize(using = UvUnion.Deserializer.class)
+@JsonSerialize(using = UvUnion.Serializer.class)
+public class UvUnion {
     public double[] boxUVCoords;
     public UvFaces faceUV;
     public boolean isBoxUV;
 
-    protected static class Serializer implements JsonSerializer<UvUnion>, JsonDeserializer<UvUnion> {
+    static class Deserializer extends JsonDeserializer<UvUnion> {
         @Override
-        @Keep
-        public UvUnion deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            UvUnion result = new UvUnion();
-            if (json.isJsonArray()) {
-                result.isBoxUV = true;
-                result.boxUVCoords = context.deserialize(json, double[].class);
-            } else if (json.isJsonObject()) {
-                result.isBoxUV = false;
-                result.faceUV = context.deserialize(json, UvFaces.class);
+        public UvUnion deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+            throws IOException, JsonProcessingException {
+            UvUnion value = new UvUnion();
+            switch (jsonParser.currentToken()) {
+                case VALUE_NULL:
+                    break;
+                case START_ARRAY:
+                    value.boxUVCoords = jsonParser.readValueAs(double[].class);
+                    value.isBoxUV = true;
+                    break;
+                case START_OBJECT:
+                    value.faceUV = jsonParser.readValueAs(UvFaces.class);
+                    value.isBoxUV = false;
+                    break;
+                default:
+                    throw new IOException("Cannot deserialize UvUnion");
             }
-            return result;
+            return value;
         }
+    }
 
+    static class Serializer extends JsonSerializer<UvUnion> {
         @Override
-        @Keep
-        public JsonElement serialize(UvUnion src, Type typeOfSrc, JsonSerializationContext context) {
-            return src.isBoxUV ? context.serialize(src.boxUVCoords) : context.serialize(src.faceUV);
+        public void serialize(UvUnion obj, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
+            throws IOException {
+            if (obj.boxUVCoords != null) {
+                jsonGenerator.writeObject(obj.boxUVCoords);
+                return;
+            }
+            if (obj.faceUV != null) {
+                jsonGenerator.writeObject(obj.faceUV);
+                return;
+            }
+            jsonGenerator.writeNull();
         }
     }
 }

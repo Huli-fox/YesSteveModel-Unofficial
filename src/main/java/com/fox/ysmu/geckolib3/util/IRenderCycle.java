@@ -7,14 +7,12 @@
 package com.fox.ysmu.geckolib3.util;
 
 
-import com.fox.ysmu.util.Keep;
-
 public interface IRenderCycle {
     /**
      * IRenderCycle 名称
      *
      * @return 名称
      */
-    @Keep
+
     String name();
 }

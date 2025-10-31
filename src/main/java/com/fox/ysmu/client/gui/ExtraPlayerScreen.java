@@ -1,7 +1,6 @@
 package com.fox.ysmu.client.gui;
 
 import com.fox.ysmu.Config;
-import com.fox.ysmu.util.Keep;
 import com.fox.ysmu.util.RenderUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -12,7 +11,7 @@ import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 public class ExtraPlayerScreen implements IGuiOverlay {
     @Override
-    @Keep
+
     public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
         if (Config.DISABLE_PLAYER_RENDER) {
             return;

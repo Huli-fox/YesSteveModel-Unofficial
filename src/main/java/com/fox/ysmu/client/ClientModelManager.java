@@ -4,7 +4,6 @@ import com.fox.ysmu.client.animation.condition.ConditionManager;
 import com.fox.ysmu.client.texture.OuterFileTexture;
 import com.fox.ysmu.geckolib3.core.builder.Animation;
 import com.fox.ysmu.geckolib3.core.molang.MolangParser;
-import com.fox.ysmu.geckolib3.file.GeckoJsonException;
 import com.fox.ysmu.model.format.FolderFormat;
 import com.fox.ysmu.data.ModelData;
 import com.fox.ysmu.geckolib3.file.AnimationFile;
@@ -165,12 +164,8 @@ public class ClientModelManager {
             for (Map.Entry<String, JsonElement> entry : JsonAnimationUtils.getAnimations(jsonObject)) {
                 String animationName = entry.getKey();
                 Animation animation;
-                try {
-                    animation = JsonAnimationUtils.deserializeJsonToAnimation(JsonAnimationUtils.getAnimation(jsonObject, animationName), parser);
-                    animationFile.putAnimation(animationName, animation);
-                } catch (GeckoJsonException e) {
-                    e.printStackTrace();
-                }
+                animation = JsonAnimationUtils.deserializeJsonToAnimation(JsonAnimationUtils.getAnimation(jsonObject, animationName), parser);
+                animationFile.putAnimation(animationName, animation);
             }
         }
         return animationFile;
@@ -205,18 +200,14 @@ public class ClientModelManager {
         String[] md5Info = getMd5Info();
         SyncModelFiles syncModelFiles = new SyncModelFiles(md5Info);
         ThreadTools.THREAD_POOL.submit(() -> {
-            try {
-                while (Minecraft.getMinecraft().theWorld == null) {
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+            while (Minecraft.getMinecraft().theWorld == null) {
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                NetworkHandler.CHANNEL.sendToServer(syncModelFiles);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
+            NetworkHandler.CHANNEL.sendToServer(syncModelFiles);
         });
     }
 

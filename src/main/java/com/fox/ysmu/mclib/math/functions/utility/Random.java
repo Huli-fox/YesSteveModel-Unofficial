@@ -2,7 +2,6 @@ package com.fox.ysmu.mclib.math.functions.utility;
 
 import com.fox.ysmu.mclib.math.IValue;
 import com.fox.ysmu.mclib.math.functions.Function;
-import com.fox.ysmu.util.Keep;
 
 public class Random extends Function {
     public java.util.Random random;
@@ -13,7 +12,7 @@ public class Random extends Function {
     }
 
     @Override
-    @Keep
+
     public double get() {
         double random = 0;
         if (this.args.length >= 3) {

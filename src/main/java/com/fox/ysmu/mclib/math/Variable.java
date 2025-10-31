@@ -1,7 +1,5 @@
 package com.fox.ysmu.mclib.math;
 
-import com.fox.ysmu.util.Keep;
-
 public class Variable implements IValue {
     private String name;
     private double value;
@@ -16,7 +14,7 @@ public class Variable implements IValue {
     }
 
     @Override
-    @Keep
+
     public double get() {
         return this.value;
     }
@@ -26,7 +24,7 @@ public class Variable implements IValue {
     }
 
     @Override
-    @Keep
+
     public String toString() {
         return this.name;
     }

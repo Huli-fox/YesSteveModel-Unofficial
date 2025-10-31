@@ -6,10 +6,8 @@ import com.fox.ysmu.geckolib3.geo.IGeoRenderer;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoBone;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoModel;
 import com.fox.ysmu.geckolib3.util.RenderUtils;
-import com.fox.ysmu.util.Keep;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.HumanoidArm;
@@ -26,7 +24,7 @@ public class CustomPlayerItemInHandLayer<T extends LivingEntity & IAnimatable> e
     }
 
     @Override
-    @Keep
+
     public void render(PoseStack poseStack, MultiBufferSource bufferIn, int packedLightIn, T entityLivingBaseIn, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
         if (entityRenderer.getGeoModel() == null) {
             return;

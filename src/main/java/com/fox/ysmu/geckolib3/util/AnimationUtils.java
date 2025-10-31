@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import com.fox.ysmu.geckolib3.model.provider.GeoModelProvider;
-import com.fox.ysmu.geckolib3.geo.IGeoRenderer;
+import com.fox.ysmu.geckolib3.renderers.geo.IGeoRenderer;
 
 public class AnimationUtils {
     public static double convertTicksToSeconds(double ticks) {

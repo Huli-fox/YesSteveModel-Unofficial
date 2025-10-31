@@ -1,27 +1,27 @@
 package com.fox.ysmu.geckolib3.geo.raw.pojo;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
-
-public class RawGeoModel implements Serializable {
-    @SerializedName("format_version")
+public class RawGeoModel {
     private FormatVersion formatVersion;
-    @SerializedName("minecraft:geometry")
     private MinecraftGeometry[] minecraftGeometry;
 
+    @JsonProperty("format_version")
     public FormatVersion getFormatVersion() {
         return formatVersion;
     }
 
+    @JsonProperty("format_version")
     public void setFormatVersion(FormatVersion value) {
         this.formatVersion = value;
     }
 
+    @JsonProperty("minecraft:geometry")
     public MinecraftGeometry[] getMinecraftGeometry() {
         return minecraftGeometry;
     }
 
+    @JsonProperty("minecraft:geometry")
     public void setMinecraftGeometry(MinecraftGeometry[] value) {
         this.minecraftGeometry = value;
     }

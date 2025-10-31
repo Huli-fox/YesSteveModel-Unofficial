@@ -1,14 +1,11 @@
 package com.fox.ysmu.client.animation.condition;
 
 import com.google.common.collect.Lists;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.tags.TagKey;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.tags.ITagManager;
+import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import com.fox.ysmu.compat.BackhandCompat;
+import net.minecraftforge.oredict.OreDictionary;
 
 import java.util.List;
 
@@ -16,18 +13,20 @@ public class ConditionalHold {
     private static final String EMPTY = "";
     private final int preSize;
     private final String idPre;
-    private final String tagPre;
-    private final List<ResourceLocation> idTest = Lists.newArrayList();
-    private final List<TagKey<Item>> tagTest = Lists.newArrayList();
+    private final String oreDictPre; // 在1.7.10中，我们用它来表示矿物词典的前缀
+    // 1.7.10: 不再使用 ResourceLocation，直接用 String 存储物品ID ("modid:name")
+    private final List<String> idTest = Lists.newArrayList();
+    // 1.7.10: 不再使用 TagKey，直接用 String 存储矿物词典的名称
+    private final List<String> oreDictTest = Lists.newArrayList();
 
-    public ConditionalHold(InteractionHand hand) {
-        if (hand == InteractionHand.MAIN_HAND) {
+    public ConditionalHold(boolean isMainHand) {
+        if (isMainHand) {
             idPre = "hold_mainhand$";
-            tagPre = "hold_mainhand#";
+            oreDictPre = "hold_mainhand#";
             preSize = 14;
         } else {
             idPre = "hold_offhand$";
-            tagPre = "hold_offhand#";
+            oreDictPre = "hold_offhand#";
             preSize = 13;
         }
     }
@@ -37,54 +36,67 @@ public class ConditionalHold {
             return;
         }
         String substring = name.substring(preSize);
-        if (name.startsWith(idPre) && ResourceLocation.isValidResourceLocation(substring)) {
-            idTest.add(new ResourceLocation(substring));
-        }
-        if (name.startsWith(tagPre) && ResourceLocation.isValidResourceLocation(substring)) {
-            ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-            if (tags == null) {
-                return;
+        if (name.startsWith(idPre)) {
+            // 1.7.10: 简单验证格式即可，不再有 isValidResourceLocation 方法
+            if (substring.contains(":")) {
+                idTest.add(substring);
             }
-            TagKey<Item> tagKey = tags.createTagKey(new ResourceLocation(substring));
-            tagTest.add(tagKey);
+        }
+        if (name.startsWith(oreDictPre)) {
+            // 1.7.10: 这里处理的是矿物词典名称
+            oreDictTest.add(substring);
         }
     }
 
-    public String doTest(Player player, InteractionHand hand) {
-        if (player.getItemInHand(hand).isEmpty()) {
+    public String doTest(EntityPlayer player, boolean isMainHand) {
+        if (BackhandCompat.getItemInHand(player, isMainHand) == null) {
             return EMPTY;
         }
-        String result = doIdTest(player, hand);
+        String result = doIdTest(player, isMainHand);
         if (result.isEmpty()) {
-            return doTagTest(player, hand);
+            return doOreDictTest(player, isMainHand);
         }
         return result;
     }
 
-    private String doIdTest(Player player, InteractionHand hand) {
+    private String doIdTest(EntityPlayer player, boolean isMainHand) {
         if (idTest.isEmpty()) {
             return EMPTY;
         }
-        ItemStack itemInHand = player.getItemInHand(hand);
-        ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(itemInHand.getItem());
-        if (registryName == null) {
+        ItemStack itemInHand = BackhandCompat.getItemInHand(player, isMainHand);
+        // 1.7.10: 使用 GameRegistry 获取物品的唯一标识符
+        GameRegistry.UniqueIdentifier uid = GameRegistry.findUniqueIdentifierFor(itemInHand.getItem());
+        if (uid == null) {
             return EMPTY;
         }
+        String registryName = uid.toString(); // 格式为 "modid:name"
         if (idTest.contains(registryName)) {
             return idPre + registryName;
         }
         return EMPTY;
     }
 
-    private String doTagTest(Player player, InteractionHand hand) {
-        if (tagTest.isEmpty()) {
+    // 1.7.10: doTagTest 完全重写，使用 OreDictionary
+    private String doOreDictTest(EntityPlayer player, boolean isMainHand) {
+        if (oreDictTest.isEmpty()) {
             return EMPTY;
         }
-        ItemStack itemInHand = player.getItemInHand(hand);
-        ITagManager<Item> tags = ForgeRegistries.ITEMS.tags();
-        if (tags == null) {
+        ItemStack itemInHand = BackhandCompat.getItemInHand(player, isMainHand);
+        // 获取物品堆栈对应的所有矿辞ID
+        int[] oreIDs = OreDictionary.getOreIDs(itemInHand);
+        if (oreIDs.length == 0) {
             return EMPTY;
         }
-        return tagTest.stream().filter(itemInHand::is).findFirst().map(itemTagKey -> tagPre + itemTagKey.location()).orElse(EMPTY);
+
+        // 遍历物品拥有的所有矿辞
+        for (int oreID : oreIDs) {
+            String oreName = OreDictionary.getOreName(oreID);
+            // 检查这个矿辞名称是否在我们需要测试的列表里
+            if (oreDictTest.contains(oreName)) {
+                return oreDictPre + oreName; // 找到匹配，返回结果
+            }
+        }
+
+        return EMPTY; // 未找到匹配
     }
 }
