@@ -11,7 +11,7 @@ import com.fox.ysmu.geckolib3.geo.render.built.GeoCube;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoModel;
 import com.fox.ysmu.geckolib3.util.VectorUtils;
 
-import org.joml.Vector3f;
+import javax.vecmath.Vector3f;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;

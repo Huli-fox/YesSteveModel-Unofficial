@@ -1,6 +1,6 @@
 package com.fox.ysmu.geckolib3.geo;
 
-import com.fox.ysmu.geckolib3.util.GlStateManager;
+import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
@@ -18,19 +18,14 @@ import com.fox.ysmu.geckolib3.geo.render.built.GeoVertex;
 import com.fox.ysmu.geckolib3.model.provider.GeoModelProvider;
 import com.fox.ysmu.geckolib3.particles.emitter.BedrockEmitter;
 import com.fox.ysmu.geckolib3.util.MatrixStack;
-import com.fox.ysmu.geckolib3.util.ConfigHandler;
+import com.fox.ysmu.example.config.ConfigHandler;
 import com.fox.ysmu.geckolib3.util.PositionUtils;
 
-//import javax.vecmath.Matrix3f;
-//import javax.vecmath.Matrix4f;
-//import javax.vecmath.Vector3d;
-//import javax.vecmath.Vector3f;
-//import javax.vecmath.Vector4f;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3d;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
+import javax.vecmath.Matrix3f;
+import javax.vecmath.Matrix4f;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Map;
@@ -212,7 +207,6 @@ public interface IGeoRenderer<T> {
     }
 
     default void renderParticle(BedrockEmitter emitter, GeoBone locator, float ticks) {
-        Matrix4f tempMatrix = new Matrix4f();
         emitter.prevGlobal.x = emitter.lastGlobal.x;
         emitter.prevGlobal.y = emitter.lastGlobal.y;
         emitter.prevGlobal.z = emitter.lastGlobal.z;
@@ -240,8 +234,7 @@ public interface IGeoRenderer<T> {
         emitter.rotation.setIdentity();
 
         MATRIX_STACK.push();
-        tempMatrix.set3x3(cur2);
-        MATRIX_STACK.getModelMatrix().mul(tempMatrix);
+        MATRIX_STACK.getModelMatrix().mul(new Matrix4f(cur2.m00, cur2.m01, cur2.m02, 0, cur2.m10, cur2.m11, cur2.m12, 0, cur2.m20, cur2.m21, cur2.m22, 0, 0, 0, 0, 1));
         GeoBone[] bonePath = getPathFromRoot(locator);
         for (int i = 0; i < bonePath.length; i++) {
             GeoBone bone = bonePath[i];

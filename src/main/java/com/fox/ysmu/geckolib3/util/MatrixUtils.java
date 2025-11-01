@@ -8,18 +8,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.joml.*;
 
 import javax.annotation.Nullable;
-//import javax.vecmath.Matrix3f;
-//import javax.vecmath.Matrix4d;
-//import javax.vecmath.Matrix4f;
-//import javax.vecmath.Quat4d;
-//import javax.vecmath.SingularMatrixException;
-//import javax.vecmath.Vector3d;
-//import javax.vecmath.Vector3f;
-//import javax.vecmath.Vector4d;
-//import javax.vecmath.Vector4f;
+import javax.vecmath.Matrix3f;
+import javax.vecmath.Matrix4d;
+import javax.vecmath.Matrix4f;
+import javax.vecmath.Quat4d;
+import javax.vecmath.SingularMatrixException;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4d;
+import javax.vecmath.Vector4f;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 
@@ -51,11 +50,15 @@ public class MatrixUtils {
     /**
      * Read OpenGL's model view matrix
      */
-    public static Matrix4f readModelView(Matrix4f dest) {
+    public static Matrix4f readModelView(Matrix4f matrix4f) {
         buffer.clear();
         GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, buffer);
-        dest.set(buffer);
-        return dest;
+        buffer.get(floats);
+
+        matrix4f.set(floats);
+        matrix4f.transpose();
+
+        return matrix4f;
     }
 
     /**
@@ -78,16 +81,75 @@ public class MatrixUtils {
     public static Matrix4d readModelViewDouble() {
         doubleBuffer.clear();
         GL11.glGetDouble(GL11.GL_MODELVIEW_MATRIX, doubleBuffer);
-        return new Matrix4d().set(doubleBuffer);
+        doubleBuffer.get(doubles);
+
+        Matrix4d matrix4d = new Matrix4d();
+
+        matrix4d.set(doubles);
+        matrix4d.transpose();
+
+        return matrix4d;
     }
 
     /**
      * Replace model view matrix with given matrix
      */
     public static void loadModelView(Matrix4f matrix4f) {
-        matrix4f.get(buffer);
+        matrixToFloat(floats, matrix4f);
+
+        buffer.clear();
+        buffer.put(floats);
+        buffer.rewind();
         GL11.glLoadMatrix(buffer);
     }
+
+    /**
+     * method to fill the float array with values from the matrix
+     */
+    public static void matrixToFloat(float[] floats, Matrix4f matrix4f) {
+        floats[0] = matrix4f.m00;
+        floats[1] = matrix4f.m01;
+        floats[2] = matrix4f.m02;
+        floats[3] = matrix4f.m03;
+        floats[4] = matrix4f.m10;
+        floats[5] = matrix4f.m11;
+        floats[6] = matrix4f.m12;
+        floats[7] = matrix4f.m13;
+        floats[8] = matrix4f.m20;
+        floats[9] = matrix4f.m21;
+        floats[10] = matrix4f.m22;
+        floats[11] = matrix4f.m23;
+        floats[12] = matrix4f.m30;
+        floats[13] = matrix4f.m31;
+        floats[14] = matrix4f.m32;
+        floats[15] = matrix4f.m33;
+    }
+
+    /**
+     * @param floatBuffer with the minimum size of 16
+     * @param matrix
+     */
+    public static void matrixToFloatBuffer(FloatBuffer floatBuffer, Matrix4f matrix) {
+        floatBuffer.put(matrix.m00);
+        floatBuffer.put(matrix.m01);
+        floatBuffer.put(matrix.m02);
+        floatBuffer.put(matrix.m03);
+        floatBuffer.put(matrix.m10);
+        floatBuffer.put(matrix.m11);
+        floatBuffer.put(matrix.m12);
+        floatBuffer.put(matrix.m13);
+        floatBuffer.put(matrix.m20);
+        floatBuffer.put(matrix.m21);
+        floatBuffer.put(matrix.m22);
+        floatBuffer.put(matrix.m23);
+        floatBuffer.put(matrix.m30);
+        floatBuffer.put(matrix.m31);
+        floatBuffer.put(matrix.m32);
+        floatBuffer.put(matrix.m33);
+
+        floatBuffer.flip();
+    }
+
 
     public static boolean captureMatrix() {
         if (matrix == null) {
@@ -107,12 +169,42 @@ public class MatrixUtils {
         matrix = null;
     }
 
-    public static Quaterniond matrixToQuaternion(Matrix3f matrix) {
-        return new Quaterniond().setFromNormalized(matrix);
+    public static Quat4d matrixToQuaternion(Matrix3f matrix) {
+        double tr = matrix.m00 + matrix.m11 + matrix.m22;
+        double qw = 0;
+        double qx = 0;
+        double qy = 0;
+        double qz = 0;
+
+        if (tr > 0) {
+            double S = Math.sqrt(tr + 1.0) * 2; // S=4*qw
+            qw = 0.25 * S;
+            qx = (matrix.m21 - matrix.m12) / S;
+            qy = (matrix.m02 - matrix.m20) / S;
+            qz = (matrix.m10 - matrix.m01) / S;
+        } else if ((matrix.m00 > matrix.m11) & (matrix.m00 > matrix.m22)) {
+            double S = Math.sqrt(1.0 + matrix.m00 - matrix.m11 - matrix.m22) * 2; // S=4*qx
+            qw = (matrix.m21 - matrix.m12) / S;
+            qx = 0.25 * S;
+            qy = (matrix.m01 + matrix.m10) / S;
+            qz = (matrix.m02 + matrix.m20) / S;
+        } else if (matrix.m11 > matrix.m22) {
+            double S = Math.sqrt(1.0 + matrix.m11 - matrix.m00 - matrix.m22) * 2; // S=4*qy
+            qw = (matrix.m02 - matrix.m20) / S;
+            qx = (matrix.m01 + matrix.m10) / S;
+            qy = 0.25 * S;
+            qz = (matrix.m12 + matrix.m21) / S;
+        } else {
+            double S = Math.sqrt(1.0 + matrix.m22 - matrix.m00 - matrix.m11) * 2; // S=4*qz
+            qw = (matrix.m10 - matrix.m01) / S;
+            qx = (matrix.m02 + matrix.m20) / S;
+            qy = (matrix.m12 + matrix.m21) / S;
+            qz = 0.25 * S;
+        }
+
+        return new Quat4d(qw, qx, qy, qz);
     }
 
-
-    // TODO 这里之后都要改
     /**
      * This method calculates the angular velocity around the arbitrary axis.
      * The arbitrary axis and the angle around it can be obtained from this result.
@@ -152,18 +244,69 @@ public class MatrixUtils {
      * @return intrinsic rotation matrix
      */
     public static Matrix4f getRotationMatrix(float x, float y, float z, RotationOrder order) {
-        Matrix4f mat = new Matrix4f(); // Automatically initialized to identity
-        // The original code was equivalent to post-multiplying in the specified order.
-        // E.g., for ZYX: mat = I * rotZ * rotY * rotX
+        Matrix4f mat = new Matrix4f();
+        Matrix4f rot = new Matrix4f();
+
+        mat.setIdentity();
+
         switch (order) {
-            case XYZ: return mat.rotateX(x).rotateY(y).rotateZ(z);
-            case XZY: return mat.rotateX(x).rotateZ(z).rotateY(y);
-            case YXZ: return mat.rotateY(y).rotateX(x).rotateZ(z);
-            case YZX: return mat.rotateY(y).rotateZ(z).rotateX(x);
-            case ZXY: return mat.rotateZ(z).rotateX(x).rotateY(y);
-            case ZYX: return mat.rotateZ(z).rotateY(y).rotateX(x);
-            default:  return mat;
+            case XYZ:
+                rot.rotZ(z);
+                mat.mul(rot);
+                rot.rotY(y);
+                mat.mul(rot);
+                rot.rotX(x);
+                mat.mul(rot);
+
+                break;
+            case ZYX:
+                rot.rotX(x);
+                mat.mul(rot);
+                rot.rotY(y);
+                mat.mul(rot);
+                rot.rotZ(z);
+                mat.mul(rot);
+
+                break;
+            case XZY:
+                rot.rotY(y);
+                mat.mul(rot);
+                rot.rotZ(z);
+                mat.mul(rot);
+                rot.rotX(x);
+                mat.mul(rot);
+
+                break;
+            case YZX:
+                rot.rotX(x);
+                mat.mul(rot);
+                rot.rotZ(z);
+                mat.mul(rot);
+                rot.rotY(y);
+                mat.mul(rot);
+
+                break;
+            case YXZ:
+                rot.rotZ(z);
+                mat.mul(rot);
+                rot.rotX(x);
+                mat.mul(rot);
+                rot.rotY(y);
+                mat.mul(rot);
+
+                break;
+            case ZXY:
+                rot.rotY(y);
+                mat.mul(rot);
+                rot.rotX(x);
+                mat.mul(rot);
+                rot.rotZ(z);
+                mat.mul(rot);
+
+                break;
         }
+
+        return mat;
     }
 
     /**
@@ -172,70 +315,129 @@ public class MatrixUtils {
      * @return Matrix4d array {translation, rotation, scale} or null if singular matrix exception occured during inverting the camera matrix.
      */
     public static Matrix4d[] getTransformation() {
-        Matrix4d parent = getCameraMatrix(); // Use the getter to get a copy
-        if (!parent.invert()) {
-            return null; // Inversion failed
+        Matrix4d parent = new Matrix4d(camera);
+        Matrix4d translation = new Matrix4d();
+        Matrix4d rotation = new Matrix4d();
+        Matrix4d scale = new Matrix4d();
+
+        translation.setIdentity();
+        rotation.setIdentity();
+        scale.setIdentity();
+
+        try {
+            parent.invert();
+        } catch (SingularMatrixException e) {
+            return null;
         }
 
-        // Original: parent = parent * readModelViewDouble()
-        parent.mul(readModelViewDouble());
+        parent.mul(parent, readModelViewDouble());
 
         Entity renderViewEntity = Minecraft.getMinecraft().renderViewEntity;
-        float partialTicks = Minecraft.getMinecraft().timer.renderPartialTicks;
 
-        // Create camera translation matrix
-        Matrix4d cameraTrans = new Matrix4d().translation(
-            Interpolations.lerp(renderViewEntity.lastTickPosX, renderViewEntity.posX, partialTicks),
-            Interpolations.lerp(renderViewEntity.lastTickPosY, renderViewEntity.posY, partialTicks),
-            Interpolations.lerp(renderViewEntity.lastTickPosZ, renderViewEntity.posZ, partialTicks)
-        );
+        Matrix4d cameraTrans = new Matrix4d();
 
-        // Original: parent = cameraTrans * parent
-        parent.premul(cameraTrans);
+        cameraTrans.setIdentity();
+        cameraTrans.m03 = Interpolations.lerp(renderViewEntity.lastTickPosX, renderViewEntity.posX, Minecraft.getMinecraft().timer.renderPartialTicks);
+        cameraTrans.m13 = Interpolations.lerp(renderViewEntity.lastTickPosY, renderViewEntity.posY, Minecraft.getMinecraft().timer.renderPartialTicks);
+        cameraTrans.m23 = Interpolations.lerp(renderViewEntity.lastTickPosZ, renderViewEntity.posZ, Minecraft.getMinecraft().timer.renderPartialTicks);
 
-        // Decompose using JOML's methods
-        Matrix4d translation = new Matrix4d().translation(parent.getTranslation(new Vector3d()));
-        Matrix4d rotation = new Matrix4d().set(parent.getNormalizedRotation(new Quaterniond()));
-        Matrix4d scale = new Matrix4d().scaling(parent.getScale(new Vector3d()));
+        parent.mul(cameraTrans, parent);
+
+        Vector4d rx = new Vector4d(parent.m00, parent.m10, parent.m20, 0);
+        Vector4d ry = new Vector4d(parent.m01, parent.m11, parent.m21, 0);
+        Vector4d rz = new Vector4d(parent.m02, parent.m12, parent.m22, 0);
+
+        rx.normalize();
+        ry.normalize();
+        rz.normalize();
+        rotation.setRow(0, rx);
+        rotation.setRow(1, ry);
+        rotation.setRow(2, rz);
+
+        translation.setTranslation(new Vector3d(parent.m03, parent.m13, parent.m23));
+
+        scale.m00 = Math.sqrt(parent.m00 * parent.m00 + parent.m10 * parent.m10 + parent.m20 * parent.m20);
+        scale.m11 = Math.sqrt(parent.m01 * parent.m01 + parent.m11 * parent.m11 + parent.m21 * parent.m21);
+        scale.m22 = Math.sqrt(parent.m02 * parent.m02 + parent.m12 * parent.m12 + parent.m22 * parent.m22);
 
         return new Matrix4d[]{translation, rotation, scale};
     }
 
+
     /**
-     * Extracts transformations from a model-view matrix, optionally removing the camera's influence.
-     * Simplified with JOML's decomposition.
+     * This method extracts the rotation, translation and scale from the modelview matrix. It needs the view matrix to work properly
+     *
+     * @param cameraMatrix The cameraMatrix from rendering so you can extract modelView from OpenGL's matrix.
+     * @param modelView    The matrix containing the transformations that should be extracted.
+     * @return Transformation contains translation, rotation and scale as 4x4 matrices. It also has getter methods for the 3x3 matrices.
+     * @author Christian F. (known as Chryfi)
      */
     public static Transformation extractTransformations(@Nullable Matrix4f cameraMatrix, Matrix4f modelView) {
+        return extractTransformations(cameraMatrix, modelView, MatrixMajor.ROW);
+    }
+
+    public static Transformation extractTransformations(@Nullable Matrix4f cameraMatrix, Matrix4f modelView, MatrixMajor major) {
         Matrix4f parent = new Matrix4f(modelView);
 
         if (cameraMatrix != null) {
-            // Remove camera transform: modelMatrix = cameraMatrix^-1 * modelViewMatrix
-            Matrix4f invCamera = new Matrix4f(cameraMatrix);
-            if (!invCamera.invert()) {
+            parent.set(cameraMatrix);
+
+            try {
+                parent.invert();
+            } catch (SingularMatrixException e) {
                 Transformation transformation = new Transformation();
-                transformation.creationException = new Exception("Camera matrix is not invertible.");
+                transformation.creationException = e;
+
                 return transformation;
             }
-            invCamera.mul(modelView, parent);
+
+            parent.mul(modelView);
         }
 
-        // Decompose using JOML's built-in, robust methods
-        Vector3f translationVec = parent.getTranslation(new Vector3f());
-        Quaternionf rotationQuat = parent.getNormalizedRotation(new Quaternionf());
-        Vector3f scaleVec = parent.getScale(new Vector3f());
+        Matrix4f translation = new Matrix4f();
+        Matrix4f scale = new Matrix4f();
+        Matrix4f rotation = new Matrix4f();
 
-        Matrix4f translationMat = new Matrix4f().translation(translationVec);
-        Matrix4f rotationMat = new Matrix4f().rotation(rotationQuat);
-        Matrix4f scaleMat = new Matrix4f().scaling(scaleVec);
+        translation.setIdentity();
+        rotation.setIdentity();
+        scale.setIdentity();
 
-        return new Transformation(translationMat, rotationMat, scaleMat);
-    }
+        translation.m03 = parent.m03;
+        translation.m13 = parent.m13;
+        translation.m23 = parent.m23;
 
-    // Overloaded method to maintain API compatibility, but MatrixMajor is no longer needed
-    // as JOML's decomposition methods are robust.
-    public static Transformation extractTransformations(@Nullable Matrix4f cameraMatrix, Matrix4f modelView, MatrixMajor major) {
-        // We can ignore 'major' as JOML's math is consistent.
-        return extractTransformations(cameraMatrix, modelView);
+        Vector4f ax = new Vector4f(parent.m00, parent.m01, parent.m02, 0);
+        Vector4f ay = new Vector4f(parent.m10, parent.m11, parent.m12, 0);
+        Vector4f az = new Vector4f(parent.m20, parent.m21, parent.m22, 0);
+
+        if (major == MatrixMajor.COLUMN) {
+            ax = new Vector4f(parent.m00, parent.m10, parent.m20, 0.0F);
+            ay = new Vector4f(parent.m01, parent.m11, parent.m21, 0.0F);
+            az = new Vector4f(parent.m02, parent.m12, parent.m22, 0.0F);
+        }
+
+        ax.normalize();
+        ay.normalize();
+        az.normalize();
+        rotation.setRow(0, ax);
+        rotation.setRow(1, ay);
+        rotation.setRow(2, az);
+
+        if (major == MatrixMajor.COLUMN) {
+            rotation.transpose();
+        }
+
+        scale.m00 = (float) Math.sqrt(parent.m00 * parent.m00 + parent.m01 * parent.m01 + parent.m02 * parent.m02);
+        scale.m11 = (float) Math.sqrt(parent.m10 * parent.m10 + parent.m11 * parent.m11 + parent.m12 * parent.m12);
+        scale.m22 = (float) Math.sqrt(parent.m20 * parent.m20 + parent.m21 * parent.m21 + parent.m22 * parent.m22);
+
+        if (major == MatrixMajor.COLUMN) {
+            scale.m00 = (float) Math.sqrt(parent.m00 * parent.m00 + parent.m10 * parent.m10 + parent.m20 * parent.m20);
+            scale.m11 = (float) Math.sqrt(parent.m01 * parent.m01 + parent.m11 * parent.m11 + parent.m21 * parent.m21);
+            scale.m22 = (float) Math.sqrt(parent.m02 * parent.m02 + parent.m12 * parent.m12 + parent.m22 * parent.m22);
+        }
+
+        return new Transformation(translation, rotation, scale);
     }
 
     public static class Transformation {
@@ -255,18 +457,40 @@ public class MatrixUtils {
         }
 
         public Transformation() {
+            this.translation.setIdentity();
+            this.rotation.setIdentity();
+            this.scale.setIdentity();
         }
 
         public Matrix3f getScale3f() {
-            return new Matrix3f().scaling(this.scale.getScale(new Vector3f()));
+            Matrix3f scale3f = new Matrix3f();
+
+            scale3f.setIdentity();
+
+            scale3f.m00 = this.scale.m00;
+            scale3f.m11 = this.scale.m11;
+            scale3f.m22 = this.scale.m22;
+
+            return scale3f;
         }
 
         public Vector3f getTranslation3f() {
-            return this.translation.getTranslation(new Vector3f());
+            Vector3f translation3f = new Vector3f();
+
+            translation3f.set(this.translation.m03, this.translation.m13, this.translation.m23);
+
+            return translation3f;
         }
 
         public Matrix3f getRotation3f() {
-            return this.rotation.get3x3(new Matrix3f());
+            Matrix3f rotation3f = new Matrix3f();
+
+            rotation3f.setIdentity();
+            rotation3f.setRow(0, this.rotation.m00, this.rotation.m01, this.rotation.m02);
+            rotation3f.setRow(1, this.rotation.m10, this.rotation.m11, this.rotation.m12);
+            rotation3f.setRow(2, this.rotation.m20, this.rotation.m21, this.rotation.m22);
+
+            return rotation3f;
         }
 
         public Exception getCreationException() {
