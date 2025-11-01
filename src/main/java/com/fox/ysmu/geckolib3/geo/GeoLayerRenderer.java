@@ -1,7 +1,7 @@
 package com.fox.ysmu.geckolib3.geo;
 
-import net.geckominecraft.client.renderer.GlStateManager;
-import net.geckominecraft.client.renderer.entity.layers.LayerRenderer;
+import com.fox.ysmu.geckolib3.util.GlStateManager;
+import com.fox.ysmu.geckolib3.util.LayerRenderer;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;

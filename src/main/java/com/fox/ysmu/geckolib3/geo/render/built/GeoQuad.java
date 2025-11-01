@@ -1,6 +1,6 @@
 package com.fox.ysmu.geckolib3.geo.render.built;
 
-import net.geckominecraft.util.math.Vec3i;
+import com.fox.ysmu.geckolib3.util.Vec3i;
 import net.minecraft.util.EnumFacing;
 import com.fox.ysmu.geckolib3.geo.raw.pojo.FaceUv;
 

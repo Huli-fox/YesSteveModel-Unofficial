@@ -2,7 +2,7 @@ package com.fox.ysmu.geckolib3.model;
 
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.entity.Entity;
-import com.fox.ysmu.geckolib3.renderers.geo.GeoEntityRenderer;
+import com.fox.ysmu.geckolib3.geo.GeoEntityRenderer;
 
 public class DummyVanilaModel extends ModelBase {
     public GeoEntityRenderer renderer;

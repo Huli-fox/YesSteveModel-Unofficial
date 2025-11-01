@@ -8,8 +8,8 @@ import com.fox.ysmu.geckolib3.geo.raw.pojo.UvFaces;
 import com.fox.ysmu.geckolib3.geo.raw.pojo.UvUnion;
 import com.fox.ysmu.geckolib3.util.VectorUtils;
 
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
+import org.joml.Vector3d;
+import org.joml.Vector3f;
 import java.io.Serializable;
 
 public class GeoCube implements Serializable {

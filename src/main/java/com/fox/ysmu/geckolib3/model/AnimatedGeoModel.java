@@ -1,6 +1,6 @@
 package com.fox.ysmu.geckolib3.model;
 
-import com.fox.ysmu.molang.MolangParser;
+import com.fox.ysmu.geckolib3.core.molang.MolangParser;
 import cpw.mods.fml.common.FMLCommonHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -9,7 +9,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
-import com.fox.ysmu.geckolib3.animation.AnimationTicker;
+import com.fox.ysmu.geckolib3.util.AnimationTicker;
 import com.fox.ysmu.geckolib3.core.IAnimatable;
 import com.fox.ysmu.geckolib3.core.IAnimatableModel;
 import com.fox.ysmu.geckolib3.core.builder.Animation;
@@ -23,7 +23,6 @@ import com.fox.ysmu.geckolib3.geo.render.built.GeoBone;
 import com.fox.ysmu.geckolib3.geo.render.built.GeoModel;
 import com.fox.ysmu.geckolib3.model.provider.GeoModelProvider;
 import com.fox.ysmu.geckolib3.model.provider.IAnimatableModelProvider;
-import com.fox.ysmu.geckolib3.molang.MolangRegistrar;
 import com.fox.ysmu.geckolib3.resource.GeckoLibCache;
 import com.fox.ysmu.geckolib3.util.MolangUtils;
 
@@ -74,7 +73,7 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
         predicate.animationTick = seekTime;
         animationProcessor.preAnimationSetup(predicate.getAnimatable(), seekTime);
         if (!this.animationProcessor.getModelRendererList().isEmpty()) {
-            animationProcessor.tickAnimation(entity, uniqueID, seekTime, predicate, MolangRegistrar.getParser(),
+            animationProcessor.tickAnimation(entity, uniqueID, seekTime, predicate, GeckoLibCache.getInstance().parser,
                 shouldCrashOnMissing);
         }
     }
@@ -115,7 +114,7 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 
     @Override
     public void setMolangQueries(IAnimatable animatable, double currentTick) {
-        MolangParser parser = MolangRegistrar.getParser();
+        MolangParser parser = GeckoLibCache.getInstance().parser;
         Minecraft minecraftInstance = Minecraft.getMinecraft();
         float partialTick = minecraftInstance.timer.renderPartialTicks;
 

@@ -3,8 +3,8 @@ package com.fox.ysmu.geckolib3.util;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
-import javax.vecmath.Vector3d;
-import javax.vecmath.Vector3f;
+import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 public class VectorUtils {
     public static Vector3d fromArray(double[] array) {
