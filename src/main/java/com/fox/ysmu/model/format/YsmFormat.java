@@ -1,16 +1,6 @@
 package com.fox.ysmu.model.format;
 
-import com.fox.ysmu.data.EncryptTools;
-import com.fox.ysmu.data.ModelData;
-import software.bernie.geckolib3.geo.raw.pojo.Converter;
-import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
-import com.fox.ysmu.util.Md5Utils;
-import com.fox.ysmu.util.ObjectStreamUtil;
-import com.fox.ysmu.util.YesModelUtils;
-import com.google.common.collect.Maps;
-import net.minecraft.util.ResourceLocation;
-import org.apache.commons.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
+import static com.fox.ysmu.model.ServerModelManager.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,14 +10,26 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.fox.ysmu.model.ServerModelManager.*;
+import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
+
+import com.fox.ysmu.compat.Utils;
+import com.fox.ysmu.data.EncryptTools;
+import com.fox.ysmu.data.ModelData;
+import com.fox.ysmu.util.Md5Utils;
+import com.fox.ysmu.util.YesModelUtils;
+import com.google.common.collect.Maps;
+
+import software.bernie.geckolib3.geo.raw.pojo.Converter;
+import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
 
 public final class YsmFormat {
+
     public static void cacheAllModels(Path rootPath) {
-        Collection<File> ysmFiles = FileUtils.listFiles(rootPath.toFile(), new String[]{"ysm"}, false);
+        Collection<File> ysmFiles = FileUtils.listFiles(rootPath.toFile(), new String[] { "ysm" }, false);
         for (File ysmFile : ysmFiles) {
             String modelId = removeExtension(ysmFile.getName());
-            if (!ResourceLocation.isValidResourceLocation(modelId)) {
+            if (!Utils.isValidResourceLocation(modelId)) {
                 continue;
             }
             try {
@@ -41,7 +43,9 @@ public final class YsmFormat {
                 if (!data.containsKey(ARM_MODEL_FILE_NAME)) {
                     continue;
                 }
-                if (data.keySet().stream().noneMatch(fileName -> fileName.endsWith(".png"))) {
+                if (data.keySet()
+                    .stream()
+                    .noneMatch(fileName -> fileName.endsWith(".png"))) {
                     continue;
                 }
 
@@ -67,8 +71,15 @@ public final class YsmFormat {
         try {
             ModelData data = getModelData(input, modelId, isAuth);
             byte[] dataBytes = EncryptTools.assembleEncryptModels(data);
-            data.setMd5(Md5Utils.md5Hex(dataBytes).toUpperCase(Locale.US));
-            FileUtils.writeByteArrayToFile(CACHE_SERVER.resolve(data.getInfo().getMd5()).toFile(), dataBytes);
+            data.setMd5(
+                Md5Utils.md5Hex(dataBytes)
+                    .toUpperCase(Locale.US));
+            FileUtils.writeByteArrayToFile(
+                CACHE_SERVER.resolve(
+                    data.getInfo()
+                        .getMd5())
+                    .toFile(),
+                dataBytes);
             return data.getInfo();
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,7 +125,8 @@ public final class YsmFormat {
         if (MAIN_MODEL_FILE_NAME.equals(fileName) || ARM_MODEL_FILE_NAME.equals(fileName)) {
             String modelJson = new String(data.get(fileName), StandardCharsets.UTF_8);
             RawGeoModel rawModel = Converter.fromJsonString(modelJson);
-            return ObjectStreamUtil.toByteArray(rawModel);
+            // 直接返回JSON字符串的字节数组，而不是尝试序列化RawGeoModel对象
+            return modelJson.getBytes(StandardCharsets.UTF_8);
         }
 
         return data.get(fileName);

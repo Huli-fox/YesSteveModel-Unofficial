@@ -1,8 +1,18 @@
 package com.fox.ysmu.client.model;
 
-import com.fox.ysmu.ysmu;
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ResourceLocation;
+
 import com.fox.ysmu.client.animation.AnimationRegister;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
+import com.fox.ysmu.util.ModelIdUtil;
+import com.fox.ysmu.ysmu;
+
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.core.molang.MolangParser;
@@ -11,18 +21,14 @@ import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.model.AnimatedGeoModel;
 import software.bernie.geckolib3.model.provider.data.EntityModelData;
 import software.bernie.geckolib3.resource.GeckoLibCache;
-import com.fox.ysmu.util.ModelIdUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.entity.player.EntityPlayer;
-
-import javax.annotation.Nullable;
-import java.util.List;
 
 @SuppressWarnings("all")
 public class CustomPlayerModel extends AnimatedGeoModel {
-    public static final ResourceLocation DEFAULT_MAIN_MODEL = ModelIdUtil.getMainId(new ResourceLocation(ysmu.MODID, "default"));
-    public static final ResourceLocation DEFAULT_MAIN_ANIMATION = ModelIdUtil.getMainId(new ResourceLocation(ysmu.MODID, "default"));
+
+    public static final ResourceLocation DEFAULT_MAIN_MODEL = ModelIdUtil
+        .getMainId(new ResourceLocation(ysmu.MODID, "default"));
+    public static final ResourceLocation DEFAULT_MAIN_ANIMATION = ModelIdUtil
+        .getMainId(new ResourceLocation(ysmu.MODID, "default"));
     public static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(ysmu.MODID, "default/default.png");
     public static float FIRST_PERSON_HEAD_POS;
 
@@ -57,8 +63,11 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     public void setLivingAnimations(IAnimatable animatable, Integer instanceId, AnimationEvent animationEvent) {
         List extraData = animationEvent.getExtraData();
         MolangParser parser = GeckoLibCache.getInstance().parser;
-        if (!Minecraft.getMinecraft().isGamePaused() && extraData.size() == 1 && extraData.get(0) instanceof EntityModelData data
-                && animatable instanceof CustomPlayerEntity customPlayer && customPlayer.getPlayer() != null) {
+        if (!Minecraft.getMinecraft()
+            .isGamePaused() && extraData.size() == 1
+            && extraData.get(0) instanceof EntityModelData data
+            && animatable instanceof CustomPlayerEntity customPlayer
+            && customPlayer.getPlayer() != null) {
             EntityPlayer player = customPlayer.getPlayer();
             AnimationRegister.setParserValue(animationEvent, parser, data, player);
             super.setLivingAnimations(animatable, instanceId, animationEvent);
@@ -75,7 +84,8 @@ public class CustomPlayerModel extends AnimatedGeoModel {
         if (head != null) {
             head.setRotationX(head.getRotationX() + (float) Math.toRadians(data.headPitch));
             head.setRotationY(head.getRotationY() + (float) Math.toRadians(data.netHeadYaw));
-            FIRST_PERSON_HEAD_POS = head.getPivotY() * ((CustomPlayerEntity) animationEvent.getAnimatable()).getHeightScale();
+            FIRST_PERSON_HEAD_POS = head.getPivotY()
+                * ((CustomPlayerEntity) animationEvent.getAnimatable()).getHeightScale();
         }
         if (getCurrentModel().firstPersonViewLocator != null) {
             float heightScale = ((CustomPlayerEntity) animationEvent.getAnimatable()).getHeightScale();
@@ -93,6 +103,5 @@ public class CustomPlayerModel extends AnimatedGeoModel {
 
     @Override
 
-    public void setMolangQueries(IAnimatable animatable, double seekTime) {
-    }
+    public void setMolangQueries(IAnimatable animatable, double seekTime) {}
 }

@@ -1,20 +1,22 @@
 // TODO 待检查
 package com.fox.ysmu.client.animation.condition;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.oredict.OreDictionary;
-
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import cpw.mods.fml.common.registry.GameRegistry;
+
 public class ConditionArmor {
+
     private static final Pattern ID_PRE_REG = Pattern.compile("^(.+?)\\$(.*?)$");
     private static final Pattern TAG_PRE_REG = Pattern.compile("^(.+?)#(.*?)$");
     private static final String EMPTY = "";
@@ -37,7 +39,8 @@ public class ConditionArmor {
                 return;
             }
             if (idTest.containsKey(slotIndex)) {
-                idTest.get(slotIndex).add(id);
+                idTest.get(slotIndex)
+                    .add(id);
             } else {
                 idTest.put(slotIndex, Lists.newArrayList(id));
             }
@@ -52,7 +55,8 @@ public class ConditionArmor {
             }
             String oreName = matcherTag.group(2);
             if (oreDictTest.containsKey(slotIndex)) {
-                oreDictTest.get(slotIndex).add(oreName);
+                oreDictTest.get(slotIndex)
+                    .add(oreName);
             } else {
                 oreDictTest.put(slotIndex, Lists.newArrayList(oreName));
             }
@@ -79,7 +83,9 @@ public class ConditionArmor {
     }
 
     private String doIdTest(EntityPlayer player, int slotIndex) {
-        if (idTest.isEmpty() || !idTest.containsKey(slotIndex) || idTest.get(slotIndex).isEmpty()) {
+        if (idTest.isEmpty() || !idTest.containsKey(slotIndex)
+            || idTest.get(slotIndex)
+                .isEmpty()) {
             return EMPTY;
         }
         List<String> idListTest = idTest.get(slotIndex);
@@ -99,7 +105,9 @@ public class ConditionArmor {
     }
 
     private String doOreDictTest(EntityPlayer player, int slotIndex) {
-        if (oreDictTest.isEmpty() || !oreDictTest.containsKey(slotIndex) || oreDictTest.get(slotIndex).isEmpty()) {
+        if (oreDictTest.isEmpty() || !oreDictTest.containsKey(slotIndex)
+            || oreDictTest.get(slotIndex)
+                .isEmpty()) {
             return EMPTY;
         }
         List<String> oreDictListTest = oreDictTest.get(slotIndex);
@@ -123,6 +131,7 @@ public class ConditionArmor {
     /**
      * 1.7.10 Helper: 将高版本的槽位字符串名转换为1.7.10的整数索引。
      * 使用 EntityPlayer.getEquipmentInSlot(int) 的索引。
+     * 
      * @param type "head", "chest", "legs", "feet"
      * @return 1-4 for armor, -1 for invalid
      */
@@ -144,6 +153,7 @@ public class ConditionArmor {
 
     /**
      * 1.7.10 Helper: 将整数索引转换回高版本的槽位字符串名。
+     * 
      * @param index 1-4
      * @return "head", "chest", "legs", "feet", or ""
      */

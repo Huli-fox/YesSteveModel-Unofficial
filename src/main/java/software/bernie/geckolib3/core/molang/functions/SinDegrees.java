@@ -4,6 +4,7 @@ import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.mclib.math.functions.Function;
 
 public class SinDegrees extends Function {
+
     public SinDegrees(IValue[] values, String name) throws Exception {
         super(values, name);
     }

@@ -1,10 +1,11 @@
 package software.bernie.geckolib3.geo.raw.pojo;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.io.Serializable;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class ModelProperties implements Serializable {
+
     private static final long serialVersionUID = 42L;
     private Boolean animationArmsDown;
     private Boolean animationArmsOutFront;
@@ -23,6 +24,9 @@ public class ModelProperties implements Serializable {
     private Double visibleBoundsHeight;
     private double[] visibleBoundsOffset;
     private Double visibleBoundsWidth;
+    private Double heightScale = 0.7D;
+    private Double widthScale = 0.7D;
+    private ExtraInfo extraInfo = null;
 
     @JsonProperty("animationArmsDown")
     public Boolean getAnimationArmsDown() {
@@ -208,5 +212,35 @@ public class ModelProperties implements Serializable {
     @JsonProperty("visible_bounds_width")
     public void setVisibleBoundsWidth(Double value) {
         this.visibleBoundsWidth = value;
+    }
+
+    @JsonProperty("ysm_height_scale")
+    public Double getHeightScale() {
+        return heightScale;
+    }
+
+    @JsonProperty("ysm_height_scale")
+    public void setHeightScale(Double heightScale) {
+        this.heightScale = heightScale;
+    }
+
+    @JsonProperty("ysm_width_scale")
+    public Double getWidthScale() {
+        return widthScale;
+    }
+
+    @JsonProperty("ysm_width_scale")
+    public void setWidthScale(Double widthScale) {
+        this.widthScale = widthScale;
+    }
+
+    @JsonProperty("ysm_extra_info")
+    public ExtraInfo getExtraInfo() {
+        return extraInfo;
+    }
+
+    @JsonProperty("ysm_extra_info")
+    public void setExtraInfo(ExtraInfo extraInfo) {
+        this.extraInfo = extraInfo;
     }
 }

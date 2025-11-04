@@ -1,13 +1,14 @@
 package com.fox.ysmu.eep; // 建议放在 eep 包下
 
-import com.fox.ysmu.Config;
-import com.fox.ysmu.ysmu;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IExtendedEntityProperties;
+
+import com.fox.ysmu.Config;
+import com.fox.ysmu.ysmu;
 
 public class ExtendedModelInfo implements IExtendedEntityProperties {
 
@@ -19,7 +20,9 @@ public class ExtendedModelInfo implements IExtendedEntityProperties {
 
     // 2. 将原 ModelInfoCapability 的字段和方法直接移到这里
     private ResourceLocation modelId = new ResourceLocation(ysmu.MODID, Config.DEFAULT_MODEL_ID);
-    private ResourceLocation selectTexture = new ResourceLocation(ysmu.MODID, Config.DEFAULT_MODEL_ID + "/" + Config.DEFAULT_MODEL_TEXTURE);
+    private ResourceLocation selectTexture = new ResourceLocation(
+        ysmu.MODID,
+        Config.DEFAULT_MODEL_ID + "/" + Config.DEFAULT_MODEL_TEXTURE);
     private String animation = "idle";
     private boolean playAnimation = false;
     private boolean dirty; // dirty 标志可以保留，用于客户端渲染逻辑判断是否需要更新
@@ -78,7 +81,7 @@ public class ExtendedModelInfo implements IExtendedEntityProperties {
         this.dirty = true;
         // 如果需要数据变化时立即同步，可以在这里发送数据包
         // if (!this.player.worldObj.isRemote) {
-        //     NetworkHandler.sendToClientPlayer(new SyncModelInfoPacket(this.player), this.player);
+        // NetworkHandler.sendToClientPlayer(new SyncModelInfoPacket(this.player), this.player);
         // }
     }
 

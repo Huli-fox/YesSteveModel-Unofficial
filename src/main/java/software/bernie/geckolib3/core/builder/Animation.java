@@ -16,6 +16,7 @@ import software.bernie.geckolib3.core.keyframe.EventKeyFrame;
 import software.bernie.geckolib3.core.keyframe.ParticleEventKeyFrame;
 
 public class Animation implements Serializable {
+
     private static final long serialVersionUID = 42L;
     public String animationName;
     public Double animationLength;
@@ -38,9 +39,11 @@ public class Animation implements Serializable {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
             objectOutputStream.writeObject(animation);
             objectOutputStream.flush();
-            String serialized = Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray());
+            String serialized = Base64.getEncoder()
+                .encodeToString(byteArrayOutputStream.toByteArray());
 
-            byte[] data = Base64.getDecoder().decode(serialized);
+            byte[] data = Base64.getDecoder()
+                .decode(serialized);
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data);
             ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
             return (Animation) objectInputStream.readObject();

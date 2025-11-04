@@ -1,10 +1,11 @@
 package com.fox.ysmu.util;
 
+import javax.annotation.Nullable;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
-import javax.annotation.Nullable;
 
 public class GsonHelper {
 
@@ -14,9 +15,9 @@ public class GsonHelper {
     /**
      * 使用指定的 Gson 实例将 Json 字符串反序列化为指定类型的对象。
      *
-     * @param gson      用于反序列化的 Gson 实例
-     * @param json      要反序列化的 Json 字符串
-     * @param classOfT  目标对象的类
+     * @param gson     用于反序列化的 Gson 实例
+     * @param json     要反序列化的 Json 字符串
+     * @param classOfT 目标对象的类
      * @return 反序列化后的对象，如果 json 为 null 则返回 null
      * @throws JsonSyntaxException 如果 json 格式错误
      */
@@ -57,10 +58,12 @@ public class GsonHelper {
     public static String getAsString(JsonObject jsonObject, String memberName) {
         if (jsonObject.has(memberName)) {
             JsonElement element = jsonObject.get(memberName);
-            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive()
+                .isString()) {
                 return element.getAsString();
             } else {
-                throw new JsonSyntaxException("Expected '" + memberName + "' to be a String, was " + getElementType(element));
+                throw new JsonSyntaxException(
+                    "Expected '" + memberName + "' to be a String, was " + getElementType(element));
             }
         } else {
             throw new JsonSyntaxException("Missing '" + memberName + "', expected to find a String");
@@ -73,10 +76,12 @@ public class GsonHelper {
     public static boolean getAsBoolean(JsonObject jsonObject, String memberName) {
         if (jsonObject.has(memberName)) {
             JsonElement element = jsonObject.get(memberName);
-            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean()) {
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive()
+                .isBoolean()) {
                 return element.getAsBoolean();
             } else {
-                throw new JsonSyntaxException("Expected '" + memberName + "' to be a Boolean, was " + getElementType(element));
+                throw new JsonSyntaxException(
+                    "Expected '" + memberName + "' to be a Boolean, was " + getElementType(element));
             }
         } else {
             throw new JsonSyntaxException("Missing '" + memberName + "', expected to find a Boolean");
@@ -89,10 +94,12 @@ public class GsonHelper {
     public static int getAsInt(JsonObject jsonObject, String memberName) {
         if (jsonObject.has(memberName)) {
             JsonElement element = jsonObject.get(memberName);
-            if (element.isJsonPrimitive() && element.getAsJsonPrimitive().isNumber()) {
+            if (element.isJsonPrimitive() && element.getAsJsonPrimitive()
+                .isNumber()) {
                 return element.getAsInt();
             } else {
-                throw new JsonSyntaxException("Expected '" + memberName + "' to be a Int, was " + getElementType(element));
+                throw new JsonSyntaxException(
+                    "Expected '" + memberName + "' to be a Int, was " + getElementType(element));
             }
         } else {
             throw new JsonSyntaxException("Missing '" + memberName + "', expected to find a Int");

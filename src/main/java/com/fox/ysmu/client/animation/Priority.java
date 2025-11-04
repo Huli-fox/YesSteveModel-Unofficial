@@ -1,6 +1,7 @@
 package com.fox.ysmu.client.animation;
 
 public final class Priority {
+
     public static final int HIGHEST = 0;
     public static final int HIGH = 1;
     public static final int NORMAL = 2;

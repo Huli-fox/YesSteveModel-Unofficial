@@ -3,12 +3,13 @@ package software.bernie.geckolib3.geo.raw.pojo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Cube {
+
     private Double inflate;
     private Boolean mirror;
-    private double[] origin = new double[]{0, 0, 0};
-    private double[] pivot = new double[]{0, 0, 0};
-    private double[] rotation = new double[]{0, 0, 0};
-    private double[] size = new double[]{1, 1, 1};
+    private double[] origin = new double[] { 0, 0, 0 };
+    private double[] pivot = new double[] { 0, 0, 0 };
+    private double[] rotation = new double[] { 0, 0, 0 };
+    private double[] size = new double[] { 1, 1, 1 };
     private UvUnion uv;
 
     /**

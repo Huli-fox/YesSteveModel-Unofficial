@@ -1,7 +1,12 @@
 package com.fox.ysmu.network.message;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.nbt.NBTTagCompound;
+
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.util.ThreadTools;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -9,16 +14,13 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
 
 public class SyncModelInfo implements IMessage {
+
     private int entityId;
     private NBTTagCompound modelInfoNBT;
 
-    public SyncModelInfo() {
-    }
+    public SyncModelInfo() {}
 
     public SyncModelInfo(int entityId, ExtendedModelInfo modelInfo) {
         this.entityId = entityId;
@@ -42,6 +44,7 @@ public class SyncModelInfo implements IMessage {
 
     @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<SyncModelInfo, IMessage> {
+
         @Override
         public IMessage onMessage(SyncModelInfo message, MessageContext ctx) {
             if (ctx.side == Side.CLIENT) {
@@ -49,6 +52,7 @@ public class SyncModelInfo implements IMessage {
             }
             return null;
         }
+
         private void handleEEP(SyncModelInfo message) {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.theWorld != null) {

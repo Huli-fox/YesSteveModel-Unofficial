@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public final class InputStreamUtils {
+
     public static byte[] toBytes(InputStream stream) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];

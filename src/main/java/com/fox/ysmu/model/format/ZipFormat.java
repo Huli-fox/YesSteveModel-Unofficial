@@ -1,18 +1,6 @@
 package com.fox.ysmu.model.format;
 
-import com.fox.ysmu.data.EncryptTools;
-import com.fox.ysmu.data.ModelData;
-import software.bernie.geckolib3.geo.raw.pojo.Converter;
-import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
-import com.fox.ysmu.util.InputStreamUtils;
-import com.fox.ysmu.util.Md5Utils;
-import com.fox.ysmu.util.ObjectStreamUtil;
-import com.google.common.collect.Maps;
-import net.minecraft.util.ResourceLocation;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
+import static com.fox.ysmu.model.ServerModelManager.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,14 +13,29 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static com.fox.ysmu.model.ServerModelManager.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+
+import com.fox.ysmu.compat.Utils;
+import com.fox.ysmu.data.EncryptTools;
+import com.fox.ysmu.data.ModelData;
+import com.fox.ysmu.util.InputStreamUtils;
+import com.fox.ysmu.util.Md5Utils;
+import com.fox.ysmu.util.ObjectStreamUtil;
+import com.google.common.collect.Maps;
+
+import software.bernie.geckolib3.geo.raw.pojo.Converter;
+import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
 
 public final class ZipFormat {
+
     public static void cacheAllModels(Path rootPath) {
-        Collection<File> zipFiles = FileUtils.listFiles(rootPath.toFile(), new String[]{"zip"}, false);
+        Collection<File> zipFiles = FileUtils.listFiles(rootPath.toFile(), new String[] { "zip" }, false);
         for (File file : zipFiles) {
             String modelId = removeExtension(file.getName());
-            if (!ResourceLocation.isValidResourceLocation(modelId)) {
+            if (!Utils.isValidResourceLocation(modelId)) {
                 continue;
             }
             try (ZipFile zipFile = new ZipFile(file)) {
@@ -42,7 +45,10 @@ public final class ZipFormat {
                 if (zipFile.getEntry(ARM_MODEL_FILE_NAME) == null || isBlankEntry(zipFile, ARM_MODEL_FILE_NAME)) {
                     continue;
                 }
-                if (zipFile.stream().noneMatch(entry -> entry.getName().endsWith(".png"))) {
+                if (zipFile.stream()
+                    .noneMatch(
+                        entry -> entry.getName()
+                            .endsWith(".png"))) {
                     continue;
                 }
 
@@ -68,8 +74,15 @@ public final class ZipFormat {
         try {
             ModelData data = getModelData(zipFile, modelId, isAuth);
             byte[] dataBytes = EncryptTools.assembleEncryptModels(data);
-            data.setMd5(Md5Utils.md5Hex(dataBytes).toUpperCase(Locale.US));
-            FileUtils.writeByteArrayToFile(CACHE_SERVER.resolve(data.getInfo().getMd5()).toFile(), dataBytes);
+            data.setMd5(
+                Md5Utils.md5Hex(dataBytes)
+                    .toUpperCase(Locale.US));
+            FileUtils.writeByteArrayToFile(
+                CACHE_SERVER.resolve(
+                    data.getInfo()
+                        .getMd5())
+                    .toFile(),
+                dataBytes);
             return data.getInfo();
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,15 +97,17 @@ public final class ZipFormat {
         model.put("arm", getBytes(zipFile, ARM_MODEL_FILE_NAME));
 
         Map<String, byte[]> texture = Maps.newHashMap();
-        zipFile.stream().forEach(zipEntry -> {
-            if (zipEntry.getName().endsWith(".png")) {
-                try {
-                    texture.put(zipEntry.getName(), getBytes(zipFile, zipEntry.getName()));
-                } catch (IOException e) {
-                    e.printStackTrace();
+        zipFile.stream()
+            .forEach(zipEntry -> {
+                if (zipEntry.getName()
+                    .endsWith(".png")) {
+                    try {
+                        texture.put(zipEntry.getName(), getBytes(zipFile, zipEntry.getName()));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-        });
+            });
 
         Map<String, byte[]> animation = Maps.newHashMap();
         animation.put("main", getBytes(zipFile, MAIN_ANIMATION_FILE_NAME));

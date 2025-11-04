@@ -1,6 +1,14 @@
 package software.bernie.geckolib3.geo.render;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.vecmath.Vector3f;
+
 import org.apache.commons.lang3.ArrayUtils;
+
 import software.bernie.geckolib3.geo.raw.pojo.Bone;
 import software.bernie.geckolib3.geo.raw.pojo.Cube;
 import software.bernie.geckolib3.geo.raw.pojo.ModelProperties;
@@ -11,13 +19,8 @@ import software.bernie.geckolib3.geo.render.built.GeoCube;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.util.VectorUtils;
 
-import javax.vecmath.Vector3f;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class GeoBuilder implements IGeoBuilder {
+
     private static Map<String, IGeoBuilder> moddedGeoBuilders = new HashMap<>();
     private static IGeoBuilder defaultBuilder = new GeoBuilder();
     private static final String LEFT_HAND_LOCATOR = "LeftHandLocator";
@@ -42,20 +45,25 @@ public class GeoBuilder implements IGeoBuilder {
         for (RawBoneGroup rawBone : geometryTree.topLevelBones.values()) {
             model.topLevelBones.add(this.constructBone(rawBone, geometryTree.properties, null));
         }
-        model.getBone(LEFT_HAND_LOCATOR).ifPresent(b -> {
-            getBoneParent(b, model.leftHandBones);
-            Collections.reverse(model.leftHandBones);
-        });
-        model.getBone(RIGHT_HAND_LOCATOR).ifPresent(b -> {
-            getBoneParent(b, model.rightHandBones);
-            Collections.reverse(model.rightHandBones);
-        });
-        model.getBone(ELYTRA_LOCATOR_NAME).ifPresent(b -> {
-            getBoneParent(b, model.elytraBones);
-            Collections.reverse(model.elytraBones);
-        });
-        model.getBone(FIRST_PERSON_HEAD_NAME).ifPresent(b -> model.firstPersonHead = b);
-        model.getBone(FIRST_PERSON_VIEW_LOCATOR_NAME).ifPresent(b -> model.firstPersonViewLocator = b);
+        model.getBone(LEFT_HAND_LOCATOR)
+            .ifPresent(b -> {
+                getBoneParent(b, model.leftHandBones);
+                Collections.reverse(model.leftHandBones);
+            });
+        model.getBone(RIGHT_HAND_LOCATOR)
+            .ifPresent(b -> {
+                getBoneParent(b, model.rightHandBones);
+                Collections.reverse(model.rightHandBones);
+            });
+        model.getBone(ELYTRA_LOCATOR_NAME)
+            .ifPresent(b -> {
+                getBoneParent(b, model.elytraBones);
+                Collections.reverse(model.elytraBones);
+            });
+        model.getBone(FIRST_PERSON_HEAD_NAME)
+            .ifPresent(b -> model.firstPersonHead = b);
+        model.getBone(FIRST_PERSON_VIEW_LOCATOR_NAME)
+            .ifPresent(b -> model.firstPersonViewLocator = b);
         return model;
     }
 
@@ -86,8 +94,12 @@ public class GeoBuilder implements IGeoBuilder {
 
         if (!ArrayUtils.isEmpty(rawBone.getCubes())) {
             for (Cube cube : rawBone.getCubes()) {
-                geoBone.childCubes.add(GeoCube.createFromPojoCube(cube, properties,
-                    geoBone.inflate == null ? null : geoBone.inflate / 16, geoBone.mirror));
+                geoBone.childCubes.add(
+                    GeoCube.createFromPojoCube(
+                        cube,
+                        properties,
+                        geoBone.inflate == null ? null : geoBone.inflate / 16,
+                        geoBone.mirror));
             }
         }
 

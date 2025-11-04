@@ -1,6 +1,7 @@
 package com.fox.ysmu.util;
 
 public final class ByteInteger {
+
     public static byte[] int2Bytes(int value) {
         byte[] b = new byte[4];
         for (int i = 0; i < 4; i++) {

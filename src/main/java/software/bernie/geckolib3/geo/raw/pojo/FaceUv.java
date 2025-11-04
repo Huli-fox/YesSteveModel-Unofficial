@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * faces the -x axis
  */
 public class FaceUv {
+
     private String materialInstance;
     private double[] uv;
     private double[] uvSize;
@@ -80,6 +81,7 @@ public class FaceUv {
     }
 
     public enum Rotation {
+
         NONE,
         CLOCKWISE_90,
         CLOCKWISE_180,
@@ -102,13 +104,13 @@ public class FaceUv {
         public float[] rotateUvs(float u, float v, float u2, float v2) {
             switch (this) {
                 case CLOCKWISE_90:
-                    return new float[] {u2, v, u2, v2, u, v2, u, v};
+                    return new float[] { u2, v, u2, v2, u, v2, u, v };
                 case CLOCKWISE_180:
-                    return new float[] {u2, v2, u, v2, u, v, u2, v};
+                    return new float[] { u2, v2, u, v2, u, v, u2, v };
                 case CLOCKWISE_270:
-                    return new float[] {u, v2, u, v, u2, v, u2, v2};
+                    return new float[] { u, v2, u, v, u2, v, u2, v2 };
                 default:
-                    return new float[] {u, v, u2, v, u2, v2, u, v2};
+                    return new float[] { u, v, u2, v, u2, v2, u, v2 };
             }
         }
     }

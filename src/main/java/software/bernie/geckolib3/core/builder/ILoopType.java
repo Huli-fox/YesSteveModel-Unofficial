@@ -5,13 +5,14 @@
 
 package software.bernie.geckolib3.core.builder;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-
 import java.io.Serializable;
 import java.util.Locale;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+
 public interface ILoopType extends Serializable {
+
     /**
      * 从动画文件读取播放类型
      *
@@ -36,8 +37,7 @@ public interface ILoopType extends Serializable {
             }
             try {
                 return EDefaultLoopTypes.valueOf(string.toUpperCase(Locale.ROOT));
-            } catch (Exception ignore) {
-            }
+            } catch (Exception ignore) {}
         }
         return EDefaultLoopTypes.PLAY_ONCE;
     }
@@ -48,8 +48,11 @@ public interface ILoopType extends Serializable {
      * @return 是否在动画结束后重复
      */
     boolean isRepeatingAfterEnd();
+
     static final long serialVersionUID = 42L;
+
     enum EDefaultLoopTypes implements ILoopType {
+
         LOOP(true),
         PLAY_ONCE,
         HOLD_ON_LAST_FRAME(true);

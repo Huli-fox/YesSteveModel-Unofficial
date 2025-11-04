@@ -3,7 +3,9 @@ package com.eliotlash.mclib.utils.resources;
 import com.eliotlash.mclib.utils.Color;
 
 public enum PixelAccessor {
+
     BYTE() {
+
         @Override
         public void get(Pixels pixels, int index, Color color) {
             index *= pixels.pixelLength;
@@ -37,6 +39,7 @@ public enum PixelAccessor {
         }
     },
     INT() {
+
         @Override
         public void get(Pixels pixels, int index, Color color) {
             int c = pixels.pixelInts[index];
@@ -54,7 +57,9 @@ public enum PixelAccessor {
 
         @Override
         public void set(Pixels pixels, int index, Color color) {
-            pixels.pixelInts[index] = ((int) (color.a * 0xff) << 24) + ((int) (color.b * 0xff) << 16) + ((int) (color.g * 0xff) << 8) + (int) (color.r * 0xff);
+            pixels.pixelInts[index] = ((int) (color.a * 0xff) << 24) + ((int) (color.b * 0xff) << 16)
+                + ((int) (color.g * 0xff) << 8)
+                + (int) (color.r * 0xff);
         }
     };
 

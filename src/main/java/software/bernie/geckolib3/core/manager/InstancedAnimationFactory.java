@@ -3,6 +3,7 @@ package software.bernie.geckolib3.core.manager;
 import software.bernie.geckolib3.core.IAnimatable;
 
 public class InstancedAnimationFactory extends AnimationFactory {
+
     private AnimationData animationData;
 
     public InstancedAnimationFactory(IAnimatable animatable) {

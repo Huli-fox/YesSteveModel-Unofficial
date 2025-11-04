@@ -8,6 +8,7 @@ package software.bernie.geckolib3.core.keyframe;
 import java.io.Serializable;
 
 public class EventKeyFrame<T> implements Serializable {
+
     private static final long serialVersionUID = 42L;
     private T eventData;
     private Double startTick;

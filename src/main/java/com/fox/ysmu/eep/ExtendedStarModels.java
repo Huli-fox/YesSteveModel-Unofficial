@@ -1,7 +1,7 @@
 package com.fox.ysmu.eep; // 放在 eep 包下
 
-import com.google.common.collect.Sets;
-import cpw.mods.fml.common.FMLLog;
+import java.util.Set;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
@@ -11,7 +11,9 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IExtendedEntityProperties;
 
-import java.util.Set;
+import com.google.common.collect.Sets;
+
+import cpw.mods.fml.common.FMLLog;
 
 public class ExtendedStarModels implements IExtendedEntityProperties {
 

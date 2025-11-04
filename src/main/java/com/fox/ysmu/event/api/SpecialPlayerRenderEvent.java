@@ -1,13 +1,16 @@
 package com.fox.ysmu.event.api;
 
-import com.fox.ysmu.client.entity.CustomPlayerEntity;
-import cpw.mods.fml.common.eventhandler.Cancelable;
-import cpw.mods.fml.common.eventhandler.Event;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
+import com.fox.ysmu.client.entity.CustomPlayerEntity;
+
+import cpw.mods.fml.common.eventhandler.Cancelable;
+import cpw.mods.fml.common.eventhandler.Event;
+
 @Cancelable
 public class SpecialPlayerRenderEvent extends Event {
+
     private final EntityPlayer player;
     private final CustomPlayerEntity customPlayer;
     private final ResourceLocation modelId;

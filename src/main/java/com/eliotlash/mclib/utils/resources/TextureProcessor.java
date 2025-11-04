@@ -1,21 +1,25 @@
 package com.eliotlash.mclib.utils.resources;
 
-import com.eliotlash.mclib.utils.Color;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.IResource;
-import net.minecraft.client.resources.IResourceManager;
-import software.bernie.example.config.ConfigHandler;
-
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.IResource;
+import net.minecraft.client.resources.IResourceManager;
+
+import com.eliotlash.mclib.utils.Color;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import software.bernie.example.config.ConfigHandler;
+
 @SideOnly(Side.CLIENT)
 public class TextureProcessor {
+
     public static Pixels pixels = new Pixels();
     public static Pixels target = new Pixels();
 
@@ -25,7 +29,8 @@ public class TextureProcessor {
     }
 
     public static BufferedImage process(MultiResourceLocation multi) {
-        IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
+        IResourceManager manager = Minecraft.getMinecraft()
+            .getResourceManager();
         List<BufferedImage> images = new ArrayList<BufferedImage>();
 
         int w = 0;
@@ -94,7 +99,8 @@ public class TextureProcessor {
     /**
      * Apply erasing
      */
-    private static void processErase(BufferedImage image, BufferedImage child, FilteredResourceLocation filter, int iw, int ih) {
+    private static void processErase(BufferedImage image, BufferedImage child, FilteredResourceLocation filter, int iw,
+        int ih) {
         BufferedImage mask = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
         Graphics g2 = mask.getGraphics();
 

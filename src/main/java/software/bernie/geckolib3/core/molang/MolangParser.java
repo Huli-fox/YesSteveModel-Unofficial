@@ -1,28 +1,30 @@
 package software.bernie.geckolib3.core.molang;
 
-import software.bernie.geckolib3.core.molang.expressions.MolangAssignment;
-import software.bernie.geckolib3.core.molang.expressions.MolangExpression;
-import software.bernie.geckolib3.core.molang.expressions.MolangMultiStatement;
-import software.bernie.geckolib3.core.molang.expressions.MolangValue;
-import software.bernie.geckolib3.core.molang.functions.CosDegrees;
-import software.bernie.geckolib3.core.molang.functions.SinDegrees;
+import java.util.List;
+import java.util.Map;
+import java.util.function.DoubleSupplier;
+
 import com.eliotlash.mclib.math.Constant;
 import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.mclib.math.MathBuilder;
 import com.eliotlash.mclib.math.Variable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.DoubleSupplier;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import software.bernie.geckolib3.core.molang.expressions.MolangAssignment;
+import software.bernie.geckolib3.core.molang.expressions.MolangExpression;
+import software.bernie.geckolib3.core.molang.expressions.MolangMultiStatement;
+import software.bernie.geckolib3.core.molang.expressions.MolangValue;
+import software.bernie.geckolib3.core.molang.functions.CosDegrees;
+import software.bernie.geckolib3.core.molang.functions.SinDegrees;
 
 /**
  * MoLang 解析器
  * <a href="https://bedrock.dev/docs/1.19.0.0/1.19.30.23/Molang#Math%20Functions">Wiki</a>
  */
 public class MolangParser extends MathBuilder {
+
     public static final Map<String, LazyVariable> VARIABLES = new Object2ObjectOpenHashMap<>();
     public static final MolangExpression ZERO = new MolangValue(null, new Constant(0));
     public static final MolangExpression ONE = new MolangValue(null, new Constant(1));
@@ -137,7 +139,9 @@ public class MolangParser extends MathBuilder {
      */
     public MolangExpression parseExpression(String expression) throws MolangException {
         MolangMultiStatement result = null;
-        for (String split : expression.toLowerCase().trim().split(";")) {
+        for (String split : expression.toLowerCase()
+            .trim()
+            .split(";")) {
             String trimmed = split.trim();
             if (!trimmed.isEmpty()) {
                 if (result == null) {
@@ -155,7 +159,8 @@ public class MolangParser extends MathBuilder {
     /**
      * 解析单个 MoLang 表达式
      */
-    protected MolangExpression parseOneLine(String expression, MolangMultiStatement currentStatement) throws MolangException {
+    protected MolangExpression parseOneLine(String expression, MolangMultiStatement currentStatement)
+        throws MolangException {
         if (expression.startsWith(RETURN)) {
             try {
                 return new MolangValue(this, parse(expression.substring(RETURN.length()))).addReturn();
@@ -168,7 +173,10 @@ public class MolangParser extends MathBuilder {
             // 将表达式拆分
             List<Object> symbols = breakdownChars(this.breakdown(expression));
             // 如果是赋值表达式
-            if (symbols.size() >= 3 && (symbols.get(0) instanceof String name) && isVariable(symbols.get(0)) && symbols.get(1).equals("=")) {
+            if (symbols.size() >= 3 && (symbols.get(0) instanceof String name)
+                && isVariable(symbols.get(0))
+                && symbols.get(1)
+                    .equals("=")) {
                 symbols = symbols.subList(2, symbols.size());
                 LazyVariable variable;
                 if (!VARIABLES.containsKey(name) && !currentStatement.locals.containsKey(name)) {

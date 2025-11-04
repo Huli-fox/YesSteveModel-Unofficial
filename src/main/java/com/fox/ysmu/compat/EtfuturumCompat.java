@@ -1,13 +1,15 @@
 package com.fox.ysmu.compat;
 
+import net.minecraft.entity.player.EntityPlayer;
+
 import cpw.mods.fml.common.Loader;
 import ganymedes01.etfuturum.api.elytra.IElytraPlayer;
 import ganymedes01.etfuturum.elytra.IClientElytraPlayer;
-import ganymedes01.etfuturum.spectator.SpectatorMode;
 import ganymedes01.etfuturum.items.equipment.ItemArmorElytra;
-import net.minecraft.entity.player.EntityPlayer;
+import ganymedes01.etfuturum.spectator.SpectatorMode;
 
 public class EtfuturumCompat {
+
     private static final boolean ETFUTURUM_LOADED = Loader.isModLoaded("etfuturum");
 
     public static boolean isEtfuturumLoadedLoaded() {
@@ -16,7 +18,7 @@ public class EtfuturumCompat {
 
     public static boolean isFallFlying(EntityPlayer entityPlayer) {
         if (ETFUTURUM_LOADED) {
-            return ((IElytraPlayer)entityPlayer).etfu$isElytraFlying();
+            return ((IElytraPlayer) entityPlayer).etfu$isElytraFlying();
         }
         return false;
     }

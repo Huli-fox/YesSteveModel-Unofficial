@@ -1,8 +1,6 @@
 package com.fox.ysmu.client.renderer.layer;
 
-import com.fox.ysmu.client.ClientEventHandler;
-import com.fox.ysmu.compat.QuatJ2L;
-import cpw.mods.fml.common.Optional;
+import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBiped;
@@ -16,10 +14,18 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.IItemRenderer;
 import net.minecraftforge.client.MinecraftForgeClient;
+
 import org.joml.Quaternionf;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.util.vector.Quaternion;
+
+import com.fox.ysmu.client.ClientEventHandler;
+import com.fox.ysmu.compat.Axis;
+import com.fox.ysmu.compat.BackhandCompat;
+import com.fox.ysmu.compat.Utils;
+
+import cpw.mods.fml.common.Optional;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.util.Color;
 import software.bernie.geckolib3.geo.GeoLayerRenderer;
@@ -27,14 +33,12 @@ import software.bernie.geckolib3.geo.IGeoRenderer;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.util.RenderUtils;
-import net.geckominecraft.client.renderer.GlStateManager;
-import com.fox.ysmu.compat.Axis;
-import com.fox.ysmu.compat.BackhandCompat;
 import xonin.backhand.compat.IOffhandRenderOptOut;
 
-
 @Optional.Interface(iface = "xonin.backhand.compat.IOffhandRenderOptOut", modid = "backhand")
-public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatable> extends GeoLayerRenderer<T> implements IOffhandRenderOptOut {
+public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatable> extends GeoLayerRenderer<T>
+    implements IOffhandRenderOptOut {
+
     private final ItemRenderer itemRenderer;
 
     public CustomPlayerItemInHandLayer(IGeoRenderer<T> entityRendererIn) {
@@ -44,7 +48,7 @@ public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatabl
 
     @Override
     public void render(T entityLivingBaseIn, float limbSwing, float limbSwingAmount, float partialTicks,
-                       float ageInTicks, float netHeadYaw, float headPitch, Color renderColor) {
+        float ageInTicks, float netHeadYaw, float headPitch, Color renderColor) {
         if (entityRenderer.getGeoModel() == null) {
             return;
         }
@@ -112,7 +116,8 @@ public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatabl
         }
     }
 
-    protected void renderMainhandItemIn3rdPerson(EntityPlayer player, ModelBiped modelBipedMain, ItemStack mainhandItem) {
+    protected void renderMainhandItemIn3rdPerson(EntityPlayer player, ModelBiped modelBipedMain,
+        ItemStack mainhandItem) {
         float f2;
         float f4;
         // TODO 很多数值取反了，待检查
@@ -166,33 +171,33 @@ public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatabl
                 GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
             } else if (mainhandItem.getItem()
                 .isFull3D()) {
-                f2 = 0.625F;
+                    f2 = 0.625F;
 
-                if (mainhandItem.getItem()
-                    .shouldRotateAroundWhenRendering()) {
-                    GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glTranslatef(0.0F, -0.125F, 0.0F);
+                    if (mainhandItem.getItem()
+                        .shouldRotateAroundWhenRendering()) {
+                        GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
+                        GL11.glTranslatef(0.0F, -0.125F, 0.0F);
+                    }
+
+                    if (player.getItemInUseCount() > 0 && enumaction == EnumAction.block) {
+                        GL11.glTranslatef(0.05F, 0.0F, -0.1F);
+                        GL11.glRotatef(-50.0F, 0.0F, 1.0F, 0.0F);
+                        GL11.glRotatef(-10.0F, 1.0F, 0.0F, 0.0F);
+                        GL11.glRotatef(-60.0F, 0.0F, 0.0F, 1.0F);
+                    }
+
+                    GL11.glTranslatef(0.0F, 0.1875F, 0.0F);
+                    GL11.glScalef(f2, -f2, f2); // 镜像变换？需要修改
+                    GL11.glRotatef(-100.0F, 1.0F, 0.0F, 0.0F);
+                    GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
+                } else {
+                    f2 = 0.375F;
+                    GL11.glTranslatef(-0.25F, 0.1875F, 0.1875F);
+                    GL11.glScalef(f2, f2, f2);
+                    GL11.glRotatef(60.0F, 0.0F, 0.0F, 1.0F);
+                    GL11.glRotatef(-90.0F, 1.0F, 0.0F, 0.0F);
+                    GL11.glRotatef(20.0F, 0.0F, 0.0F, 1.0F);
                 }
-
-                if (player.getItemInUseCount() > 0 && enumaction == EnumAction.block) {
-                    GL11.glTranslatef(0.05F, 0.0F, -0.1F);
-                    GL11.glRotatef(-50.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glRotatef(-10.0F, 1.0F, 0.0F, 0.0F);
-                    GL11.glRotatef(-60.0F, 0.0F, 0.0F, 1.0F);
-                }
-
-                GL11.glTranslatef(0.0F, 0.1875F, 0.0F);
-                GL11.glScalef(f2, -f2, f2);  // 镜像变换？需要修改
-                GL11.glRotatef(-100.0F, 1.0F, 0.0F, 0.0F);
-                GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
-            } else {
-                f2 = 0.375F;
-                GL11.glTranslatef(-0.25F, 0.1875F, 0.1875F);
-                GL11.glScalef(f2, f2, f2);
-                GL11.glRotatef(60.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glRotatef(-90.0F, 1.0F, 0.0F, 0.0F);
-                GL11.glRotatef(20.0F, 0.0F, 0.0F, 1.0F);
-            }
 
             float f3;
             int k;
@@ -288,33 +293,33 @@ public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatabl
                 GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
             } else if (offhandItem.getItem()
                 .isFull3D()) {
-                f2 = 0.625F;
+                    f2 = 0.625F;
 
-                if (offhandItem.getItem()
-                    .shouldRotateAroundWhenRendering()) {
-                    GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
-                    GL11.glTranslatef(0.0F, -0.125F, 0.0F);
+                    if (offhandItem.getItem()
+                        .shouldRotateAroundWhenRendering()) {
+                        GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
+                        GL11.glTranslatef(0.0F, -0.125F, 0.0F);
+                    }
+
+                    if (player.getItemInUseCount() > 0 && enumaction == EnumAction.block) {
+                        GL11.glTranslatef(0.05F, 0.0F, -0.1F);
+                        GL11.glRotatef(-50.0F, 0.0F, 1.0F, 0.0F);
+                        GL11.glRotatef(-10.0F, 1.0F, 0.0F, 0.0F);
+                        GL11.glRotatef(-60.0F, 0.0F, 0.0F, 1.0F);
+                    }
+
+                    GL11.glTranslatef(0.0F, 0.1875F, 0.0F);
+                    GL11.glScalef(f2, -f2, f2);
+                    GL11.glRotatef(-100.0F, 1.0F, 0.0F, 0.0F);
+                    GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
+                } else {
+                    f2 = 0.375F;
+                    GL11.glTranslatef(0.25F, 0.1875F, -0.1875F);
+                    GL11.glScalef(f2, f2, f2);
+                    GL11.glRotatef(60.0F, 0.0F, 0.0F, 1.0F);
+                    GL11.glRotatef(-90.0F, 1.0F, 0.0F, 0.0F);
+                    GL11.glRotatef(20.0F, 0.0F, 0.0F, 1.0F);
                 }
-
-                if (player.getItemInUseCount() > 0 && enumaction == EnumAction.block) {
-                    GL11.glTranslatef(0.05F, 0.0F, -0.1F);
-                    GL11.glRotatef(-50.0F, 0.0F, 1.0F, 0.0F);
-                    GL11.glRotatef(-10.0F, 1.0F, 0.0F, 0.0F);
-                    GL11.glRotatef(-60.0F, 0.0F, 0.0F, 1.0F);
-                }
-
-                GL11.glTranslatef(0.0F, 0.1875F, 0.0F);
-                GL11.glScalef(f2, -f2, f2);
-                GL11.glRotatef(-100.0F, 1.0F, 0.0F, 0.0F);
-                GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
-            } else {
-                f2 = 0.375F;
-                GL11.glTranslatef(0.25F, 0.1875F, -0.1875F);
-                GL11.glScalef(f2, f2, f2);
-                GL11.glRotatef(60.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glRotatef(-90.0F, 1.0F, 0.0F, 0.0F);
-                GL11.glRotatef(20.0F, 0.0F, 0.0F, 1.0F);
-            }
 
             float f3;
             int k;
@@ -354,7 +359,7 @@ public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatabl
     }
 
     private static Quaternion j2l(Quaternionf jomlQuat) {
-        return QuatJ2L.j2l(jomlQuat);
+        return Utils.j2l(jomlQuat);
     }
 
     @Override

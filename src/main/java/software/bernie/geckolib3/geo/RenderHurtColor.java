@@ -12,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
  * entities getting hurt
  */
 public class RenderHurtColor extends RendererLivingEntity {
+
     /**
      * Private instance
      */
@@ -26,11 +27,11 @@ public class RenderHurtColor extends RendererLivingEntity {
     }
 
     public static boolean set(EntityLivingBase entity, float partialTicks) {
-        return true;//getInstance().setBrightness(entity, partialTicks, true); // TODO
+        return true;// getInstance().setBrightness(entity, partialTicks, true); // TODO
     }
 
     public static void unset() {
-        //getInstance().unsetBrightness();
+        // getInstance().unsetBrightness();
     }
 
     public RenderHurtColor(ModelBase modelBaseIn, float shadowSizeIn) {

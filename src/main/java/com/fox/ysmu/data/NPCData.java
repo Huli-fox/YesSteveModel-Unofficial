@@ -1,13 +1,16 @@
 package com.fox.ysmu.data;
 
-import com.google.common.collect.Maps;
-import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.util.ResourceLocation;
-
 import java.util.Map;
 import java.util.UUID;
 
+import net.minecraft.util.ResourceLocation;
+
+import com.google.common.collect.Maps;
+
+import it.unimi.dsi.fastutil.Pair;
+
 public final class NPCData {
+
     private static Map<UUID, Pair<ResourceLocation, ResourceLocation>> DATA = Maps.newHashMap();
 
     public static void clear() {

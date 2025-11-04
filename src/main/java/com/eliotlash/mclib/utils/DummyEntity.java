@@ -12,12 +12,13 @@ import net.minecraft.world.World;
  * methods.
  */
 public class DummyEntity extends EntityLivingBase {
+
     private final ItemStack[] held;
 
     public DummyEntity(World worldIn) {
         super(worldIn);
 
-        this.held = new ItemStack[]{null, null, null, null, new ItemStack(Items.diamond_sword)};
+        this.held = new ItemStack[] { null, null, null, null, new ItemStack(Items.diamond_sword) };
     }
 
     @Override

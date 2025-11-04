@@ -1,8 +1,11 @@
 package com.fox.ysmu.network.message;
 
-//import com.fox.ysmu.client.gui.ModelManageScreen;
+// import com.fox.ysmu.client.gui.ModelManageScreen;
+import java.util.List;
+
 import com.fox.ysmu.model.format.Type;
 import com.google.common.collect.Lists;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -10,14 +13,9 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
-//import net.minecraftforge.api.distmarker.Dist;
-//import net.minecraftforge.api.distmarker.OnlyIn;
-//import net.minecraftforge.network.NetworkEvent;
-
-import java.util.List;
 
 public class RequestServerModelInfo implements IMessage {
+
     private List<Info> customModels;
     private List<Info> authModels;
 
@@ -60,21 +58,21 @@ public class RequestServerModelInfo implements IMessage {
 
     @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<RequestServerModelInfo, IMessage> {
+
         @Override
         public IMessage onMessage(RequestServerModelInfo message, MessageContext ctx) {
-//            if (ctx.side == Side.CLIENT) {
-//                openGui(message);
-//            }
+            // if (ctx.side == Side.CLIENT) {
+            // openGui(message);
+            // }
             return null;
         }
     }
 
-//    @OnlyIn(Dist.CLIENT)
-//    private static void openGui(RequestServerModelInfo message) {
-//        Minecraft mc = Minecraft.getInstance();
-//        mc.setScreen(new ModelManageScreen(message.customModels, message.authModels));
-//    }
-
+    // @OnlyIn(Dist.CLIENT)
+    // private static void openGui(RequestServerModelInfo message) {
+    // Minecraft mc = Minecraft.getInstance();
+    // mc.setScreen(new ModelManageScreen(message.customModels, message.authModels));
+    // }
 
     private static void infoToBuffer(ByteBuf buf, Info info) {
         ByteBufUtils.writeUTF8String(buf, info.fileName);
@@ -92,12 +90,12 @@ public class RequestServerModelInfo implements IMessage {
     }
 
     public static class Info {
+
         private String fileName;
         private Type type;
         private long size;
 
-        public Info() {
-        }
+        public Info() {}
 
         public Info(String fileName, Type type, long size) {
             this.fileName = fileName;

@@ -1,25 +1,9 @@
 package com.fox.ysmu.client;
 
-import com.fox.ysmu.Config;
-import com.fox.ysmu.client.animation.AnimationRegister;
-import com.fox.ysmu.client.entity.CustomPlayerEntity;
-import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
-import com.fox.ysmu.compat.Axis;
-import com.fox.ysmu.compat.QuatJ2L;
-import com.fox.ysmu.data.NPCData;
-import com.fox.ysmu.eep.ExtendedModelInfo;
-import com.fox.ysmu.event.api.SpecialPlayerRenderEvent;
-import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.network.message.RequestLoadModel;
-import com.fox.ysmu.network.message.SetPlayAnimation;
-import com.fox.ysmu.util.AnimatableCacheUtil;
-import com.fox.ysmu.util.ModelIdUtil;
-import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.InputEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
-import cpw.mods.fml.relauncher.Side;
+import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -36,19 +20,35 @@ import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
+
 import org.joml.Quaternionf;
 import org.lwjgl.util.vector.Quaternion;
+
+import com.fox.ysmu.Config;
+import com.fox.ysmu.client.entity.CustomPlayerEntity;
+import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
+import com.fox.ysmu.compat.Axis;
+import com.fox.ysmu.compat.Utils;
+import com.fox.ysmu.data.NPCData;
+import com.fox.ysmu.eep.ExtendedModelInfo;
+import com.fox.ysmu.event.api.SpecialPlayerRenderEvent;
+import com.fox.ysmu.network.NetworkHandler;
+import com.fox.ysmu.network.message.RequestLoadModel;
+import com.fox.ysmu.network.message.SetPlayAnimation;
+import com.fox.ysmu.util.AnimatableCacheUtil;
+import com.fox.ysmu.util.ModelIdUtil;
+import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
+
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.InputEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent;
+import cpw.mods.fml.relauncher.Side;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.resource.GeckoLibCache;
 
-import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-@EventBusSubscriber(side = Side.CLIENT)  //TODO 注意下事件阶段
+@EventBusSubscriber(side = Side.CLIENT)
 public class ClientEventHandler {
-    private static CustomPlayerRenderer CUSTOM_PLAYER_RENDERER;
 
     public static int DEBUG_BG_WIDTH = 1000;
     private static final Pattern INT_REG = Pattern.compile("^[0-9]*$");
@@ -59,13 +59,6 @@ public class ClientEventHandler {
     private static final String RIGHT_ARM = "RightArm";
     private static final String BACKGROUND_BONE = "Background";
     private static boolean alreadyRenderedThisFrame = false;
-
-    @SubscribeEvent
-    public static void onClientSetup(FMLInitializationEvent event) {
-        AnimationRegister.registerAnimationState();
-        AnimationRegister.registerVariables();
-        CUSTOM_PLAYER_RENDERER = new CustomPlayerRenderer();
-    }
 
     @SubscribeEvent
     public static void onTextureStitchEventPost(TextureStitchEvent.Post event) {
@@ -102,7 +95,14 @@ public class ClientEventHandler {
             return;
         }
         event.setCanceled(true);
-        getInstance().doRender(playerRender, playerRender.posX, playerRender.posY, playerRender.posZ, playerRender.rotationYaw, event.partialRenderTick);
+        ClientProxy.getInstance()
+            .doRender(
+                playerRender,
+                playerRender.posX,
+                playerRender.posY,
+                playerRender.posZ,
+                playerRender.rotationYaw,
+                event.partialRenderTick);
     }
 
     @SubscribeEvent
@@ -130,15 +130,17 @@ public class ClientEventHandler {
         event.setCanceled(true);
 
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
-        if (eep != null){
+        if (eep != null) {
             ResourceLocation modelId = eep.getModelId();
             // 注意：我们加载的是包含手臂和背景的完整第一人称模型
-            GeoModel geoModel = GeckoLibCache.getInstance().getGeoModels().get(ModelIdUtil.getArmId(modelId));
+            GeoModel geoModel = GeckoLibCache.getInstance()
+                .getGeoModels()
+                .get(ModelIdUtil.getArmId(modelId));
             if (geoModel == null) {
                 return;
             }
 
-            CustomPlayerRenderer rendererInstance = getInstance();
+            CustomPlayerRenderer rendererInstance = ClientProxy.getInstance();
             if (rendererInstance == null) {
                 return;
             }
@@ -181,7 +183,8 @@ public class ClientEventHandler {
                 // 渲染背景骨骼
                 if (geoModel.hasTopLevelBone(BACKGROUND_BONE)) {
                     GlStateManager.translate(0, -1.5, 0); // 背景模型的特定位移
-                    geoModel.getTopLevelBone(BACKGROUND_BONE).ifPresent(bone -> rendererInstance.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
+                    geoModel.getTopLevelBone(BACKGROUND_BONE)
+                        .ifPresent(bone -> rendererInstance.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
                 }
                 GlStateManager.popMatrix();
             }
@@ -191,7 +194,8 @@ public class ClientEventHandler {
             GlStateManager.pushMatrix();
             GlStateManager.translate(-0.25, 1.8, 0);
             GlStateManager.scale(-1, -1, 1);
-            geoModel.getTopLevelBone(RIGHT_ARM).ifPresent(bone -> rendererInstance.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
+            geoModel.getTopLevelBone(RIGHT_ARM)
+                .ifPresent(bone -> rendererInstance.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
             GlStateManager.popMatrix();
 
             GlStateManager.popMatrix();
@@ -214,36 +218,37 @@ public class ClientEventHandler {
         NPCData.clear();
     }
 
-    public static CustomPlayerRenderer getInstance() {
-        return CUSTOM_PLAYER_RENDERER;
-    }
-
     public static ModelBiped getModelBiped() {
         return MODEL_BIPED;
     }
 
     private static boolean isVanillaPlayer(ResourceLocation modelId) {
-        return modelId.getResourcePath().equals("steve"); // TODO steve
+        return modelId.getResourcePath()
+            .equals("steve"); // TODO steve
     }
 
     private static void bobView(float pPartialTicks, EntityPlayer player) {
         float walk = player.distanceWalkedModified - player.prevDistanceWalkedModified;
         float walk2 = -(player.distanceWalkedModified + walk * pPartialTicks);
         float lerp = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * pPartialTicks;
-        GlStateManager.translate(-MathHelper.sin(walk2 * (float) Math.PI) * lerp * 0.5F, Math.abs(MathHelper.cos(walk2 * (float) Math.PI) * lerp), 0.0D);
+        GlStateManager.translate(
+            -MathHelper.sin(walk2 * (float) Math.PI) * lerp * 0.5F,
+            Math.abs(MathHelper.cos(walk2 * (float) Math.PI) * lerp),
+            0.0D);
         GlStateManager.rotate(j2l(Axis.ZN.rotationDegrees(MathHelper.sin(walk2 * (float) Math.PI) * lerp * 3.0F)));
-        GlStateManager.rotate(j2l(Axis.XN.rotationDegrees(Math.abs(MathHelper.cos(walk2 * (float) Math.PI - 0.2F) * lerp) * 5.0F)));
+        GlStateManager.rotate(
+            j2l(Axis.XN.rotationDegrees(Math.abs(MathHelper.cos(walk2 * (float) Math.PI - 0.2F) * lerp) * 5.0F)));
     }
 
     private static boolean isMoveKey() {
         KeyBinding[] keyBindings = Minecraft.getMinecraft().gameSettings.keyBindings;
         for (KeyBinding keyBinding : keyBindings) {
-            if ((keyBinding == Minecraft.getMinecraft().gameSettings.keyBindForward ||
-                keyBinding == Minecraft.getMinecraft().gameSettings.keyBindBack ||
-                keyBinding == Minecraft.getMinecraft().gameSettings.keyBindLeft ||
-                keyBinding == Minecraft.getMinecraft().gameSettings.keyBindRight ||
-                keyBinding == Minecraft.getMinecraft().gameSettings.keyBindJump ||
-                keyBinding == Minecraft.getMinecraft().gameSettings.keyBindSneak) && keyBinding.isPressed()) {
+            if ((keyBinding == Minecraft.getMinecraft().gameSettings.keyBindForward
+                || keyBinding == Minecraft.getMinecraft().gameSettings.keyBindBack
+                || keyBinding == Minecraft.getMinecraft().gameSettings.keyBindLeft
+                || keyBinding == Minecraft.getMinecraft().gameSettings.keyBindRight
+                || keyBinding == Minecraft.getMinecraft().gameSettings.keyBindJump
+                || keyBinding == Minecraft.getMinecraft().gameSettings.keyBindSneak) && keyBinding.isPressed()) {
                 return true;
             }
         }
@@ -251,6 +256,6 @@ public class ClientEventHandler {
     }
 
     private static Quaternion j2l(Quaternionf jomlQuat) {
-        return QuatJ2L.j2l(jomlQuat);
+        return Utils.j2l(jomlQuat);
     }
 }

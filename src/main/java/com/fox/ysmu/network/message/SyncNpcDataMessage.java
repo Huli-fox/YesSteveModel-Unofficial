@@ -1,7 +1,14 @@
 package com.fox.ysmu.network.message;
 
+import java.util.Map;
+import java.util.UUID;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ResourceLocation;
+
 import com.fox.ysmu.data.NPCData;
 import com.google.common.collect.Maps;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -10,17 +17,12 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ResourceLocation;
-
-import java.util.Map;
-import java.util.UUID;
 
 public class SyncNpcDataMessage implements IMessage {
+
     private Map<UUID, Pair<ResourceLocation, ResourceLocation>> data;
 
-    public SyncNpcDataMessage() {
-    }
+    public SyncNpcDataMessage() {}
 
     public SyncNpcDataMessage(Map<UUID, Pair<ResourceLocation, ResourceLocation>> data) {
         this.data = data;
@@ -48,13 +50,20 @@ public class SyncNpcDataMessage implements IMessage {
             buf.writeLong(uuid.getMostSignificantBits());
             buf.writeLong(uuid.getLeastSignificantBits());
             Pair<ResourceLocation, ResourceLocation> pair = entry.getValue();
-            ByteBufUtils.writeUTF8String(buf, pair.first().toString());
-            ByteBufUtils.writeUTF8String(buf, pair.second().toString());
+            ByteBufUtils.writeUTF8String(
+                buf,
+                pair.first()
+                    .toString());
+            ByteBufUtils.writeUTF8String(
+                buf,
+                pair.second()
+                    .toString());
         }
     }
 
     @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<SyncNpcDataMessage, IMessage> {
+
         @Override
         public IMessage onMessage(SyncNpcDataMessage message, MessageContext ctx) {
             if (Minecraft.getMinecraft().thePlayer != null) {

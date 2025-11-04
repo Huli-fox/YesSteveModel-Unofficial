@@ -6,9 +6,10 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 public final class DeflateUtil {
+
     public static byte[] compressBytes(final byte[] input) {
         if (input.length == 0) {
-            return new byte[]{};
+            return new byte[] {};
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         final byte[] buf = new byte[1024];
@@ -25,7 +26,7 @@ public final class DeflateUtil {
 
     public static byte[] decompressBytes(final byte[] input) throws DataFormatException {
         if (input.length == 0) {
-            return new byte[]{};
+            return new byte[] {};
         }
         final ByteArrayOutputStream stream = new ByteArrayOutputStream();
         final byte[] buf = new byte[1024];

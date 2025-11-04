@@ -1,17 +1,20 @@
 package com.fox.ysmu.client.animation.condition;
 
-import com.google.common.collect.Lists;
-import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.EnumAction;
-import com.fox.ysmu.compat.BackhandCompat;
-import net.minecraftforge.oredict.OreDictionary;
-
 import java.util.List;
 import java.util.Locale;
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.EnumAction;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+
+import com.fox.ysmu.compat.BackhandCompat;
+import com.google.common.collect.Lists;
+
+import cpw.mods.fml.common.registry.GameRegistry;
+
 public class ConditionalUse {
+
     private static final String EMPTY = "";
     private final int preSize;
     private final String idPre;
@@ -55,12 +58,16 @@ public class ConditionalUse {
         }
         if (name.startsWith(extraPre)) {
             // 1.7.10: 使用EnumAction替代UseAnim
-            if (substring.equals(EnumAction.none.name().toLowerCase(Locale.US))) {
+            if (substring.equals(
+                EnumAction.none.name()
+                    .toLowerCase(Locale.US))) {
                 return;
             }
             // 1.7.10: 使用传统方式查找EnumAction
             for (EnumAction action : EnumAction.values()) {
-                if (action.name().toLowerCase(Locale.US).equals(substring)) {
+                if (action.name()
+                    .toLowerCase(Locale.US)
+                    .equals(substring)) {
                     extraTest.add(action);
                     break;
                 }
@@ -128,9 +135,11 @@ public class ConditionalUse {
             return EMPTY;
         }
         // 1.7.10: 使用getItemUseAction替代getUseAnimation
-        EnumAction action = BackhandCompat.getItemInHand(player, isMainHand).getItemUseAction();
+        EnumAction action = BackhandCompat.getItemInHand(player, isMainHand)
+            .getItemUseAction();
         if (this.extraTest.contains(action)) {
-            return extraPre + action.name().toLowerCase(Locale.US);
+            return extraPre + action.name()
+                .toLowerCase(Locale.US);
         }
         return EMPTY;
     }

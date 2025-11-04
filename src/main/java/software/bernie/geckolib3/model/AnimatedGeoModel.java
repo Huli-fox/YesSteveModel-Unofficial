@@ -1,14 +1,13 @@
 package software.bernie.geckolib3.model;
 
-import software.bernie.geckolib3.core.molang.MolangParser;
-import cpw.mods.fml.common.FMLCommonHandler;
+import java.util.Collections;
+
+import javax.annotation.Nullable;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ActiveRenderInfo;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
+
+import cpw.mods.fml.common.FMLCommonHandler;
 import software.bernie.geckolib3.animation.AnimationTicker;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.IAnimatableModel;
@@ -24,14 +23,11 @@ import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.model.provider.GeoModelProvider;
 import software.bernie.geckolib3.model.provider.IAnimatableModelProvider;
 import software.bernie.geckolib3.resource.GeckoLibCache;
-import software.bernie.geckolib3.util.MolangUtils;
 
-import javax.annotation.Nullable;
-import java.util.Collections;
-
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelProvider<T>
     implements IAnimatableModel<T>, IAnimatableModelProvider<T> {
+
     private final AnimationProcessor animationProcessor;
     private GeoModel currentModel;
 
@@ -51,13 +47,17 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
     public void setLivingAnimations(T entity, Integer uniqueID, @Nullable AnimationEvent customPredicate) {
         // Each animation has it's own collection of animations (called the
         // EntityAnimationManager), which allows for multiple independent animations
-        AnimationData manager = entity.getFactory().getOrCreateAnimationData(uniqueID);
+        AnimationData manager = entity.getFactory()
+            .getOrCreateAnimationData(uniqueID);
         if (manager.ticker == null) {
             AnimationTicker ticker = new AnimationTicker(manager);
             manager.ticker = ticker;
-            FMLCommonHandler.instance().bus().register(ticker);
+            FMLCommonHandler.instance()
+                .bus()
+                .register(ticker);
         }
-        if (!Minecraft.getMinecraft().isGamePaused() || manager.shouldPlayWhilePaused) {
+        if (!Minecraft.getMinecraft()
+            .isGamePaused() || manager.shouldPlayWhilePaused) {
             seekTime = manager.tick + Minecraft.getMinecraft().timer.renderPartialTicks;
         } else {
             seekTime = manager.tick;
@@ -65,15 +65,27 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 
         AnimationEvent<T> predicate;
         if (customPredicate == null) {
-            predicate = new AnimationEvent<T>(entity, 0, 0, (float) (manager.tick - lastGameTickTime), false, Collections.emptyList());
+            predicate = new AnimationEvent<T>(
+                entity,
+                0,
+                0,
+                (float) (manager.tick - lastGameTickTime),
+                false,
+                Collections.emptyList());
         } else {
             predicate = customPredicate;
         }
 
         predicate.animationTick = seekTime;
         animationProcessor.preAnimationSetup(predicate.getAnimatable(), seekTime);
-        if (!this.animationProcessor.getModelRendererList().isEmpty()) {
-            animationProcessor.tickAnimation(entity, uniqueID, seekTime, predicate, GeckoLibCache.getInstance().parser,
+        if (!this.animationProcessor.getModelRendererList()
+            .isEmpty()) {
+            animationProcessor.tickAnimation(
+                entity,
+                uniqueID,
+                seekTime,
+                predicate,
+                GeckoLibCache.getInstance().parser,
                 shouldCrashOnMissing);
         }
     }
@@ -89,7 +101,9 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
 
     @Override
     public Animation getAnimation(String name, IAnimatable animatable) {
-        AnimationFile file = GeckoLibCache.getInstance().getAnimations().get(this.getAnimationFileLocation((T) animatable));
+        AnimationFile file = GeckoLibCache.getInstance()
+            .getAnimations()
+            .get(this.getAnimationFileLocation((T) animatable));
         if (file != null) {
             return file.getAnimation(name);
         }
@@ -115,6 +129,7 @@ public abstract class AnimatedGeoModel<T extends IAnimatable> extends GeoModelPr
     public GeoModel getCurrentModel() {
         return currentModel;
     }
+
     @Override
     public double getCurrentTick() {
         return (Minecraft.getSystemTime() / 50d);

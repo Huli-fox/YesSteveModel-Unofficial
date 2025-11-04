@@ -1,12 +1,13 @@
 package com.eliotlash.mclib.utils.resources;
 
-import com.eliotlash.mclib.utils.Color;
-
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 
+import com.eliotlash.mclib.utils.Color;
+
 public class Pixels {
+
     public byte[] pixelBytes;
     public int[] pixelInts;
     public int pixelLength;
@@ -17,12 +18,15 @@ public class Pixels {
     private PixelAccessor accessor;
 
     public void set(BufferedImage image) {
-        if (image.getRaster().getDataBuffer() instanceof DataBufferByte) {
-            this.pixelBytes = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
+        if (image.getRaster()
+            .getDataBuffer() instanceof DataBufferByte) {
+            this.pixelBytes = ((DataBufferByte) image.getRaster()
+                .getDataBuffer()).getData();
             this.pixelInts = null;
             this.accessor = PixelAccessor.BYTE;
         } else {
-            this.pixelInts = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+            this.pixelInts = ((DataBufferInt) image.getRaster()
+                .getDataBuffer()).getData();
             this.pixelBytes = null;
             this.accessor = PixelAccessor.INT;
         }

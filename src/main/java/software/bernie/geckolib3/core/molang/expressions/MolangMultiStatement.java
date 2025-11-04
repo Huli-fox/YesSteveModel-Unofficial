@@ -1,15 +1,16 @@
 package software.bernie.geckolib3.core.molang.expressions;
 
-import software.bernie.geckolib3.core.molang.LazyVariable;
-import software.bernie.geckolib3.core.molang.MolangParser;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import software.bernie.geckolib3.core.molang.LazyVariable;
+import software.bernie.geckolib3.core.molang.MolangParser;
+
 public class MolangMultiStatement extends MolangExpression {
+
     public final List<MolangExpression> expressions = new ObjectArrayList<>();
     public final Map<String, LazyVariable> locals = new Object2ObjectOpenHashMap<>();
 

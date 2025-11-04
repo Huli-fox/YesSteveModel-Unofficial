@@ -1,6 +1,8 @@
 package com.fox.ysmu.command.sub;
 
-import com.fox.ysmu.eep.ExtendedModelInfo;
+import java.util.Arrays;
+import java.util.List;
+
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerSelector;
@@ -8,9 +10,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentTranslation;
 
-import java.util.List;
+import com.fox.ysmu.eep.ExtendedModelInfo;
 
 public class PlayAnimationCommand extends CommandBase {
+
     private static final String PLAY_NAME = "play";
     private static final String STOP = "stop";
 
@@ -40,7 +43,7 @@ public class PlayAnimationCommand extends CommandBase {
         String animation = args[1];
 
         try {
-            List<EntityPlayerMP> targets = PlayerSelector.matchPlayers(sender, targetSelector);
+            List<EntityPlayerMP> targets = Arrays.asList(PlayerSelector.matchPlayers(sender, targetSelector));
             if (targets.isEmpty()) {
                 sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.play.no_targets"));
                 return;
@@ -69,7 +72,10 @@ public class PlayAnimationCommand extends CommandBase {
     @Override
     public List addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
+            return getListOfStringsMatchingLastWord(
+                args,
+                MinecraftServer.getServer()
+                    .getAllUsernames());
         }
         return null;
     }

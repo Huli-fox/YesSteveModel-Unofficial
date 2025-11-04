@@ -1,12 +1,14 @@
 package software.bernie.geckolib3.core.molang.expressions;
 
-import software.bernie.geckolib3.core.molang.MolangParser;
 import com.eliotlash.mclib.math.Constant;
 import com.eliotlash.mclib.math.IValue;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
+import software.bernie.geckolib3.core.molang.MolangParser;
+
 public class MolangValue extends MolangExpression {
+
     public IValue value;
     public boolean returns;
 

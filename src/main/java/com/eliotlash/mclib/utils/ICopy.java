@@ -11,8 +11,8 @@ package com.eliotlash.mclib.utils;
  * @param <T> by convention this should be the type of the class that inherits this interface
  */
 public interface ICopy<T> {
+
     T copy();
 
-    default void copy(T origin) {
-    }
+    default void copy(T origin) {}
 }

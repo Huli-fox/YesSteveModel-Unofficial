@@ -1,14 +1,16 @@
 package com.fox.ysmu.command;
 
-import com.fox.ysmu.command.sub.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ChatComponentTranslation;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.fox.ysmu.command.sub.*;
 
 public class RootCommand extends CommandBase {
+
     private static final String ROOT_NAME = "ysm";
 
     @Override
@@ -49,7 +51,8 @@ public class RootCommand extends CommandBase {
         } else if ("play".equals(subCommand)) {
             new PlayAnimationCommand().processCommand(sender, subArgs);
         } else {
-            sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.invalid_subcommand", subCommand));
+            sender.addChatMessage(
+                new ChatComponentTranslation("commands.yes_steve_model.invalid_subcommand", subCommand));
         }
     }
 

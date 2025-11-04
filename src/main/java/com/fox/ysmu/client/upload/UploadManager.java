@@ -1,6 +1,7 @@
 package com.fox.ysmu.client.upload;
 
 public class UploadManager {
+
     public static volatile String FILE_PATH = null;
     public static volatile Statue STATUE = Statue.FULFILL;
 

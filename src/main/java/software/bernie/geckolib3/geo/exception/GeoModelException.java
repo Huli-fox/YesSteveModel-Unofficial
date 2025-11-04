@@ -4,6 +4,7 @@ import net.minecraft.util.ResourceLocation;
 
 @SuppressWarnings("serial")
 public class GeoModelException extends RuntimeException {
+
     public GeoModelException(ResourceLocation fileLocation, String message) {
         super(fileLocation + ": " + message);
     }

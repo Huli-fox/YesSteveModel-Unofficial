@@ -1,27 +1,27 @@
 package com.fox.ysmu.network;
 
-//import com.fox.ysmu.bukkit.message.OpenModelGuiMessage;
+// import com.fox.ysmu.bukkit.message.OpenModelGuiMessage;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+
+import com.fox.ysmu.network.message.*;
 import com.fox.ysmu.network.message.SetNpcModelAndTexture;
 import com.fox.ysmu.network.message.SyncNpcDataMessage;
 import com.fox.ysmu.network.message.UpdateNpcDataMessage;
-import com.fox.ysmu.network.message.*;
+
+import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
-//import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-//import net.minecraft.world.entity.player.Player;
-import net.minecraft.entity.player.EntityPlayer;
-//import net.minecraftforge.network.NetworkDirection;
-import cpw.mods.fml.common.network.NetworkRegistry;
-//import net.minecraftforge.network.PacketDistributor;
-//import net.minecraftforge.network.simple.SimpleChannel;
-
+// import net.minecraftforge.network.PacketDistributor;
+// import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class NetworkHandler {
+
     private static final String VERSION = "1.0.0";
-//    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(ysmu.MODID, "network"),
-//            () -> VERSION, it -> it.equals(VERSION), it -> it.equals(VERSION));
+    // public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(ysmu.MODID,
+    // "network"),
+    // () -> VERSION, it -> it.equals(VERSION), it -> it.equals(VERSION));
     public static final SimpleNetworkWrapper CHANNEL = NetworkRegistry.INSTANCE.newSimpleChannel("ysmu_network");
     public static final int OPEN_NPC_MODEL_GUI = 93;
     public static final int SET_NPC_MODEL_ID = 94;
@@ -50,10 +50,19 @@ public final class NetworkHandler {
     }
 
     private static void initBukkit() {
-//        CHANNEL.registerMessage(OpenModelGuiMessage.Handler.class, OpenModelGuiMessage.class, OPEN_NPC_MODEL_GUI, Side.CLIENT);
-        CHANNEL.registerMessage(SetNpcModelAndTexture.Handler.class, SetNpcModelAndTexture.class, SET_NPC_MODEL_ID, Side.SERVER);
+        // CHANNEL.registerMessage(OpenModelGuiMessage.Handler.class, OpenModelGuiMessage.class, OPEN_NPC_MODEL_GUI,
+        // Side.CLIENT);
+        CHANNEL.registerMessage(
+            SetNpcModelAndTexture.Handler.class,
+            SetNpcModelAndTexture.class,
+            SET_NPC_MODEL_ID,
+            Side.SERVER);
         CHANNEL.registerMessage(SyncNpcDataMessage.Handler.class, SyncNpcDataMessage.class, SYNC_NPC_DATA, Side.CLIENT);
-        CHANNEL.registerMessage(UpdateNpcDataMessage.Handler.class, UpdateNpcDataMessage.class, UPDATE_NPC_DATA, Side.CLIENT);
+        CHANNEL.registerMessage(
+            UpdateNpcDataMessage.Handler.class,
+            UpdateNpcDataMessage.class,
+            UPDATE_NPC_DATA,
+            Side.CLIENT);
     }
 
     public static void sendToClientPlayer(IMessage message, EntityPlayer player) {

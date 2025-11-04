@@ -1,20 +1,23 @@
 package net.geckominecraft.client.resources;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.resources.IResourcePack;
-import net.minecraft.client.resources.data.IMetadataSection;
-import net.minecraft.client.resources.data.IMetadataSerializer;
-import net.minecraft.util.ResourceLocation;
-
-import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
+import net.minecraft.client.resources.IResourcePack;
+import net.minecraft.client.resources.data.IMetadataSection;
+import net.minecraft.client.resources.data.IMetadataSerializer;
+import net.minecraft.util.ResourceLocation;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
 @SideOnly(Side.CLIENT)
 public class LegacyV2Adapter implements IResourcePack {
+
     private final IResourcePack pack;
 
     public LegacyV2Adapter(IResourcePack packIn) {
@@ -32,8 +35,10 @@ public class LegacyV2Adapter implements IResourcePack {
             int i = s.indexOf(95);
 
             if (i != -1) {
-                final String s1 = s.substring(0, i + 1) + s.substring(i + 1, s.indexOf(46, i)).toUpperCase() + ".lang";
+                final String s1 = s.substring(0, i + 1) + s.substring(i + 1, s.indexOf(46, i))
+                    .toUpperCase() + ".lang";
                 return new ResourceLocation(p_191382_1_.getResourceDomain(), "") {
+
                     public String getResourcePath() {
                         return s1;
                     }
@@ -53,7 +58,8 @@ public class LegacyV2Adapter implements IResourcePack {
     }
 
     @Nullable
-    public IMetadataSection getPackMetadata(IMetadataSerializer metadataSerializer, String metadataSectionName) throws IOException {
+    public IMetadataSection getPackMetadata(IMetadataSerializer metadataSerializer, String metadataSectionName)
+        throws IOException {
         return this.pack.getPackMetadata(metadataSerializer, metadataSectionName);
     }
 

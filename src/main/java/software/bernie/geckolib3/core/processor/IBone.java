@@ -3,75 +3,76 @@ package software.bernie.geckolib3.core.processor;
 import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
 
 public interface IBone {
-	float getRotationX();
 
-	float getRotationY();
+    float getRotationX();
 
-	float getRotationZ();
+    float getRotationY();
 
-	float getPositionX();
+    float getRotationZ();
 
-	float getPositionY();
+    float getPositionX();
 
-	float getPositionZ();
+    float getPositionY();
 
-	float getScaleX();
+    float getPositionZ();
 
-	float getScaleY();
+    float getScaleX();
 
-	float getScaleZ();
+    float getScaleY();
 
-	void setRotationX(float value);
+    float getScaleZ();
 
-	void setRotationY(float value);
+    void setRotationX(float value);
 
-	void setRotationZ(float value);
+    void setRotationY(float value);
 
-	void setPositionX(float value);
+    void setRotationZ(float value);
 
-	void setPositionY(float value);
+    void setPositionX(float value);
 
-	void setPositionZ(float value);
+    void setPositionY(float value);
 
-	void setScaleX(float value);
+    void setPositionZ(float value);
 
-	void setScaleY(float value);
+    void setScaleX(float value);
 
-	void setScaleZ(float value);
+    void setScaleY(float value);
 
-	void setPivotX(float value);
+    void setScaleZ(float value);
 
-	void setPivotY(float value);
+    void setPivotX(float value);
 
-	void setPivotZ(float value);
+    void setPivotY(float value);
 
-	float getPivotX();
+    void setPivotZ(float value);
 
-	float getPivotY();
+    float getPivotX();
 
-	float getPivotZ();
+    float getPivotY();
 
-	boolean isHidden();
+    float getPivotZ();
 
-	boolean cubesAreHidden();
+    boolean isHidden();
 
-	boolean childBonesAreHiddenToo();
+    boolean cubesAreHidden();
 
-	void setHidden(boolean hidden);
+    boolean childBonesAreHiddenToo();
 
-	void setCubesHidden(boolean hidden);
+    void setHidden(boolean hidden);
 
-	void setHidden(boolean selfHidden, boolean skipChildRendering);
+    void setCubesHidden(boolean hidden);
 
-	void setModelRendererName(String modelRendererName);
+    void setHidden(boolean selfHidden, boolean skipChildRendering);
 
-	void saveInitialSnapshot();
+    void setModelRendererName(String modelRendererName);
 
-	BoneSnapshot getInitialSnapshot();
+    void saveInitialSnapshot();
 
-	default BoneSnapshot saveSnapshot() {
-		return new BoneSnapshot(this);
-	}
+    BoneSnapshot getInitialSnapshot();
 
-	String getName();
+    default BoneSnapshot saveSnapshot() {
+        return new BoneSnapshot(this);
+    }
+
+    String getName();
 }

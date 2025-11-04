@@ -1,6 +1,12 @@
 package com.fox.ysmu.network.message;
 
+import java.util.UUID;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ResourceLocation;
+
 import com.fox.ysmu.data.NPCData;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -8,18 +14,14 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ResourceLocation;
-
-import java.util.UUID;
 
 public class UpdateNpcDataMessage implements IMessage {
+
     private UUID uuid;
     private ResourceLocation modelId;
     private ResourceLocation textureId;
 
-    public UpdateNpcDataMessage() {
-    }
+    public UpdateNpcDataMessage() {}
 
     public UpdateNpcDataMessage(UUID uuid, ResourceLocation modelId, ResourceLocation textureId) {
         this.uuid = uuid;
@@ -46,6 +48,7 @@ public class UpdateNpcDataMessage implements IMessage {
 
     @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<UpdateNpcDataMessage, IMessage> {
+
         @Override
         public IMessage onMessage(UpdateNpcDataMessage message, MessageContext ctx) {
             if (Minecraft.getMinecraft().thePlayer != null) {

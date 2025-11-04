@@ -1,22 +1,21 @@
 package software.bernie.geckolib3.geo.raw.tree;
 
-import net.minecraft.util.ResourceLocation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
 import software.bernie.geckolib3.geo.raw.pojo.Bone;
 import software.bernie.geckolib3.geo.raw.pojo.MinecraftGeometry;
 import software.bernie.geckolib3.geo.raw.pojo.ModelProperties;
 import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class RawGeometryTree {
+
     public HashMap<String, RawBoneGroup> topLevelBones = new HashMap<>();
     public ModelProperties properties;
 
-    public static RawGeometryTree parseHierarchy(RawGeoModel model, ResourceLocation location) {
+    public static RawGeometryTree parseHierarchy(RawGeoModel model) {
         RawGeometryTree hierarchy = new RawGeometryTree();
         MinecraftGeometry geometry = model.getMinecraftGeometry()[0];
         hierarchy.properties = geometry.getProperties();
@@ -27,8 +26,10 @@ public class RawGeometryTree {
         while (true) {
             loopsWithoutChange++;
             if (loopsWithoutChange > 10000) {
-                System.out.println("[GeckoLib] " + "Some bones in " + location.toString() + " do not have existing parents: ");
-                System.out.println("[GeckoLib] " + bones.stream().map(x -> x.getName()).collect(Collectors.joining(", ")));
+                // System.out.println("[GeckoLib] " + "Some bones in " + location.toString() + " do not have existing
+                // parents: ");
+                // System.out.println("[GeckoLib] " + bones.stream().map(x -> x.getName()).collect(Collectors.joining(",
+                // ")));
                 break;
             }
             Bone bone = bones.get(index);
@@ -56,7 +57,6 @@ public class RawGeometryTree {
         }
         return hierarchy;
     }
-
 
     public static boolean hasParent(Bone bone) {
         return bone.getParent() != null;

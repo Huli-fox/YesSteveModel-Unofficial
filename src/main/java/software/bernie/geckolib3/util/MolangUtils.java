@@ -1,6 +1,7 @@
 package software.bernie.geckolib3.util;
 
 public class MolangUtils {
+
     public static final float TRUE = 1;
     public static final float FALSE = 0;
 

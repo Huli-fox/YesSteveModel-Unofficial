@@ -1,11 +1,7 @@
 package com.eliotlash.mclib.utils;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
 
 import javax.annotation.Nullable;
 import javax.vecmath.Matrix3f;
@@ -17,11 +13,19 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4d;
 import javax.vecmath.Vector4f;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.entity.Entity;
+
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class MatrixUtils {
+
     /**
      * Model view matrix buffer
      */
@@ -60,7 +64,8 @@ public class MatrixUtils {
     }
 
     /**
-     * This method is called by the ASMAfterCamera method. It saves the camera modelview matrix after the camera is set up.
+     * This method is called by the ASMAfterCamera method. It saves the camera modelview matrix after the camera is set
+     * up.
      * The camera matrix will be used to calculate global transformations of models.
      * Thank you to MiaoNLI for discovering this possibility.
      */
@@ -148,7 +153,6 @@ public class MatrixUtils {
         floatBuffer.flip();
     }
 
-
     public static boolean captureMatrix() {
         if (matrix == null) {
             matrix = MatrixUtils.readModelView(new Matrix4f());
@@ -225,9 +229,7 @@ public class MatrixUtils {
 
         angularVelocity.sub(step);
 
-        Vector3f angularV = new Vector3f(angularVelocity.m21,
-            -angularVelocity.m20,
-            angularVelocity.m10);
+        Vector3f angularV = new Vector3f(angularVelocity.m21, -angularVelocity.m20, angularVelocity.m10);
 
         return angularV;
     }
@@ -310,7 +312,8 @@ public class MatrixUtils {
     /**
      * Calculates the current global transformations
      *
-     * @return Matrix4d array {translation, rotation, scale} or null if singular matrix exception occured during inverting the camera matrix.
+     * @return Matrix4d array {translation, rotation, scale} or null if singular matrix exception occured during
+     *         inverting the camera matrix.
      */
     public static Matrix4d[] getTransformation() {
         Matrix4d parent = new Matrix4d(camera);
@@ -335,9 +338,18 @@ public class MatrixUtils {
         Matrix4d cameraTrans = new Matrix4d();
 
         cameraTrans.setIdentity();
-        cameraTrans.m03 = Interpolations.lerp(renderViewEntity.lastTickPosX, renderViewEntity.posX, Minecraft.getMinecraft().timer.renderPartialTicks);
-        cameraTrans.m13 = Interpolations.lerp(renderViewEntity.lastTickPosY, renderViewEntity.posY, Minecraft.getMinecraft().timer.renderPartialTicks);
-        cameraTrans.m23 = Interpolations.lerp(renderViewEntity.lastTickPosZ, renderViewEntity.posZ, Minecraft.getMinecraft().timer.renderPartialTicks);
+        cameraTrans.m03 = Interpolations.lerp(
+            renderViewEntity.lastTickPosX,
+            renderViewEntity.posX,
+            Minecraft.getMinecraft().timer.renderPartialTicks);
+        cameraTrans.m13 = Interpolations.lerp(
+            renderViewEntity.lastTickPosY,
+            renderViewEntity.posY,
+            Minecraft.getMinecraft().timer.renderPartialTicks);
+        cameraTrans.m23 = Interpolations.lerp(
+            renderViewEntity.lastTickPosZ,
+            renderViewEntity.posZ,
+            Minecraft.getMinecraft().timer.renderPartialTicks);
 
         parent.mul(cameraTrans, parent);
 
@@ -358,23 +370,25 @@ public class MatrixUtils {
         scale.m11 = Math.sqrt(parent.m01 * parent.m01 + parent.m11 * parent.m11 + parent.m21 * parent.m21);
         scale.m22 = Math.sqrt(parent.m02 * parent.m02 + parent.m12 * parent.m12 + parent.m22 * parent.m22);
 
-        return new Matrix4d[]{translation, rotation, scale};
+        return new Matrix4d[] { translation, rotation, scale };
     }
 
-
     /**
-     * This method extracts the rotation, translation and scale from the modelview matrix. It needs the view matrix to work properly
+     * This method extracts the rotation, translation and scale from the modelview matrix. It needs the view matrix to
+     * work properly
      *
      * @param cameraMatrix The cameraMatrix from rendering so you can extract modelView from OpenGL's matrix.
      * @param modelView    The matrix containing the transformations that should be extracted.
-     * @return Transformation contains translation, rotation and scale as 4x4 matrices. It also has getter methods for the 3x3 matrices.
+     * @return Transformation contains translation, rotation and scale as 4x4 matrices. It also has getter methods for
+     *         the 3x3 matrices.
      * @author Christian F. (known as Chryfi)
      */
     public static Transformation extractTransformations(@Nullable Matrix4f cameraMatrix, Matrix4f modelView) {
         return extractTransformations(cameraMatrix, modelView, MatrixMajor.ROW);
     }
 
-    public static Transformation extractTransformations(@Nullable Matrix4f cameraMatrix, Matrix4f modelView, MatrixMajor major) {
+    public static Transformation extractTransformations(@Nullable Matrix4f cameraMatrix, Matrix4f modelView,
+        MatrixMajor major) {
         Matrix4f parent = new Matrix4f(modelView);
 
         if (cameraMatrix != null) {
@@ -439,6 +453,7 @@ public class MatrixUtils {
     }
 
     public static class Transformation {
+
         public Matrix4f translation = new Matrix4f();
         public Matrix4f rotation = new Matrix4f();
         public Matrix4f scale = new Matrix4f();
@@ -519,9 +534,9 @@ public class MatrixUtils {
          * @param invAxis The axis to be inverted when the matrix is a left-handed
          *                coordinate system. 012 equals xyz
          * @return A vector includes rotation values with specific order, null if matrix
-         * is a illegal rotation matrix.<br>
-         * The returned vector will be as close to the reference vector as
-         * possible
+         *         is a illegal rotation matrix.<br>
+         *         The returned vector will be as close to the reference vector as
+         *         possible
          */
         public Vector3f getRotation(RotationOrder order, Vector3f ref, int invAxis) {
             Matrix3f mat = this.getRotation3f();
@@ -553,7 +568,8 @@ public class MatrixUtils {
             /* if the second rotation value is +/-90, here will be null. */
             if (angle != null) {
                 if (refFloats != null) {
-                    angle = refFloats[order.thirdIndex] + MathHelper.wrapDegrees(2F * (angle - refFloats[order.thirdIndex])) / 2F;
+                    angle = refFloats[order.thirdIndex]
+                        + MathHelper.wrapDegrees(2F * (angle - refFloats[order.thirdIndex])) / 2F;
                 }
                 rotation[order.thirdIndex] = angle;
                 mat.mul(getRotationMatrix(order.thirdIndex, -angle), mat);
@@ -656,14 +672,21 @@ public class MatrixUtils {
     }
 
     public enum RotationOrder {
-        XYZ, XZY, YXZ, YZX, ZXY, ZYX;
+
+        XYZ,
+        XZY,
+        YXZ,
+        YZX,
+        ZXY,
+        ZYX;
 
         public final int firstIndex;
         public final int secondIndex;
         public final int thirdIndex;
 
         private RotationOrder() {
-            String order = this.name().toUpperCase();
+            String order = this.name()
+                .toUpperCase();
             firstIndex = order.charAt(0) - 'X';
             secondIndex = order.charAt(1) - 'X';
             thirdIndex = order.charAt(2) - 'X';

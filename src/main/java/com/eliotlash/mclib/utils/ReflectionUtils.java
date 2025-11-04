@@ -1,8 +1,10 @@
 package com.eliotlash.mclib.utils;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.List;
+import java.util.Map;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -10,14 +12,14 @@ import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.SimpleReloadableResourceManager;
 import net.minecraft.util.ResourceLocation;
+
+import cpw.mods.fml.client.FMLClientHandler;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import software.bernie.example.config.ConfigHandler;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.List;
-import java.util.Map;
-
 public class ReflectionUtils {
+
     /**
      * Minecraft texture manager's field to the texture map (a map of
      * {@link ITextureObject} which is used to cache references to
@@ -57,7 +59,8 @@ public class ReflectionUtils {
     @SuppressWarnings("rawtypes")
     public static void setupTextureMapField(TextureManager manager) {
         /* Finding the field which has holds the texture cache */
-        for (Field field : manager.getClass().getDeclaredFields()) {
+        for (Field field : manager.getClass()
+            .getDeclaredFields()) {
             if (Modifier.isStatic(field.getModifiers())) {
                 continue;
             }
@@ -67,7 +70,9 @@ public class ReflectionUtils {
             try {
                 Object value = field.get(manager);
 
-                if (value instanceof Map && ((Map) value).keySet().iterator().next() instanceof ResourceLocation) {
+                if (value instanceof Map && ((Map) value).keySet()
+                    .iterator()
+                    .next() instanceof ResourceLocation) {
                     TEXTURE_MAP = field;
 
                     break;
@@ -88,7 +93,8 @@ public class ReflectionUtils {
 
             List<IResourcePack> packs = (List<IResourcePack>) field.get(FMLClientHandler.instance());
             packs.add(pack);
-            IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
+            IResourceManager manager = Minecraft.getMinecraft()
+                .getResourceManager();
 
             if (manager instanceof SimpleReloadableResourceManager) {
                 ((SimpleReloadableResourceManager) manager).reloadResourcePack(pack);
@@ -111,8 +117,7 @@ public class ReflectionUtils {
                 Class clazz = Class.forName("net.optifine.shaders.Shaders");
 
                 SHADOW_PASS = clazz.getDeclaredField("isShadowPass");
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
 
             SHADOW_PASS_CHECK = true;
         }
@@ -120,8 +125,7 @@ public class ReflectionUtils {
         if (SHADOW_PASS != null) {
             try {
                 return (boolean) SHADOW_PASS.get(null);
-            } catch (Exception e) {
-            }
+            } catch (Exception e) {}
         }
 
         return false;

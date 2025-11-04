@@ -1,18 +1,21 @@
 package software.bernie.geckolib3.util;
 
-import org.lwjgl.util.vector.Quaternion;
-import software.bernie.geckolib3.geo.render.built.GeoBone;
-import software.bernie.geckolib3.geo.render.built.GeoCube;
+import java.util.Stack;
 
 import javax.vecmath.Matrix3f;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
-import java.util.Stack;
+
+import org.lwjgl.util.vector.Quaternion;
+
+import software.bernie.geckolib3.geo.render.built.GeoBone;
+import software.bernie.geckolib3.geo.render.built.GeoCube;
 
 /**
  * Simple implementation of a matrix stack
  */
 public class MatrixStack {
+
     private Stack<Matrix4f> model = new Stack<Matrix4f>();
     private Stack<Matrix3f> normal = new Stack<Matrix3f>();
 
@@ -64,7 +67,8 @@ public class MatrixStack {
         this.tempModelMatrix.setIdentity();
         this.tempModelMatrix.setTranslation(vec);
 
-        this.model.peek().mul(this.tempModelMatrix);
+        this.model.peek()
+            .mul(this.tempModelMatrix);
     }
 
     public void moveToPivot(GeoCube cube) {
@@ -97,7 +101,8 @@ public class MatrixStack {
         this.tempModelMatrix.m11 = y;
         this.tempModelMatrix.m22 = z;
 
-        this.model.peek().mul(this.tempModelMatrix);
+        this.model.peek()
+            .mul(this.tempModelMatrix);
 
         if (x < 0 || y < 0 || z < 0) {
             this.tempNormalMatrix.setIdentity();
@@ -105,7 +110,8 @@ public class MatrixStack {
             this.tempNormalMatrix.m11 = y < 0 ? -1 : 1;
             this.tempNormalMatrix.m22 = z < 0 ? -1 : 1;
 
-            this.normal.peek().mul(this.tempNormalMatrix);
+            this.normal.peek()
+                .mul(this.tempNormalMatrix);
         }
     }
 
@@ -122,8 +128,10 @@ public class MatrixStack {
         this.tempNormalMatrix.setIdentity();
         this.tempNormalMatrix.rotX(radian);
 
-        this.model.peek().mul(this.tempModelMatrix);
-        this.normal.peek().mul(this.tempNormalMatrix);
+        this.model.peek()
+            .mul(this.tempModelMatrix);
+        this.normal.peek()
+            .mul(this.tempNormalMatrix);
     }
 
     public void rotateY(float radian) {
@@ -133,8 +141,10 @@ public class MatrixStack {
         this.tempNormalMatrix.setIdentity();
         this.tempNormalMatrix.rotY(radian);
 
-        this.model.peek().mul(this.tempModelMatrix);
-        this.normal.peek().mul(this.tempNormalMatrix);
+        this.model.peek()
+            .mul(this.tempModelMatrix);
+        this.normal.peek()
+            .mul(this.tempNormalMatrix);
     }
 
     public void rotateZ(float radian) {
@@ -144,8 +154,10 @@ public class MatrixStack {
         this.tempNormalMatrix.setIdentity();
         this.tempNormalMatrix.rotZ(radian);
 
-        this.model.peek().mul(this.tempModelMatrix);
-        this.normal.peek().mul(this.tempNormalMatrix);
+        this.model.peek()
+            .mul(this.tempModelMatrix);
+        this.normal.peek()
+            .mul(this.tempNormalMatrix);
     }
 
     public void rotate(GeoBone bone) {
@@ -187,8 +199,10 @@ public class MatrixStack {
         matrix3f.rotX(rotation.x);
         this.tempNormalMatrix.mul(matrix3f);
 
-        this.model.peek().mul(this.tempModelMatrix);
-        this.normal.peek().mul(this.tempNormalMatrix);
+        this.model.peek()
+            .mul(this.tempModelMatrix);
+        this.normal.peek()
+            .mul(this.tempNormalMatrix);
     }
 
     @SuppressWarnings("unused")

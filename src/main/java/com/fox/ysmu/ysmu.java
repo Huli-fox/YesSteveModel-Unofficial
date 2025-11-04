@@ -1,9 +1,10 @@
 package com.fox.ysmu;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
@@ -17,9 +18,11 @@ public class ysmu {
 
     public static final String MODID = "ysmu";
     public static final Logger LOG = LogManager.getLogger(MODID);
-    public static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+    public static final Gson GSON = new GsonBuilder().disableHtmlEscaping()
+        .setPrettyPrinting()
+        .create();
 
-    @SidedProxy(clientSide = "com.fox.ysmu.ClientProxy", serverSide = "com.fox.ysmu.CommonProxy")
+    @SidedProxy(clientSide = "com.fox.ysmu.client.ClientProxy", serverSide = "com.fox.ysmu.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler

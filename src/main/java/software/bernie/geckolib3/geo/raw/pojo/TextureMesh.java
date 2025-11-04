@@ -3,6 +3,7 @@ package software.bernie.geckolib3.geo.raw.pojo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TextureMesh {
+
     private double[] localPivot;
     private double[] position;
     private double[] rotation;

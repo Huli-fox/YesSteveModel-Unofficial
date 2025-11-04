@@ -1,6 +1,9 @@
 package com.eliotlash.mclib.utils.resources;
 
-import com.eliotlash.mclib.utils.MathUtils;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.ITextureObject;
@@ -8,11 +11,10 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Arrays;
+import com.eliotlash.mclib.utils.MathUtils;
 
 public class GifTexture extends AbstractTexture {
+
     public static int globalTick = 0;
     public static int entityTick = -1;
 
@@ -28,7 +30,8 @@ public class GifTexture extends AbstractTexture {
     public static void bindTexture(ResourceLocation location, int ticks, float partialTicks) {
         TextureManager textures = Minecraft.getMinecraft().renderEngine;
 
-        if (location.getResourcePath().endsWith("gif")) {
+        if (location.getResourcePath()
+            .endsWith("gif")) {
             ITextureObject object = textures.getTexture(location);
 
             if (object instanceof GifTexture) {
@@ -60,8 +63,7 @@ public class GifTexture extends AbstractTexture {
     }
 
     @Override
-    public void loadTexture(IResourceManager resourceManager) throws IOException {
-    }
+    public void loadTexture(IResourceManager resourceManager) throws IOException {}
 
     @Override
     public int getGlTextureId() {
@@ -79,8 +81,7 @@ public class GifTexture extends AbstractTexture {
     }
 
     @Override
-    public void deleteGlTexture() {
-    }
+    public void deleteGlTexture() {}
 
     public ResourceLocation getFrame(int ticks, float partialTicks) {
         int tick = (int) ((ticks + partialTicks) * 5 % this.duration);
@@ -119,8 +120,7 @@ public class GifTexture extends AbstractTexture {
                 Object obj = fieldMultiTex.get(texture);
 
                 fieldMultiTex.set(this, obj);
-            } catch (IllegalArgumentException | IllegalAccessException e) {
-            }
+            } catch (IllegalArgumentException | IllegalAccessException e) {}
         }
     }
 }

@@ -1,14 +1,15 @@
 package software.bernie.geckolib3.core.molang;
 
-import com.eliotlash.mclib.math.Variable;
-
 import java.util.function.DoubleSupplier;
+
+import com.eliotlash.mclib.math.Variable;
 
 /**
  * 变量延迟计算，在需要时才会进行计算 <br>
  * 这样能优化渲染，只会在需要这个数值时才会进行计算
  */
 public class LazyVariable extends Variable {
+
     private DoubleSupplier valueSupplier;
 
     @Deprecated

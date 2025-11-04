@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * with cubes and texture geometry.
  */
 public class PolyMesh {
+
     private Boolean normalizedUvs;
     private double[] normals;
     private PolysUnion polys;

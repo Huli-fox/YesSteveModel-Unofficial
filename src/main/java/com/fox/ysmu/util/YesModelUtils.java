@@ -1,17 +1,5 @@
 package com.fox.ysmu.util;
 
-import com.fox.ysmu.model.ServerModelManager;
-import com.google.common.collect.Maps;
-import it.unimi.dsi.fastutil.Pair;
-import it.unimi.dsi.fastutil.bytes.ByteArrays;
-import net.minecraft.util.ResourceLocation;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FileFileFilter;
-import org.jetbrains.annotations.NotNull;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -21,7 +9,23 @@ import java.security.GeneralSecurityException;
 import java.util.*;
 import java.util.zip.DataFormatException;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.jetbrains.annotations.NotNull;
+
+import com.fox.ysmu.compat.Utils;
+import com.fox.ysmu.model.ServerModelManager;
+import com.google.common.collect.Maps;
+
+import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.bytes.ByteArrays;
+
 public final class YesModelUtils {
+
     /**
      * 二进制文件的头部幻数
      * YSGP 的 ASCII 码
@@ -43,7 +47,7 @@ public final class YesModelUtils {
 
     public static Map<String, byte[]> input(File ysmFile) throws IOException {
         String fileName = removeExtension(ysmFile.getName());
-        if (!ResourceLocation.isValidResourceLocation(fileName)) {
+        if (!Utils.isValidResourceLocation(fileName)) {
             return Collections.emptyMap();
         }
         byte[] data = FileUtils.readFileToByteArray(ysmFile);
@@ -81,7 +85,8 @@ public final class YesModelUtils {
     }
 
     @NotNull
-    private static Pair<String, byte[]> ysmToFile(ByteArrayInputStream tmp) throws IOException, GeneralSecurityException, DataFormatException {
+    private static Pair<String, byte[]> ysmToFile(ByteArrayInputStream tmp)
+        throws IOException, GeneralSecurityException, DataFormatException {
         String name = readString(tmp);
         int size = readInt(tmp);
 
@@ -102,7 +107,8 @@ public final class YesModelUtils {
     }
 
     @NotNull
-    private static Pair<String, byte[]> ysmToFileNew(ByteArrayInputStream tmp) throws IOException, GeneralSecurityException, DataFormatException {
+    private static Pair<String, byte[]> ysmToFileNew(ByteArrayInputStream tmp)
+        throws IOException, GeneralSecurityException, DataFormatException {
         String fileName = readBase64String(tmp);
         int fileSize = readInt(tmp);
         int cipherSecretKeySize = readInt(tmp);
@@ -117,7 +123,8 @@ public final class YesModelUtils {
         byte[] keyFromMd5 = getKeyFromMd5(fileData);
         SecretKey secretSecretKey = AESUtil.getKey(keyFromMd5);
         IvParameterSpec iv = new IvParameterSpec(ivBytes);
-        byte[] decryptSecretKey = AESUtil.decrypt(secretSecretKey, iv, cipherSecretKey).toByteArray();
+        byte[] decryptSecretKey = AESUtil.decrypt(secretSecretKey, iv, cipherSecretKey)
+            .toByteArray();
         SecretKey key = AESUtil.getKey(decryptSecretKey);
         ByteArrayOutputStream decryptData = AESUtil.decrypt(key, iv, fileData);
         byte[] rawData = DeflateUtil.decompressBytes(decryptData.toByteArray());
@@ -127,13 +134,13 @@ public final class YesModelUtils {
 
     public static void export(File dir) throws IOException {
         String dirName = dir.getName();
-        if (!ResourceLocation.isValidResourceLocation(dirName)) {
+        if (!Utils.isValidResourceLocation(dirName)) {
             return;
         }
         boolean noMainModelFile = true;
         boolean noArmModelFile = true;
         boolean noTextureFile = true;
-        Collection<File> files = FileUtils.listFiles(dir, FileFileFilter.INSTANCE, null);
+        Collection<File> files = FileUtils.listFiles(dir, FileFileFilter.FILE, null);
         for (File file : files) {
             String fileName = file.getName();
             if ("main.json".equals(fileName)) {
@@ -157,7 +164,8 @@ public final class YesModelUtils {
         }
 
         byte[] ysmData = filesToYsm(files);
-        File outputFile = ServerModelManager.EXPORT.resolve(dirName + ".ysm").toFile();
+        File outputFile = ServerModelManager.EXPORT.resolve(dirName + ".ysm")
+            .toFile();
         FileUtils.writeByteArrayToFile(outputFile, ysmData, false);
     }
 
@@ -252,7 +260,8 @@ public final class YesModelUtils {
     }
 
     private static void writeBase64String(ByteArrayOutputStream stream, String string) throws IOException {
-        byte[] stringBytes = Base64.getEncoder().encode(string.getBytes(StandardCharsets.UTF_8));
+        byte[] stringBytes = Base64.getEncoder()
+            .encode(string.getBytes(StandardCharsets.UTF_8));
         stream.write(ByteInteger.int2Bytes(stringBytes.length));
         stream.write(stringBytes);
     }
@@ -268,7 +277,10 @@ public final class YesModelUtils {
         int size = readInt(stream);
         byte[] stringBytes = new byte[size];
         stream.read(stringBytes);
-        return new String(Base64.getDecoder().decode(stringBytes), StandardCharsets.UTF_8);
+        return new String(
+            Base64.getDecoder()
+                .decode(stringBytes),
+            StandardCharsets.UTF_8);
     }
 
     private static boolean readBoolean(ByteArrayInputStream stream) throws IOException {

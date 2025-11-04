@@ -1,10 +1,11 @@
 package software.bernie.geckolib3.geo.raw.tree;
 
-import software.bernie.geckolib3.geo.raw.pojo.Bone;
-
 import java.util.HashMap;
 
+import software.bernie.geckolib3.geo.raw.pojo.Bone;
+
 public class RawBoneGroup {
+
     public HashMap<String, RawBoneGroup> children = new HashMap<>();
     public Bone selfBone;
 

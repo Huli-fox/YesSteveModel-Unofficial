@@ -1,11 +1,8 @@
 package com.fox.ysmu.command.sub;
 
-import com.fox.ysmu.ysmu;
-import com.fox.ysmu.eep.ExtendedAuthModels;
-import com.fox.ysmu.eep.ExtendedModelInfo;
-import com.fox.ysmu.model.ServerModelManager;
-import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.network.message.SyncAuthModels;
+import java.util.Arrays;
+import java.util.List;
+
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerSelector;
@@ -14,9 +11,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.ResourceLocation;
 
-import java.util.List;
+import com.fox.ysmu.eep.ExtendedAuthModels;
+import com.fox.ysmu.eep.ExtendedModelInfo;
+import com.fox.ysmu.model.ServerModelManager;
+import com.fox.ysmu.network.NetworkHandler;
+import com.fox.ysmu.network.message.SyncAuthModels;
+import com.fox.ysmu.ysmu;
 
 public class AuthCommand extends CommandBase {
+
     private static final String AUTH_NAME = "auth";
 
     @Override
@@ -45,7 +48,7 @@ public class AuthCommand extends CommandBase {
         String action = args[1];
 
         try {
-            List<EntityPlayerMP> targets = PlayerSelector.matchPlayers(sender, targetSelector);
+            List<EntityPlayerMP> targets = Arrays.asList(PlayerSelector.matchPlayers(sender, targetSelector));
             if (targets.isEmpty()) {
                 sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth.no_targets"));
                 return;
@@ -61,7 +64,8 @@ public class AuthCommand extends CommandBase {
                     break;
                 case "remove":
                     if (args.length < 3) {
-                        sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth.remove.usage"));
+                        sender
+                            .addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth.remove.usage"));
                         return;
                     }
                     removeAuthModel(sender, targets, args[2]);
@@ -93,7 +97,11 @@ public class AuthCommand extends CommandBase {
                 ResourceLocation modelId = new ResourceLocation(ysmu.MODID, modelName);
                 eep.addModel(modelId);
                 NetworkHandler.sendToClientPlayer(new SyncAuthModels(eep.getAuthModels()), player);
-                sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth_model.add.info", modelId.getPath(), player.getCommandSenderName()));
+                sender.addChatMessage(
+                    new ChatComponentTranslation(
+                        "commands.yes_steve_model.auth_model.add.info",
+                        modelId.getResourcePath(),
+                        player.getCommandSenderName()));
             }
         }
     }
@@ -102,9 +110,13 @@ public class AuthCommand extends CommandBase {
         for (EntityPlayerMP player : targets) {
             ExtendedAuthModels eep = ExtendedAuthModels.get(player);
             if (eep != null) {
-                ServerModelManager.CACHE_NAME_INFO.keySet().forEach(name -> eep.addModel(new ResourceLocation(ysmu.MODID, name)));
+                ServerModelManager.CACHE_NAME_INFO.keySet()
+                    .forEach(name -> eep.addModel(new ResourceLocation(ysmu.MODID, name)));
                 NetworkHandler.sendToClientPlayer(new SyncAuthModels(eep.getAuthModels()), player);
-                sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth_model.all.info", player.getCommandSenderName()));
+                sender.addChatMessage(
+                    new ChatComponentTranslation(
+                        "commands.yes_steve_model.auth_model.all.info",
+                        player.getCommandSenderName()));
             }
         }
     }
@@ -117,14 +129,21 @@ public class AuthCommand extends CommandBase {
                 ownModelsEEP.removeModel(modelId);
                 ExtendedModelInfo modelIdEEP = ExtendedModelInfo.get(player);
                 if (modelIdEEP != null) {
-                    if (ServerModelManager.AUTH_MODELS.contains(modelIdEEP.getModelId().getPath()) && !ownModelsEEP.containModel(modelIdEEP.getModelId())) {
+                    if (ServerModelManager.AUTH_MODELS.contains(
+                        modelIdEEP.getModelId()
+                            .getResourcePath())
+                        && !ownModelsEEP.containModel(modelIdEEP.getModelId())) {
                         ResourceLocation defaultModelId = new ResourceLocation(ysmu.MODID, "default");
                         ResourceLocation defaultTextureId = new ResourceLocation(ysmu.MODID, "default/default.png");
                         modelIdEEP.setModelAndTexture(defaultModelId, defaultTextureId);
                     }
                 }
                 NetworkHandler.sendToClientPlayer(new SyncAuthModels(ownModelsEEP.getAuthModels()), player);
-                sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth_model.remove.info", modelId.getPath(), player.getCommandSenderName()));
+                sender.addChatMessage(
+                    new ChatComponentTranslation(
+                        "commands.yes_steve_model.auth_model.remove.info",
+                        modelId.getResourcePath(),
+                        player.getCommandSenderName()));
             }
         }
     }
@@ -141,7 +160,10 @@ public class AuthCommand extends CommandBase {
                     modelIdEEP.setModelAndTexture(defaultModelId, defaultTextureId);
                 }
                 NetworkHandler.sendToClientPlayer(new SyncAuthModels(ownModelEEP.getAuthModels()), player);
-                sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.auth_model.clear.info", player.getCommandSenderName()));
+                sender.addChatMessage(
+                    new ChatComponentTranslation(
+                        "commands.yes_steve_model.auth_model.clear.info",
+                        player.getCommandSenderName()));
             }
         }
     }
@@ -149,7 +171,10 @@ public class AuthCommand extends CommandBase {
     @Override
     public List addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, MinecraftServer.getServer().getAllUsernames());
+            return getListOfStringsMatchingLastWord(
+                args,
+                MinecraftServer.getServer()
+                    .getAllUsernames());
         } else if (args.length == 2) {
             List<String> actions = java.util.Arrays.asList("add", "remove", "all", "clear");
             return getListOfStringsMatchingLastWord(args, actions.toArray(new String[0]));

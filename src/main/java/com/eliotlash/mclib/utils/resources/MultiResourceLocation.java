@@ -1,14 +1,15 @@
 package com.eliotlash.mclib.utils.resources;
 
-import com.google.common.base.Objects;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import java.util.ArrayList;
+import java.util.List;
+
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.base.Objects;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 /**
  * Multiple resource location class
@@ -18,6 +19,7 @@ import java.util.List;
  * types of resources beside pictures.
  */
 public class MultiResourceLocation extends ResourceLocation implements IWritableLocation<MultiResourceLocation> {
+
     public List<FilteredResourceLocation> children = new ArrayList<FilteredResourceLocation>();
 
     private int id = -1;
@@ -45,8 +47,7 @@ public class MultiResourceLocation extends ResourceLocation implements IWritable
             multi.fromNbt(nbt);
 
             return multi;
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
 
         return null;
     }
@@ -64,15 +65,16 @@ public class MultiResourceLocation extends ResourceLocation implements IWritable
             multi.fromJson(element);
 
             return multi;
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
 
         return null;
     }
 
     public MultiResourceLocation() {
-        /* This needed so there would less chances to match with an
-         * actual ResourceLocation */
+        /*
+         * This needed so there would less chances to match with an
+         * actual ResourceLocation
+         */
         super("it_would_be_very_ironic", "if_this_would_match_with_regular_rls");
     }
 

@@ -1,16 +1,20 @@
 package software.bernie.geckolib3.util;
 
-import com.fox.ysmu.compat.QuatJ2L;
-import org.lwjgl.util.vector.Quaternion;
-import software.bernie.geckolib3.geo.render.built.GeoBone;
-import software.bernie.geckolib3.geo.render.built.GeoCube;
-import com.fox.ysmu.compat.Axis;
 import net.geckominecraft.client.renderer.GlStateManager;
+
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.lwjgl.util.vector.Quaternion;
+
+import com.fox.ysmu.compat.Axis;
+import com.fox.ysmu.compat.Utils;
+
+import software.bernie.geckolib3.geo.render.built.GeoBone;
+import software.bernie.geckolib3.geo.render.built.GeoCube;
 
 public final class RenderUtils {
+
     public static void translateMatrixToBone(GeoBone bone) {
         GlStateManager.translate(-bone.getPositionX() / 16f, bone.getPositionY() / 16f, bone.getPositionZ() / 16f);
     }
@@ -77,6 +81,6 @@ public final class RenderUtils {
     }
 
     private static Quaternion j2l(Quaternionf jomlQuat) {
-        return QuatJ2L.j2l(jomlQuat);
+        return Utils.j2l(jomlQuat);
     }
 }

@@ -4,6 +4,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public final class Md5Utils {
+
     private static final MessageDigest DIGEST;
 
     static {

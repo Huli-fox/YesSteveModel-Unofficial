@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class VectorKeyFrameList<T extends KeyFrame> implements Serializable {
+
     private static final long serialVersionUID = 42L;
     public List<T> xKeyFrames;
     public List<T> yKeyFrames;
@@ -32,20 +33,20 @@ public class VectorKeyFrameList<T extends KeyFrame> implements Serializable {
         double xTime = 0.0;
 
         KeyFrame frame;
-        for(Iterator var3 = this.xKeyFrames.iterator(); var3.hasNext(); xTime += frame.getLength()) {
-            frame = (KeyFrame)var3.next();
+        for (Iterator var3 = this.xKeyFrames.iterator(); var3.hasNext(); xTime += frame.getLength()) {
+            frame = (KeyFrame) var3.next();
         }
 
         double yTime = 0.0;
 
-        for(Iterator var5 = this.yKeyFrames.iterator(); var5.hasNext(); yTime += frame.getLength()) {
-            frame = (KeyFrame)var5.next();
+        for (Iterator var5 = this.yKeyFrames.iterator(); var5.hasNext(); yTime += frame.getLength()) {
+            frame = (KeyFrame) var5.next();
         }
 
         double zTime = 0.0;
 
-        for(Iterator var7 = this.zKeyFrames.iterator(); var7.hasNext(); zTime += frame.getLength()) {
-            frame = (KeyFrame)var7.next();
+        for (Iterator var7 = this.zKeyFrames.iterator(); var7.hasNext(); zTime += frame.getLength()) {
+            frame = (KeyFrame) var7.next();
         }
 
         return Math.max(xTime, Math.max(yTime, zTime));

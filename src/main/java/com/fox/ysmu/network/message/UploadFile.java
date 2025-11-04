@@ -1,27 +1,28 @@
 package com.fox.ysmu.network.message;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
+import net.minecraft.entity.player.EntityPlayerMP;
+
+import org.apache.commons.io.FileUtils;
+
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.network.NetworkHandler;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayerMP;
-import org.apache.commons.io.FileUtils;
-
-import java.io.IOException;
-import java.nio.file.Path;
 
 public class UploadFile implements IMessage {
+
     private String name;
     private byte[] fileBytes;
     private int dirOrdinal;
 
-    public UploadFile() {
-    }
+    public UploadFile() {}
 
     public UploadFile(String name, byte[] fileBytes, Dir dir) {
         this.name = name;
@@ -45,8 +46,8 @@ public class UploadFile implements IMessage {
         buf.writeInt(this.dirOrdinal);
     }
 
-    @SideOnly(Side.SERVER)
     public static class Handler implements IMessageHandler<UploadFile, IMessage> {
+
         @Override
         public IMessage onMessage(UploadFile message, MessageContext ctx) {
             EntityPlayerMP sender = ctx.getServerHandler().playerEntity;
@@ -55,6 +56,7 @@ public class UploadFile implements IMessage {
             }
             return null;
         }
+
         private void writeFile(UploadFile message, EntityPlayerMP player) {
             Path filePath;
             Dir dir = Dir.values()[message.dirOrdinal];
@@ -71,6 +73,7 @@ public class UploadFile implements IMessage {
             }
         }
     }
+
     public enum Dir {
         CUSTOM,
         AUTH

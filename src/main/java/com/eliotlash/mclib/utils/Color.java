@@ -3,13 +3,13 @@ package com.eliotlash.mclib.utils;
 import org.apache.commons.lang3.StringUtils;
 
 public class Color implements ICopy<Color> {
+
     public float r;
     public float g;
     public float b;
     public float a = 1;
 
-    public Color() {
-    }
+    public Color() {}
 
     public Color(float r, float g, float b) {
         this.r = r;
@@ -67,7 +67,11 @@ public class Color implements ICopy<Color> {
     }
 
     public Color set(int color, boolean alpha) {
-        this.set((color >> 16 & 0xff) / 255F, (color >> 8 & 0xff) / 255F, (color & 0xff) / 255F, alpha ? (color >> 24 & 0xff) / 255F : 1F);
+        this.set(
+            (color >> 16 & 0xff) / 255F,
+            (color >> 8 & 0xff) / 255F,
+            (color & 0xff) / 255F,
+            alpha ? (color >> 24 & 0xff) / 255F : 1F);
 
         return this;
     }

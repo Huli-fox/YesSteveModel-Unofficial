@@ -9,9 +9,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
 import software.bernie.geckolib3.core.easing.EasingType;
 
 public class KeyFrame<T> implements Serializable {
+
     private static final long serialVersionUID = 42L;
     private Double length;
     private T startValue;
@@ -71,7 +73,7 @@ public class KeyFrame<T> implements Serializable {
     }
 
     public int hashCode() {
-        return Objects.hash(new Object[]{this.length, this.startValue, this.endValue});
+        return Objects.hash(new Object[] { this.length, this.startValue, this.endValue });
     }
 
     public boolean equals(Object obj) {

@@ -4,6 +4,7 @@ import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.mclib.math.functions.Function;
 
 public class CosDegrees extends Function {
+
     public CosDegrees(IValue[] values, String name) throws Exception {
         super(values, name);
     }

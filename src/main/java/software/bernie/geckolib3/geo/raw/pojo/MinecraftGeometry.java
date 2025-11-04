@@ -3,6 +3,7 @@ package software.bernie.geckolib3.geo.raw.pojo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class MinecraftGeometry {
+
     private Bone[] bones;
     private String cape;
     private ModelProperties modelProperties;

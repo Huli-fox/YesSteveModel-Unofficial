@@ -1,10 +1,12 @@
 package software.bernie.geckolib3.core.molang.expressions;
 
-import software.bernie.geckolib3.core.molang.MolangParser;
 import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.mclib.math.Variable;
 
+import software.bernie.geckolib3.core.molang.MolangParser;
+
 public class MolangAssignment extends MolangExpression {
+
     public Variable variable;
     public IValue expression;
 

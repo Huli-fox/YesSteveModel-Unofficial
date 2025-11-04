@@ -1,15 +1,18 @@
 package com.fox.ysmu.client.animation.condition;
 
-import com.google.common.collect.Lists;
-import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import com.fox.ysmu.compat.BackhandCompat;
-import net.minecraftforge.oredict.OreDictionary;
-
 import java.util.List;
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+
+import com.fox.ysmu.compat.BackhandCompat;
+import com.google.common.collect.Lists;
+
+import cpw.mods.fml.common.registry.GameRegistry;
+
 public class ConditionalSwing {
+
     private static final String ID_PRE = "swing$";
     private static final String OD_PRE = "swing#";
     private static final String EMPTY = "";

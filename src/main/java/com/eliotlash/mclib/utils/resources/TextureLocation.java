@@ -1,10 +1,11 @@
 package com.eliotlash.mclib.utils.resources;
 
-import net.minecraft.util.ResourceLocation;
-import software.bernie.example.config.ConfigHandler;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+
+import net.minecraft.util.ResourceLocation;
+
+import software.bernie.example.config.ConfigHandler;
 
 /**
  * Texture location
@@ -13,6 +14,7 @@ import java.lang.reflect.Modifier;
  * up.
  */
 public class TextureLocation extends ResourceLocation {
+
     public TextureLocation(String domain, String path) {
         super(domain, path);
 

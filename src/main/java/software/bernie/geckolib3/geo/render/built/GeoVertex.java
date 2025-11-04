@@ -1,12 +1,14 @@
 package software.bernie.geckolib3.geo.render.built;
 
+import java.io.Serializable;
+
+import javax.vecmath.Vector3f;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
-import javax.vecmath.Vector3f;
-import java.io.Serializable;
-
 public class GeoVertex implements Serializable {
+
     private static final long serialVersionUID = 42L;
     public final Vector3f position;
     public float textureU;

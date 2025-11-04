@@ -3,6 +3,7 @@ package com.eliotlash.mclib.utils;
 import net.geckominecraft.client.renderer.GlStateManager;
 
 public class ColorUtils {
+
     public static final int HALF_BLACK = 0x88000000;
 
     public static final Color COLOR = new Color();
@@ -59,8 +60,7 @@ public class ColorUtils {
     public static int parseColor(String color, int orDefault) {
         try {
             return parseColorWithException(color);
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
 
         return orDefault;
     }

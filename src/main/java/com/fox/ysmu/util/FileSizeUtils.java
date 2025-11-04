@@ -3,7 +3,8 @@ package com.fox.ysmu.util;
 import java.text.DecimalFormat;
 
 public final class FileSizeUtils {
-    private static final String[] UNITS = new String[]{"B", "kB", "MB", "GB", "TB"};
+
+    private static final String[] UNITS = new String[] { "B", "kB", "MB", "GB", "TB" };
 
     /**
      * 来自 https://stackoverflow.com/a/5599842

@@ -1,13 +1,14 @@
 package com.eliotlash.mclib.utils.resources;
 
-import net.minecraft.util.ResourceLocation;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.util.ResourceLocation;
+
 public class MultiResourceLocationManager {
+
     private static int id = 0;
     private static Map<ResourceLocation, List<Pair>> map = new HashMap<ResourceLocation, List<Pair>>();
 
@@ -40,6 +41,7 @@ public class MultiResourceLocationManager {
     }
 
     private static class Pair {
+
         public int id;
         public MultiResourceLocation mrl;
 

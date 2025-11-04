@@ -1,13 +1,15 @@
 package software.bernie.geckolib3.core.molang.expressions;
 
-import software.bernie.geckolib3.core.molang.MolangParser;
 import com.eliotlash.mclib.math.Constant;
 import com.eliotlash.mclib.math.IValue;
 import com.eliotlash.mclib.math.Operation;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 
+import software.bernie.geckolib3.core.molang.MolangParser;
+
 public abstract class MolangExpression implements IValue {
+
     public MolangParser context;
 
     public MolangExpression(MolangParser context) {
@@ -35,7 +37,6 @@ public abstract class MolangExpression implements IValue {
         }
         return false;
     }
-
 
     public JsonElement toJson() {
         return new JsonPrimitive(this.toString());

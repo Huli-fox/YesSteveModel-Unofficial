@@ -1,11 +1,11 @@
 package software.bernie.geckolib3.core.manager;
 
-import software.bernie.geckolib3.core.IAnimatable;
-
 import java.util.HashMap;
 
+import software.bernie.geckolib3.core.IAnimatable;
 
 public class SingletonAnimationFactory extends AnimationFactory {
+
     private final HashMap<Integer, AnimationData> animationDataMap = new HashMap<>();
 
     public SingletonAnimationFactory(IAnimatable animatable) {

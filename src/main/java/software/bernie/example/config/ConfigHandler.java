@@ -1,16 +1,16 @@
 package software.bernie.example.config;
 
-import net.minecraftforge.common.config.Configuration;
-
 import java.io.File;
 
+import net.minecraftforge.common.config.Configuration;
+
 public class ConfigHandler {
+
     public static Configuration config;
     public static boolean enableExamples;
     public static boolean debugPrintStacktraces;
 
-    public ConfigHandler() {
-    }
+    public ConfigHandler() {}
 
     public static void init(File file) {
         config = new Configuration(file);
@@ -24,7 +24,8 @@ public class ConfigHandler {
     public static void syncConfig() {
         config.addCustomCategoryComment("general", "General Settings");
         enableExamples = config.getBoolean("enableexamples", "general", false, "Enable Geckolib Examples");
-        debugPrintStacktraces = config.getBoolean("debugStacktraces", "general", false, "Print stacktraces for debugging");
+        debugPrintStacktraces = config
+            .getBoolean("debugStacktraces", "general", false, "Print stacktraces for debugging");
         config.save();
     }
 }

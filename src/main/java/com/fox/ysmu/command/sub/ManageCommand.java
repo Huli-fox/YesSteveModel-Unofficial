@@ -1,22 +1,25 @@
 package com.fox.ysmu.command.sub;
 
-import com.fox.ysmu.model.ServerModelManager;
-import com.fox.ysmu.model.format.Type;
-import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.network.message.RequestServerModelInfo;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ChatComponentTranslation;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.ChatComponentTranslation;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+
+import com.fox.ysmu.model.ServerModelManager;
+import com.fox.ysmu.model.format.Type;
+import com.fox.ysmu.network.NetworkHandler;
+import com.fox.ysmu.network.message.RequestServerModelInfo;
+
 public class ManageCommand extends CommandBase {
+
     private static final String MANAGE_NAME = "manage";
 
     @Override
@@ -54,17 +57,26 @@ public class ManageCommand extends CommandBase {
         List<RequestServerModelInfo.Info> out = com.google.common.collect.Lists.newArrayList();
         Collection<File> dirs = FileUtils.listFiles(rootPath.toFile(), DirectoryFileFilter.INSTANCE, null);
         for (File dir : dirs) {
-            RequestServerModelInfo.Info info = new RequestServerModelInfo.Info(dir.getName(), Type.FOLDER, FileUtils.sizeOf(dir));
+            RequestServerModelInfo.Info info = new RequestServerModelInfo.Info(
+                dir.getName(),
+                Type.FOLDER,
+                FileUtils.sizeOf(dir));
             out.add(info);
         }
-        Collection<File> zipFiles = FileUtils.listFiles(rootPath.toFile(), new String[]{"zip"}, false);
+        Collection<File> zipFiles = FileUtils.listFiles(rootPath.toFile(), new String[] { "zip" }, false);
         for (File zipFile : zipFiles) {
-            RequestServerModelInfo.Info info = new RequestServerModelInfo.Info(zipFile.getName(), Type.ZIP, FileUtils.sizeOf(zipFile));
+            RequestServerModelInfo.Info info = new RequestServerModelInfo.Info(
+                zipFile.getName(),
+                Type.ZIP,
+                FileUtils.sizeOf(zipFile));
             out.add(info);
         }
-        Collection<File> ysmFiles = FileUtils.listFiles(rootPath.toFile(), new String[]{"ysm"}, false);
+        Collection<File> ysmFiles = FileUtils.listFiles(rootPath.toFile(), new String[] { "ysm" }, false);
         for (File ysmFile : ysmFiles) {
-            RequestServerModelInfo.Info info = new RequestServerModelInfo.Info(ysmFile.getName(), Type.YSM, FileUtils.sizeOf(ysmFile));
+            RequestServerModelInfo.Info info = new RequestServerModelInfo.Info(
+                ysmFile.getName(),
+                Type.YSM,
+                FileUtils.sizeOf(ysmFile));
             out.add(info);
         }
         return out;

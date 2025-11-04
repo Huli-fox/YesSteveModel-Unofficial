@@ -1,22 +1,22 @@
 package com.fox.ysmu.network.message;
 
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.ResourceLocation;
+
 import com.fox.ysmu.eep.ExtendedStarModels;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ResourceLocation;
 
 public class SetStarModel implements IMessage {
+
     private String modelId;
     private boolean isAdd;
 
-    public SetStarModel() {
-    }
+    public SetStarModel() {}
 
     private SetStarModel(ResourceLocation modelId, boolean isAdd) {
         this.modelId = modelId.toString();
@@ -43,8 +43,8 @@ public class SetStarModel implements IMessage {
         return new SetStarModel(modelId, false);
     }
 
-    @SideOnly(Side.SERVER)
     public static class Handler implements IMessageHandler<SetStarModel, IMessage> {
+
         @Override
         public IMessage onMessage(SetStarModel message, MessageContext ctx) {
             EntityPlayerMP sender = ctx.getServerHandler().playerEntity;
@@ -53,6 +53,7 @@ public class SetStarModel implements IMessage {
             }
             return null;
         }
+
         private void handleEEP(SetStarModel message, EntityPlayerMP sender) {
             ExtendedStarModels eep = ExtendedStarModels.get(sender);
             if (eep != null) {

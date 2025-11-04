@@ -15,5 +15,6 @@ import software.bernie.geckolib3.core.processor.IBone;
  */
 @SuppressWarnings("serial")
 public class AnimationPointQueue extends LinkedList<AnimationPoint> {
-	public IBone model;
+
+    public IBone model;
 }

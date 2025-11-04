@@ -1,25 +1,8 @@
 package com.fox.ysmu.client.animation;
 
-import com.fox.ysmu.client.entity.CustomPlayerEntity;
-import software.bernie.geckolib3.core.builder.ILoopType;
-import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
-import software.bernie.geckolib3.core.molang.LazyVariable;
-import software.bernie.geckolib3.core.molang.MolangParser;
-import software.bernie.geckolib3.model.provider.data.EntityModelData;
-import software.bernie.geckolib3.resource.GeckoLibCache;
-import software.bernie.geckolib3.util.MolangUtils;
-//import net.minecraft.client.CameraType;
-import com.fox.ysmu.compat.BackhandCompat;
-import com.fox.ysmu.compat.EtfuturumCompat;
+import java.util.function.BiPredicate;
+
 import net.minecraft.client.Minecraft;
-//import net.minecraft.client.player.AbstractClientPlayer;
-//import net.minecraft.client.player.LocalPlayer;
-//import net.minecraft.util.Mth;
-//import net.minecraft.world.entity.EquipmentSlot;
-//import net.minecraft.world.entity.Pose;
-//import net.minecraft.world.entity.Saddleable;
-//import net.minecraft.world.entity.animal.Pig;
-//import net.minecraft.world.entity.player.Player;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.entity.item.EntityBoat;
 import net.minecraft.entity.passive.EntityPig;
@@ -27,28 +10,39 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
-//import net.minecraft.world.entity.player.PlayerModelPart;
-//import net.minecraft.world.entity.vehicle.Boat;
-//import net.minecraft.world.item.ItemStack;
-//import net.minecraft.world.item.Items;
-//import net.minecraft.world.item.UseAnim;
-//import net.minecraft.world.phys.Vec3;
 
-import java.util.function.BiPredicate;
+import com.fox.ysmu.client.entity.CustomPlayerEntity;
+import com.fox.ysmu.compat.BackhandCompat;
+import com.fox.ysmu.compat.EtfuturumCompat;
+
+import software.bernie.geckolib3.core.builder.ILoopType;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.molang.LazyVariable;
+import software.bernie.geckolib3.core.molang.MolangParser;
+import software.bernie.geckolib3.model.provider.data.EntityModelData;
+import software.bernie.geckolib3.resource.GeckoLibCache;
+import software.bernie.geckolib3.util.MolangUtils;
 
 public class AnimationRegister {
+
     private static final double MIN_SPEED = 0.05;
 
     public static void registerAnimationState() {
         register("death", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.HIGHEST, (player, event) -> player.isDead);
-        //register("riptide", Priority.HIGHEST, (player, event) -> player.isAutoSpinAttack());
+        // register("riptide", Priority.HIGHEST, (player, event) -> player.isAutoSpinAttack());
         register("sleep", Priority.HIGHEST, (player, event) -> player.isPlayerSleeping());
-        register("swim", Priority.HIGHEST, (player, event) -> player.isInWater() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED); // TODO 游泳，待检查
+        register(
+            "swim",
+            Priority.HIGHEST,
+            (player, event) -> player.isInWater() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED); // TODO 游泳，待检查
         register("climb", Priority.HIGHEST, (player, event) -> player.isOnLadder() && Math.abs(player.motionY) > 0);
         register("climbing", Priority.HIGHEST, (player, event) -> player.isOnLadder());
 
         register("ride_pig", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityPig);
-        register("ride", Priority.HIGH, (player, event) -> player.isRiding() && !(player.ridingEntity instanceof EntityBoat));
+        register(
+            "ride",
+            Priority.HIGH,
+            (player, event) -> player.isRiding() && !(player.ridingEntity instanceof EntityBoat));
         register("boat", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityBoat);
         register("sit", Priority.HIGH, (player, event) -> player.isRiding());
 
@@ -56,9 +50,17 @@ public class AnimationRegister {
         register("elytra_fly", Priority.HIGH, (player, event) -> EtfuturumCompat.isFallFlying(player));
 
         register("swim_stand", Priority.NORMAL, (player, event) -> player.isInWater());
-        register("attacked", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.NORMAL, (player, event) -> player.hurtTime > 0);
+        register(
+            "attacked",
+            ILoopType.EDefaultLoopTypes.PLAY_ONCE,
+            Priority.NORMAL,
+            (player, event) -> player.hurtTime > 0);
         register("jump", Priority.NORMAL, (player, event) -> !player.onGround && !player.isInWater());
-        register("sneak", Priority.NORMAL, (player, event) -> player.onGround && player.isSneaking() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
+        register(
+            "sneak",
+            Priority.NORMAL,
+            (player, event) -> player.onGround && player.isSneaking()
+                && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
         register("sneaking", Priority.NORMAL, (player, event) -> player.onGround && player.isSneaking());
 
         register("run", Priority.LOW, (player, event) -> player.onGround && player.isSprinting());
@@ -139,16 +141,17 @@ public class AnimationRegister {
         parser.register(new LazyVariable("ysm.is_passenger", MolangUtils.FALSE));
         parser.register(new LazyVariable("ysm.is_sleep", MolangUtils.FALSE));
         parser.register(new LazyVariable("ysm.is_sneak", MolangUtils.FALSE));
-        //parser.register(new LazyVariable("ysm.is_riptide", MolangUtils.FALSE));
+        // parser.register(new LazyVariable("ysm.is_riptide", MolangUtils.FALSE));
 
         parser.register(new LazyVariable("ysm.armor_value", 0));
         parser.register(new LazyVariable("ysm.hurt_time", 0));
         parser.register(new LazyVariable("ysm.food_level", 20));
 
-        //parser.register(new LazyVariable("ysm.first_person_mod_hide", MolangUtils.FALSE));
+        // parser.register(new LazyVariable("ysm.first_person_mod_hide", MolangUtils.FALSE));
     }
 
-    public static void setParserValue(AnimationEvent<CustomPlayerEntity> animationEvent, MolangParser parser, EntityModelData data, EntityPlayer player) {
+    public static void setParserValue(AnimationEvent<CustomPlayerEntity> animationEvent, MolangParser parser,
+        EntityModelData data, EntityPlayer player) {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.theWorld == null) {
             return;
@@ -157,7 +160,9 @@ public class AnimationRegister {
         parser.setValue("query.actor_count", () -> mc.theWorld.loadedEntityList.size());
         parser.setValue("query.body_x_rotation", player.rotationPitch);
         parser.setValue("query.body_y_rotation", () -> MathHelper.wrapAngleTo180_float(player.rotationYaw));
-        parser.setValue("query.cardinal_facing_2d", () -> MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3);
+        parser.setValue(
+            "query.cardinal_facing_2d",
+            () -> MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3);
         parser.setValue("query.distance_from_camera", () -> mc.renderViewEntity.getDistanceToEntity(player));
         parser.setValue("query.equipment_count", () -> getEquipmentCount(player));
         parser.setValue("query.eye_target_x_rotation", () -> player.rotationPitch);
@@ -171,11 +176,19 @@ public class AnimationRegister {
         parser.setValue("query.health", player::getHealth);
         parser.setValue("query.hurt_time", () -> player.hurtTime);
 
-        parser.setValue("query.is_eating", () -> MolangUtils.booleanToFloat(player.getItemInUse() != null && player.getItemInUse().getItemUseAction() == EnumAction.eat));
-        parser.setValue("query.is_first_person", () -> MolangUtils.booleanToFloat(mc.gameSettings.thirdPersonView == 0));
+        parser.setValue(
+            "query.is_eating",
+            () -> MolangUtils.booleanToFloat(
+                player.getItemInUse() != null && player.getItemInUse()
+                    .getItemUseAction() == EnumAction.eat));
+        parser
+            .setValue("query.is_first_person", () -> MolangUtils.booleanToFloat(mc.gameSettings.thirdPersonView == 0));
         parser.setValue("query.is_in_water", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_in_water_or_rain", () -> MolangUtils.booleanToFloat(player.isWet()));
-        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!player.capabilities.isFlying && !player.isRiding() && !player.onGround && !player.isInWater()));
+        parser.setValue(
+            "query.is_jumping",
+            () -> MolangUtils.booleanToFloat(
+                !player.capabilities.isFlying && !player.isRiding() && !player.onGround && !player.isInWater()));
         parser.setValue("query.is_on_fire", () -> MolangUtils.booleanToFloat(player.isBurning()));
         parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(player.onGround));
         parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(player.onGround));
@@ -188,7 +201,9 @@ public class AnimationRegister {
         parser.setValue("query.is_swimming", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_using_item", () -> MolangUtils.booleanToFloat(player.isUsingItem()));
         // In 1.7.10, item use ticks count down. Modern versions count up. The logic is inverted.
-        parser.setValue("query.item_in_use_duration", () -> (getMaxUseDuration(player) - player.getItemInUseCount()) / 20.0);
+        parser.setValue(
+            "query.item_in_use_duration",
+            () -> (getMaxUseDuration(player) - player.getItemInUseCount()) / 20.0);
         parser.setValue("query.item_max_use_duration", () -> getMaxUseDuration(player) / 20.0);
         parser.setValue("query.item_remaining_use_duration", () -> player.getItemInUseCount() / 20.0);
 
@@ -221,11 +236,14 @@ public class AnimationRegister {
         parser.setValue("ysm.is_passenger", () -> MolangUtils.booleanToFloat(player.isRiding()));
         parser.setValue("ysm.is_sleep", () -> MolangUtils.booleanToFloat(player.isPlayerSleeping()));
         parser.setValue("ysm.is_sneak", () -> MolangUtils.booleanToFloat(player.onGround && player.isSneaking()));
-        //parser.setValue("ysm.is_riptide", () -> MolangUtils.booleanToFloat(player.isAutoSpinAttack()));
+        // parser.setValue("ysm.is_riptide", () -> MolangUtils.booleanToFloat(player.isAutoSpinAttack()));
 
         parser.setValue("ysm.armor_value", player::getTotalArmorValue);
         parser.setValue("ysm.hurt_time", () -> player.hurtTime);
-        parser.setValue("ysm.food_level", () -> player.getFoodStats().getFoodLevel());
+        parser.setValue(
+            "ysm.food_level",
+            () -> player.getFoodStats()
+                .getFoodLevel());
 
     }
 
@@ -272,17 +290,22 @@ public class AnimationRegister {
         return (float) ((player.posY - player.prevPosY) * 20.0);
     }
 
-    private static void register(String animationName, ILoopType loopType, int priority, BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> predicate) {
+    private static void register(String animationName, ILoopType loopType, int priority,
+        BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> predicate) {
         AnimationManager manager = AnimationManager.getInstance();
         manager.register(new AnimationState(animationName, loopType, priority, predicate));
     }
 
-    private static void register(String animationName, int priority, BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> predicate) {
+    private static void register(String animationName, int priority,
+        BiPredicate<EntityPlayer, AnimationEvent<CustomPlayerEntity>> predicate) {
         register(animationName, ILoopType.EDefaultLoopTypes.LOOP, priority, predicate);
     }
 
     private static double getEyeCloseState(AnimationEvent<CustomPlayerEntity> animationEvent, EntityPlayer player) {
-        double remainder = (animationEvent.getAnimationTick() + Math.abs(player.getUniqueID().getLeastSignificantBits()) % 10) % 90;
+        double remainder = (animationEvent.getAnimationTick() + Math.abs(
+            player.getUniqueID()
+                .getLeastSignificantBits())
+            % 10) % 90;
         boolean isBlinkTime = 85 < remainder && remainder < 90;
         return MolangUtils.booleanToFloat(player.isPlayerSleeping() || isBlinkTime);
     }

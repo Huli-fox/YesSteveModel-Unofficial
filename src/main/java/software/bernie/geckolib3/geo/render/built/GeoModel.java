@@ -1,15 +1,17 @@
 package software.bernie.geckolib3.geo.render.built;
 
-import software.bernie.geckolib3.geo.raw.pojo.ModelProperties;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import software.bernie.geckolib3.geo.raw.pojo.ModelProperties;
+
 public class GeoModel implements Serializable {
+
     private static final long serialVersionUID = 42L;
     public List<GeoBone> topLevelBones = new ArrayList<>();
     public List<GeoBone> leftHandBones = new ObjectArrayList<>();
@@ -22,7 +24,8 @@ public class GeoModel implements Serializable {
     public ModelProperties properties;
 
     public boolean hasTopLevelBone(String name) {
-        return topLevelBones.stream().anyMatch(bone -> bone.name.equals(name));
+        return topLevelBones.stream()
+            .anyMatch(bone -> bone.name.equals(name));
     }
 
     public Optional<GeoBone> getTopLevelBone(String name) {

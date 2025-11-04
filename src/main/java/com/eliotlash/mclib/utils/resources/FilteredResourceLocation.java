@@ -1,15 +1,17 @@
 package com.eliotlash.mclib.utils.resources;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import java.util.Objects;
+
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;
 
-import java.util.Objects;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 public class FilteredResourceLocation implements IWritableLocation<FilteredResourceLocation> {
+
     public static final int DEFAULT_COLOR = 0xffffffff;
 
     public ResourceLocation path;
@@ -35,8 +37,7 @@ public class FilteredResourceLocation implements IWritableLocation<FilteredResou
             location.fromNbt(base);
 
             return location;
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
 
         return null;
     }
@@ -48,14 +49,12 @@ public class FilteredResourceLocation implements IWritableLocation<FilteredResou
             location.fromJson(element);
 
             return location;
-        } catch (Exception e) {
-        }
+        } catch (Exception e) {}
 
         return null;
     }
 
-    public FilteredResourceLocation() {
-    }
+    public FilteredResourceLocation() {}
 
     public FilteredResourceLocation(ResourceLocation path) {
         this.path = path;
@@ -91,8 +90,7 @@ public class FilteredResourceLocation implements IWritableLocation<FilteredResou
         if (obj instanceof FilteredResourceLocation) {
             FilteredResourceLocation frl = (FilteredResourceLocation) obj;
 
-            return Objects.equals(this.path, frl.path)
-                && this.autoSize == frl.autoSize
+            return Objects.equals(this.path, frl.path) && this.autoSize == frl.autoSize
                 && this.sizeW == frl.sizeW
                 && this.sizeH == frl.sizeH
                 && this.scaleToLargest == frl.scaleToLargest
@@ -126,7 +124,13 @@ public class FilteredResourceLocation implements IWritableLocation<FilteredResou
     }
 
     public boolean isDefault() {
-        return (this.autoSize || (this.sizeW == 0 && this.sizeH == 0)) && this.color == DEFAULT_COLOR && !this.scaleToLargest && this.scale == 1F && this.shiftX == 0 && this.shiftY == 0 && this.pixelate <= 1 && !this.erase;
+        return (this.autoSize || (this.sizeW == 0 && this.sizeH == 0)) && this.color == DEFAULT_COLOR
+            && !this.scaleToLargest
+            && this.scale == 1F
+            && this.shiftX == 0
+            && this.shiftY == 0
+            && this.pixelate <= 1
+            && !this.erase;
     }
 
     @Override
@@ -192,46 +196,58 @@ public class FilteredResourceLocation implements IWritableLocation<FilteredResou
 
         JsonObject object = element.getAsJsonObject();
 
-        this.path = RLUtils.create(object.get("path").getAsString());
+        this.path = RLUtils.create(
+            object.get("path")
+                .getAsString());
 
         if (object.has("color")) {
-            this.color = object.get("color").getAsInt();
+            this.color = object.get("color")
+                .getAsInt();
         }
 
         if (object.has("scale")) {
-            this.scale = object.get("scale").getAsFloat();
+            this.scale = object.get("scale")
+                .getAsFloat();
         }
 
         if (object.has("scaleToLargest")) {
-            this.scaleToLargest = object.get("scaleToLargest").getAsBoolean();
+            this.scaleToLargest = object.get("scaleToLargest")
+                .getAsBoolean();
         }
 
         if (object.has("shiftX")) {
-            this.shiftX = object.get("shiftX").getAsInt();
+            this.shiftX = object.get("shiftX")
+                .getAsInt();
         }
 
         if (object.has("shiftY")) {
-            this.shiftY = object.get("shiftY").getAsInt();
+            this.shiftY = object.get("shiftY")
+                .getAsInt();
         }
 
         if (object.has("pixelate")) {
-            this.pixelate = object.get("pixelate").getAsInt();
+            this.pixelate = object.get("pixelate")
+                .getAsInt();
         }
 
         if (object.has("erase")) {
-            this.erase = object.get("erase").getAsBoolean();
+            this.erase = object.get("erase")
+                .getAsBoolean();
         }
 
         if (object.has("autoSize")) {
-            this.autoSize = object.get("autoSize").getAsBoolean();
+            this.autoSize = object.get("autoSize")
+                .getAsBoolean();
         }
 
         if (object.has("sizeW")) {
-            this.sizeW = object.get("sizeW").getAsInt();
+            this.sizeW = object.get("sizeW")
+                .getAsInt();
         }
 
         if (object.has("sizeH")) {
-            this.sizeH = object.get("sizeH").getAsInt();
+            this.sizeH = object.get("sizeH")
+                .getAsInt();
         }
     }
 

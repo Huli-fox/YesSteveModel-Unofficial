@@ -1,13 +1,14 @@
 package software.bernie.geckolib3.geo.render.built;
 
-import software.bernie.geckolib3.core.processor.IBone;
-import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import software.bernie.geckolib3.core.processor.IBone;
+import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
+
 public class GeoBone implements IBone, Serializable {
+
     private static final long serialVersionUID = 42L;
     public GeoBone parent;
 

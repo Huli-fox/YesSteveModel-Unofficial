@@ -1,22 +1,25 @@
 package com.eliotlash.mclib.utils.resources;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
-import com.google.gson.JsonPrimitive;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.SimpleResource;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;
 
-import javax.imageio.ImageIO;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonPrimitive;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 /**
  * {@link ResourceLocation} utility methods
@@ -25,6 +28,7 @@ import java.util.List;
  * actor model and skin.
  */
 public class RLUtils {
+
     private static List<IResourceTransformer> transformers = new ArrayList<IResourceTransformer>();
     private static ResourceLocation pixel = new ResourceLocation("mclib:textures/pixel.png");
 
@@ -38,20 +42,20 @@ public class RLUtils {
         }
 
         try {
-//            if (true)//TODO
-//            {
-//                MultiskinThread.add(multi);
-//
-//                return Minecraft.getMinecraft().getResourceManager().getResource(pixel);
-//            }
-//            else
-//            {
-            //MultiskinThread.clear();
+            // if (true)//TODO
+            // {
+            // MultiskinThread.add(multi);
+            //
+            // return Minecraft.getMinecraft().getResourceManager().getResource(pixel);
+            // }
+            // else
+            // {
+            // MultiskinThread.clear();
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             ImageIO.write(TextureProcessor.postProcess(multi), "png", stream);
 
             return new SimpleResource(multi, new ByteArrayInputStream(stream.toByteArray()), null, null);
-            //}
+            // }
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
