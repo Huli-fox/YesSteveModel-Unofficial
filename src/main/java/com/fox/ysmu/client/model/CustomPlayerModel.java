@@ -3,14 +3,14 @@ package com.fox.ysmu.client.model;
 import com.fox.ysmu.ysmu;
 import com.fox.ysmu.client.animation.AnimationRegister;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
-import com.fox.ysmu.geckolib3.core.IAnimatable;
-import com.fox.ysmu.geckolib3.core.event.predicate.AnimationEvent;
-import com.fox.ysmu.geckolib3.core.molang.MolangParser;
-import com.fox.ysmu.geckolib3.core.processor.IBone;
-import com.fox.ysmu.geckolib3.geo.render.built.GeoBone;
-import com.fox.ysmu.geckolib3.model.AnimatedGeoModel;
-import com.fox.ysmu.geckolib3.model.provider.data.EntityModelData;
-import com.fox.ysmu.geckolib3.resource.GeckoLibCache;
+import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.molang.MolangParser;
+import software.bernie.geckolib3.core.processor.IBone;
+import software.bernie.geckolib3.geo.render.built.GeoBone;
+import software.bernie.geckolib3.model.AnimatedGeoModel;
+import software.bernie.geckolib3.model.provider.data.EntityModelData;
+import software.bernie.geckolib3.resource.GeckoLibCache;
 import com.fox.ysmu.util.ModelIdUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
@@ -54,18 +54,17 @@ public class CustomPlayerModel extends AnimatedGeoModel {
     }
 
     @Override
-
-    public void setCustomAnimations(IAnimatable animatable, int instanceId, AnimationEvent animationEvent) {
+    public void setLivingAnimations(IAnimatable animatable, Integer instanceId, AnimationEvent animationEvent) {
         List extraData = animationEvent.getExtraData();
         MolangParser parser = GeckoLibCache.getInstance().parser;
         if (!Minecraft.getMinecraft().isGamePaused() && extraData.size() == 1 && extraData.get(0) instanceof EntityModelData data
                 && animatable instanceof CustomPlayerEntity customPlayer && customPlayer.getPlayer() != null) {
             EntityPlayer player = customPlayer.getPlayer();
             AnimationRegister.setParserValue(animationEvent, parser, data, player);
-            super.setCustomAnimations(animatable, instanceId, animationEvent);
+            super.setLivingAnimations(animatable, instanceId, animationEvent);
             this.codeAnimation(animationEvent, data, player);
         } else {
-            super.setCustomAnimations(animatable, instanceId, animationEvent);
+            super.setLivingAnimations(animatable, instanceId, animationEvent);
         }
     }
 

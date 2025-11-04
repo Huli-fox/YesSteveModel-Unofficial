@@ -1,6 +1,6 @@
 package com.fox.ysmu.util;
 
-import com.fox.ysmu.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.IAnimatable;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import net.minecraft.util.ResourceLocation;

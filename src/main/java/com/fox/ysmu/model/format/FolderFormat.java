@@ -3,11 +3,10 @@ package com.fox.ysmu.model.format;
 
 import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.data.ModelData;
-import com.fox.ysmu.geckolib3.geo.raw.pojo.Converter;
-import com.fox.ysmu.geckolib3.geo.raw.pojo.RawGeoModel;
+import software.bernie.geckolib3.geo.raw.pojo.Converter;
+import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
 import com.fox.ysmu.util.Md5Utils;
 import com.fox.ysmu.util.ObjectStreamUtil;
-import com.fox.ysmu.data.ModelData;
 import com.google.common.collect.Maps;
 //import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.ResourceLocation;

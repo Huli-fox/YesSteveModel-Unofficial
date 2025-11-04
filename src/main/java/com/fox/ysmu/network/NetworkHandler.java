@@ -1,15 +1,13 @@
 package com.fox.ysmu.network;
 
-import com.fox.ysmu.ysmu;
 //import com.fox.ysmu.bukkit.message.OpenModelGuiMessage;
-import com.fox.ysmu.bukkit.message.SetNpcModelAndTexture;
-import com.fox.ysmu.bukkit.message.SyncNpcDataMessage;
-import com.fox.ysmu.bukkit.message.UpdateNpcDataMessage;
+import com.fox.ysmu.network.message.SetNpcModelAndTexture;
+import com.fox.ysmu.network.message.SyncNpcDataMessage;
+import com.fox.ysmu.network.message.UpdateNpcDataMessage;
 import com.fox.ysmu.network.message.*;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.relauncher.Side;
-import net.minecraft.util.ResourceLocation;
 //import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 //import net.minecraft.world.entity.player.Player;
@@ -19,7 +17,6 @@ import cpw.mods.fml.common.network.NetworkRegistry;
 //import net.minecraftforge.network.PacketDistributor;
 //import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.util.Optional;
 
 public final class NetworkHandler {
     private static final String VERSION = "1.0.0";

@@ -1,8 +1,8 @@
 package com.fox.ysmu.client.animation;
 
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
-import com.fox.ysmu.geckolib3.core.builder.ILoopType;
-import com.fox.ysmu.geckolib3.core.event.predicate.AnimationEvent;
+import software.bernie.geckolib3.core.builder.ILoopType;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.MathHelper;
 

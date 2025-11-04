@@ -5,6 +5,8 @@ import net.minecraft.item.ItemStack;
 import cpw.mods.fml.common.Loader;
 import xonin.backhand.api.core.BackhandUtils;
 
+import javax.annotation.Nullable;
+
 public class BackhandCompat {
     private static final boolean BACKHAND_LOADED = Loader.isModLoaded("backhand");
 
@@ -21,11 +23,17 @@ public class BackhandCompat {
      * @param player 玩家实体
      * @return 如果加载了Backhand则返回副手物品，否则返回null
      */
-    public static ItemStack getOffhandItem(EntityPlayer player) {
+    public static @Nullable ItemStack getOffhandItem(EntityPlayer player) {
         if (BACKHAND_LOADED) {
             return BackhandUtils.getOffhandItem(player);
         }
         return null;
+    }
+
+    public static void setOffhandItem(EntityPlayer player, @Nullable ItemStack itemStack) {
+        if (BACKHAND_LOADED) {
+            BackhandUtils.setPlayerOffhandItem(player, itemStack);
+        }
     }
 
     /**
