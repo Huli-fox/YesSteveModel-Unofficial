@@ -1,6 +1,7 @@
 package com.fox.ysmu.client.renderer;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.scoreboard.Score;
 import net.minecraft.scoreboard.ScoreObjective;
@@ -35,7 +36,9 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     }
 
     @Override
-    public void doRender(Entity entityObj, double x, double y, double z, float entityYaw, float partialTicks) {
+    public void doRender(EntityLivingBase entityObj, double x, double y, double z, float entityYaw,
+        float partialTicks) {
+        System.out.println("This is the overridden doRender method!");
         if (this.animatable != null && entityObj instanceof EntityPlayer player) {
             ExtendedModelInfo eep = ExtendedModelInfo.get(player);
             if (eep != null) {

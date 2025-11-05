@@ -86,23 +86,23 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void onRender(RenderPlayerEvent.Pre event) {
-        EntityPlayer playerRender = event.entityPlayer;
+        EntityPlayer player = event.entityPlayer;
         EntityClientPlayerMP playerSelf = Minecraft.getMinecraft().thePlayer;
-        if (playerRender.equals(playerSelf) && Config.DISABLE_SELF_MODEL) {
+        if (player.equals(playerSelf) && Config.DISABLE_SELF_MODEL) {
             return;
         }
-        if (!playerRender.equals(playerSelf) && Config.DISABLE_OTHER_MODEL) {
+        if (!player.equals(playerSelf) && Config.DISABLE_OTHER_MODEL) {
             return;
         }
         event.setCanceled(true);
-        ClientProxy.getInstance()
-            .doRender(
-                playerRender,
-                playerRender.posX,
-                playerRender.posY,
-                playerRender.posZ,
-                playerRender.rotationYaw,
-                event.partialRenderTick);
+        CustomPlayerRenderer renderer = ClientProxy.getInstance();
+        renderer.doRender(
+            event.entityPlayer,
+            event.entityPlayer.posX,
+            event.entityPlayer.posY,
+            event.entityPlayer.posZ,
+            event.entityPlayer.rotationYaw,
+            event.partialRenderTick);
     }
 
     @SubscribeEvent

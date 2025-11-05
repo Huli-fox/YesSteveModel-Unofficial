@@ -1,8 +1,10 @@
 package com.eliotlash.mclib.math;
 
-import java.io.Serializable;
+public interface IValue {
 
-public interface IValue extends Serializable {
+    /**
+     * 获取计算值或存储值
+     */
 
     double get();
 }

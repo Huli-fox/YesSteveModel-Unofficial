@@ -70,9 +70,8 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
     }
 
     @Override
-    public void doRender(Entity entityObj, double x, double y, double z, float entityYaw, float partialTicks) {
-        if (!(entityObj instanceof EntityLivingBase)) return;
-        EntityLivingBase entity = (EntityLivingBase) entityObj;
+    public void doRender(EntityLivingBase entity, double x, double y, double z, float entityYaw, float partialTicks) {
+        if (!(entity instanceof EntityLivingBase)) return;
         GlStateManager.pushMatrix();
         try {
             GlStateManager.translate(x, y, z);
