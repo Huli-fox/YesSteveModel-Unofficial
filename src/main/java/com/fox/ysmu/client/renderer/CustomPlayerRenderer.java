@@ -38,7 +38,6 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     @Override
     public void doRender(EntityLivingBase entityObj, double x, double y, double z, float entityYaw,
         float partialTicks) {
-        System.out.println("This is the overridden doRender method!");
         if (this.animatable != null && entityObj instanceof EntityPlayer player) {
             ExtendedModelInfo eep = ExtendedModelInfo.get(player);
             if (eep != null) {

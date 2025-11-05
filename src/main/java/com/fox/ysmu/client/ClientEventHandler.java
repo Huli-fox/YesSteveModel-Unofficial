@@ -10,6 +10,7 @@ import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
@@ -98,9 +99,9 @@ public class ClientEventHandler {
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
         renderer.doRender(
             event.entityPlayer,
-            event.entityPlayer.posX,
-            event.entityPlayer.posY,
-            event.entityPlayer.posZ,
+            player.posX - RenderManager.renderPosX,
+            player.posY - RenderManager.renderPosY - player.yOffset,
+            player.posZ - RenderManager.renderPosZ,
             event.entityPlayer.rotationYaw,
             event.partialRenderTick);
     }
