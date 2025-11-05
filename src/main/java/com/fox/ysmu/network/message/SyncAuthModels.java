@@ -2,17 +2,15 @@ package com.fox.ysmu.network.message;
 
 import java.util.Set;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
 
-import com.fox.ysmu.eep.ExtendedAuthModels;
+import com.fox.ysmu.ysmu;
 import com.google.common.collect.Sets;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 
 public class SyncAuthModels implements IMessage {
@@ -43,27 +41,21 @@ public class SyncAuthModels implements IMessage {
         }
     }
 
-    @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<SyncAuthModels, IMessage> {
 
         @Override
         public IMessage onMessage(SyncAuthModels message, MessageContext ctx) {
-            handleEEP(message);
-            return null;
-        }
-
-        private void handleEEP(SyncAuthModels message) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc.thePlayer != null) {
-                ExtendedAuthModels eep = ExtendedAuthModels.get(mc.thePlayer);
-                if (eep != null) {
-                    eep.setAuthModels(message.authModels);
-                }
+            if (ctx.side == Side.CLIENT) {
+                ysmu.proxy.handleAuthModels(message);
             }
+            return null;
         }
     }
 
-    // TODO 声明客户端？
+    public Set<ResourceLocation> getAuthModels() {
+        return authModels;
+    }
+
     private static String readString(ByteBuf buf) {
         int length = buf.readInt();
         char[] chars = new char[length];

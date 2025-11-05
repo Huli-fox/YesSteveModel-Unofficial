@@ -2,10 +2,9 @@ package com.fox.ysmu.network.message;
 
 import java.util.Set;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
 
-import com.fox.ysmu.eep.ExtendedStarModels;
+import com.fox.ysmu.ysmu;
 import com.google.common.collect.Sets;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -13,7 +12,6 @@ import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 
 public class SyncStarModels implements IMessage {
@@ -44,25 +42,18 @@ public class SyncStarModels implements IMessage {
         }
     }
 
-    @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<SyncStarModels, IMessage> {
 
         @Override
         public IMessage onMessage(SyncStarModels message, MessageContext ctx) {
             if (ctx.side == Side.CLIENT) {
-                handleEEP(message);
+                ysmu.proxy.handleStarModels(message);
             }
             return null;
         }
+    }
 
-        private void handleEEP(SyncStarModels message) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc.thePlayer != null) {
-                ExtendedStarModels eep = ExtendedStarModels.get(mc.thePlayer);
-                if (eep != null) {
-                    eep.setStarModels(message.starModels);
-                }
-            }
-        }
+    public Set<ResourceLocation> getStarModels() {
+        return starModels;
     }
 }

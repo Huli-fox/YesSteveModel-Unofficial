@@ -42,7 +42,6 @@ public class RequestLoadModel implements IMessage {
         ByteBufUtils.writeUTF8String(buf, this.fileName);
     }
 
-    @SideOnly(Side.CLIENT)
     public static class Handler implements IMessageHandler<RequestLoadModel, IMessage> {
 
         @Override

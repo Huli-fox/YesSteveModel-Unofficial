@@ -3,6 +3,8 @@ package com.fox.ysmu;
 import com.fox.ysmu.command.RootCommand;
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.network.NetworkHandler;
+import com.fox.ysmu.network.message.SyncAuthModels;
+import com.fox.ysmu.network.message.SyncStarModels;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -31,4 +33,8 @@ public class CommonProxy {
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new RootCommand());
     }
+
+    public void handleAuthModels(SyncAuthModels message) {}
+
+    public void handleStarModels(SyncStarModels message) {}
 }
