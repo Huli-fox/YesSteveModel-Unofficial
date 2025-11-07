@@ -96,14 +96,18 @@ public class ClientEventHandler {
             return;
         }
         event.setCanceled(true);
+        float partialTicks = event.partialRenderTick;
+        double ix = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
+        double iy = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
+        double iz = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
         renderer.doRender(
-            event.entityPlayer,
-            player.posX - RenderManager.renderPosX,
-            player.posY - RenderManager.renderPosY - player.yOffset,
-            player.posZ - RenderManager.renderPosZ,
-            event.entityPlayer.rotationYaw,
-            event.partialRenderTick);
+            player,
+            ix - RenderManager.renderPosX,
+            iy - RenderManager.renderPosY - player.yOffset,
+            iz - RenderManager.renderPosZ,
+            player.rotationYaw,
+            partialTicks);
     }
 
     @SubscribeEvent
@@ -225,7 +229,7 @@ public class ClientEventHandler {
 
     private static boolean isVanillaPlayer(ResourceLocation modelId) {
         return modelId.getResourcePath()
-            .equals("steve"); // TODO steve
+            .equals("steve");
     }
 
     private static void bobView(float pPartialTicks, EntityPlayer player) {
