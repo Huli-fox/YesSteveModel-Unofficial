@@ -172,13 +172,20 @@ public interface IGeoRenderer<T> {
     }
 
     default void renderEarly(GeoModel model, T animatable, float ticks, float red, float green, float blue,
-        float alpha) {}
+        float alpha) {
+        float width = getWidthScale(animatable);
+        float height = getHeightScale(animatable);
+        MATRIX_STACK.push();
+        MATRIX_STACK.scale(width, height, width);
+    }
 
     default void renderLate(GeoModel model, T animatable, float ticks, float red, float green, float blue,
         float alpha) {}
 
     default void renderAfter(GeoModel model, T animatable, float ticks, float red, float green, float blue,
-        float alpha) {}
+        float alpha) {
+        MATRIX_STACK.pop();
+    }
 
     default Color getRenderColor(T animatable, float partialTicks) {
         return Color.ofRGBA(255, 255, 255, 255);
@@ -195,5 +202,13 @@ public interface IGeoRenderer<T> {
             bone = bone.parent;
         }
         return bones.toArray(new GeoBone[0]);
+    }
+
+    default float getWidthScale(T animatable) {
+        return 1F;
+    }
+
+    default float getHeightScale(T entity) {
+        return 1F;
     }
 }

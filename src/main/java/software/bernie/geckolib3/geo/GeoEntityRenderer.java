@@ -50,6 +50,8 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
     }
 
     protected final AnimatedGeoModel<T> modelProvider;
+    protected float widthScale = 1;
+    protected float heightScale = 1;
     protected final List<GeoLayerRenderer<T>> layerRenderers = Lists.newArrayList();
 
     public GeoEntityRenderer(AnimatedGeoModel<T> modelProvider) {
@@ -207,6 +209,16 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
     @Override
     public GeoModelProvider getGeoModelProvider() {
         return this.modelProvider;
+    }
+
+    @Override
+    public float getWidthScale(T animatable) {
+        return this.widthScale;
+    }
+
+    @Override
+    public float getHeightScale(T entity) {
+        return this.heightScale;
     }
 
     protected void applyRotations(T entityLiving, float ageInTicks, float rotationYaw, float partialTicks) {

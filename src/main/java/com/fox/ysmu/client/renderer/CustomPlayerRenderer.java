@@ -127,21 +127,21 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
         }
     }
 
-    // @Override
-    // public float getWidthScale(Object animatable) {
-    // if (this.animatable != null) {
-    // return this.animatable.getWidthScale();
-    // }
-    // return super.getWidthScale(animatable);
-    // }
+    @Override
+    public float getWidthScale(Object animatable) {
+        if (this.animatable != null) {
+            return this.animatable.getWidthScale();
+        }
+        return super.getWidthScale(animatable);
+    }
 
-    // @Override
-    // public float getHeightScale(Object animatable) {
-    // if (this.animatable != null) {
-    // return this.animatable.getHeightScale();
-    // }
-    // return super.getHeightScale(animatable);
-    // }
+    @Override
+    public float getHeightScale(Object animatable) {
+        if (this.animatable != null) {
+            return this.animatable.getHeightScale();
+        }
+        return super.getHeightScale(animatable);
+    }
 
     public CustomPlayerEntity getCustomPlayerEntity() {
         return this.animatable;

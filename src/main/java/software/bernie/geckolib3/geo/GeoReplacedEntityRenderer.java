@@ -44,6 +44,8 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
     protected T animatable;
     protected final List<GeoLayerRenderer> layerRenderers = Lists.newArrayList();
     private IAnimatable currentAnimatable;
+    protected float widthScale = 1;
+    protected float heightScale = 1;
     private static Map<Class<? extends IAnimatable>, GeoReplacedEntityRenderer> renderers = new ConcurrentHashMap<>();
 
     static {
@@ -212,6 +214,16 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
     @Override
     public AnimatedGeoModel getGeoModelProvider() {
         return this.modelProvider;
+    }
+
+    @Override
+    public float getWidthScale(Object animatable) {
+        return this.widthScale;
+    }
+
+    @Override
+    public float getHeightScale(Object entity) {
+        return this.heightScale;
     }
 
     protected void applyRotations(EntityLivingBase entityLiving, float ageInTicks, float rotationYaw,
