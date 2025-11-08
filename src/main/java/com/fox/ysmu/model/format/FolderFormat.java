@@ -13,6 +13,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,9 @@ import software.bernie.geckolib3.geo.raw.pojo.RawGeoModel;
 public final class FolderFormat {
 
     public static void cacheAllModels(Path rootPath) {
-        Collection<File> dirs = FileUtils.listFiles(rootPath.toFile(), DirectoryFileFilter.INSTANCE, null);
+        File root = rootPath.toFile();
+        Collection<File> dirs = FileUtils.listFilesAndDirs(root, DirectoryFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+        dirs.remove(root);
         for (File dir : dirs) {
             String dirName = dir.getName();
             if (!Utils.isValidResourceLocation(dirName)) {

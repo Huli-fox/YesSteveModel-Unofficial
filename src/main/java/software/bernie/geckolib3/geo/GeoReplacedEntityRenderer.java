@@ -36,6 +36,8 @@ import software.bernie.geckolib3.model.AnimatedGeoModel;
 import software.bernie.geckolib3.model.DummyVanilaModel;
 import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
+import static com.eliotlash.mclib.utils.MathHelper.wrapDegrees;
+
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends RendererLivingEntity
     implements IGeoRenderer {
@@ -88,12 +90,16 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
             float f = Interpolations.lerpYaw(entity.prevRenderYawOffset, entity.renderYawOffset, partialTicks);
             float f1 = Interpolations.lerpYaw(entity.prevRotationYawHead, entity.rotationYawHead, partialTicks);
             float netHeadYaw = f1 - f;
+
+            // 修复头部旋转角度突变问题
+            netHeadYaw = wrapDegrees(netHeadYaw);
+
             if (shouldSit && entity.ridingEntity instanceof EntityLivingBase) {
                 EntityLivingBase livingentity = (EntityLivingBase) entity.ridingEntity;
                 f = Interpolations
                     .lerpYaw(livingentity.prevRenderYawOffset, livingentity.renderYawOffset, partialTicks);
                 netHeadYaw = f1 - f;
-                float f3 = com.eliotlash.mclib.utils.MathHelper.wrapDegrees(netHeadYaw);
+                float f3 = wrapDegrees(netHeadYaw);
                 if (f3 < -85.0F) {
                     f3 = -85.0F;
                 }

@@ -13,6 +13,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 
 public class ConditionalHold {
 
+    // TODO 矿辞测试
     // 在 YesSteveModel 项目中，这些 Minecraft 标签文件（swords.json, axes.json, pickaxes.json, shovels.json, hoes.json,
     // tools.json）主要用于动画系统的条件判断。
     // 1.动画条件系统：

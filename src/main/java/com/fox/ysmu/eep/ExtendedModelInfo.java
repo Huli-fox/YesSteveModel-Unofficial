@@ -1,5 +1,7 @@
 package com.fox.ysmu.eep; // 建议放在 eep 包下
 
+import com.fox.ysmu.network.NetworkHandler;
+import com.fox.ysmu.network.message.SyncModelInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
@@ -79,10 +81,9 @@ public class ExtendedModelInfo implements IExtendedEntityProperties {
 
     public void markDirty() {
         this.dirty = true;
-        // 如果需要数据变化时立即同步，可以在这里发送数据包
-        // if (!this.player.worldObj.isRemote) {
-        // NetworkHandler.sendToClientPlayer(new SyncModelInfoPacket(this.player), this.player);
-        // }
+        if (!this.player.worldObj.isRemote) {
+            NetworkHandler.sendToClientPlayer(new SyncModelInfo(this.player.getEntityId(), this), this.player);
+        }
     }
 
     public boolean isDirty() {

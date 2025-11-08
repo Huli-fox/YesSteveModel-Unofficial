@@ -1,5 +1,6 @@
 package com.fox.ysmu.client;
 
+import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import net.minecraft.client.Minecraft;
 
 import com.fox.ysmu.CommonProxy;
@@ -11,6 +12,7 @@ import com.fox.ysmu.network.message.SyncAuthModels;
 import com.fox.ysmu.network.message.SyncStarModels;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import software.bernie.geckolib3.geo.GeoReplacedEntityRenderer;
 
 public class ClientProxy extends CommonProxy {
 
@@ -24,6 +26,7 @@ public class ClientProxy extends CommonProxy {
         AnimationRegister.registerAnimationState();
         AnimationRegister.registerVariables();
         CUSTOM_PLAYER_RENDERER = new CustomPlayerRenderer();
+        GeoReplacedEntityRenderer.registerReplacedEntity(CustomPlayerEntity.class, CUSTOM_PLAYER_RENDERER);
     }
 
     public static CustomPlayerRenderer getInstance() {
