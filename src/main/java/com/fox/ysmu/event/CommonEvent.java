@@ -1,12 +1,13 @@
 package com.fox.ysmu.event;
 
+import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.common.network.NetworkRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-
 import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
@@ -117,6 +118,29 @@ public final class CommonEvent {
                 if (player instanceof EntityPlayerMP serverPlayer) {
                     NetworkHandler.sendToClientPlayer(new SyncStarModels(starModelsEEP.getStarModels()), serverPlayer);
                 }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void playerTickEvent(TickEvent.PlayerTickEvent event) {
+        if (event.player == null) {
+            return;
+        }
+        EntityPlayer player = event.player;
+        if (!player.worldObj.isRemote && event.phase == TickEvent.Phase.END) {
+            ExtendedModelInfo eep = ExtendedModelInfo.get(player);
+            if (eep != null && eep.isDirty()) {
+                SyncModelInfo syncMsg = new SyncModelInfo(player.getEntityId(), eep);
+                NetworkRegistry.TargetPoint targetPoint = new NetworkRegistry.TargetPoint(
+                    player.dimension,
+                    player.posX,
+                    player.posY,
+                    player.posZ,
+                    64.0D // 64个方块的范围，这是一个常用值
+                );
+                NetworkHandler.CHANNEL.sendToAllAround(syncMsg, targetPoint);
+                eep.setDirty(false);
             }
         }
     }

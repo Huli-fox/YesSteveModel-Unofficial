@@ -105,8 +105,7 @@ public final class AnimationManager {
             }
             LinkedList<AnimationState> states = data.get(i);
             for (AnimationState state : states) {
-                if (state.getPredicate()
-                    .test(player, event)) {
+                if (state.getPredicate().test(player, event)) {
                     String animationName = state.getAnimationName();
                     ILoopType loopType = state.getLoopType();
                     return playAnimation(event, animationName, loopType);

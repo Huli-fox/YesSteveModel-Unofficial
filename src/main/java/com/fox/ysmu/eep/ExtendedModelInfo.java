@@ -81,9 +81,6 @@ public class ExtendedModelInfo implements IExtendedEntityProperties {
 
     public void markDirty() {
         this.dirty = true;
-        if (!this.player.worldObj.isRemote) {
-            NetworkHandler.sendToClientPlayer(new SyncModelInfo(this.player.getEntityId(), this), this.player);
-        }
     }
 
     public boolean isDirty() {
