@@ -23,6 +23,8 @@ import software.bernie.geckolib3.model.provider.data.EntityModelData;
 import software.bernie.geckolib3.resource.GeckoLibCache;
 import software.bernie.geckolib3.util.MolangUtils;
 
+import static com.fox.ysmu.event.CommonEvent.*;
+
 public class AnimationRegister {
 
     private static final double MIN_SPEED = 0.05;
@@ -39,15 +41,15 @@ public class AnimationRegister {
         register("ride", Priority.HIGH, (player, event) -> player.isRiding() && !(player.ridingEntity instanceof EntityBoat));
         register("boat", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityBoat);
         register("sit", Priority.HIGH, (player, event) -> player.isRiding());
-        register("fly", Priority.HIGH, (player, event) -> player.capabilities.isFlying);
+        register("fly", Priority.HIGH, (player, event) -> isPlayerFlying(player));
         register("elytra_fly", Priority.HIGH, (player, event) -> EtfuturumCompat.isFallFlying(player));
         register("swim_stand", Priority.NORMAL, (player, event) -> player.isInWater());
         register("attacked", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.NORMAL, (player, event) -> player.hurtTime > 0);
-        register("jump", Priority.NORMAL, (player, event) -> !player.onGround && !player.isInWater() && Math.abs(player.motionY) > 0);
-        register("sneak", Priority.NORMAL, (player, event) -> player.onGround && player.isSneaking() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
-        register("sneaking", Priority.NORMAL, (player, event) -> player.onGround && player.isSneaking());
-        register("run", Priority.LOW, (player, event) -> player.onGround && player.isSprinting());
-        register("walk", Priority.LOW, (player, event) -> player.onGround && event.getLimbSwingAmount() > MIN_SPEED);
+        register("jump", Priority.NORMAL, (player, event) -> !isPlayerOnGround(player) && !player.isInWater() && Math.abs(player.motionY) > 0);
+        register("sneak", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
+        register("sneaking", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking());
+        register("run", Priority.LOW, (player, event) -> isPlayerOnGround(player) && player.isSprinting());
+        register("walk", Priority.LOW, (player, event) -> isPlayerOnGround(player) && event.getLimbSwingAmount() > MIN_SPEED);
         register("idle", Priority.LOWEST, (player, event) -> true);
     }
 
@@ -157,14 +159,14 @@ public class AnimationRegister {
         parser.setValue("query.is_first_person", () -> MolangUtils.booleanToFloat(mc.gameSettings.thirdPersonView == 0));
         parser.setValue("query.is_in_water", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_in_water_or_rain", () -> MolangUtils.booleanToFloat(player.isWet()));
-        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!player.capabilities.isFlying && !player.isRiding() && !player.onGround && Math.abs(player.motionY) > 0 && !player.isInWater()));
+        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!isPlayerFlying(player) && !player.isRiding() && !isPlayerOnGround(player) && Math.abs(player.motionY) > 0 && !player.isInWater()));
         parser.setValue("query.is_on_fire", () -> MolangUtils.booleanToFloat(player.isBurning()));
-        parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(player.onGround));
-        parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(player.onGround));
+        parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
+        parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
         parser.setValue("query.is_playing_dead", () -> MolangUtils.booleanToFloat(player.isDead));
         parser.setValue("query.is_riding", () -> MolangUtils.booleanToFloat(player.isRiding()));
         parser.setValue("query.is_sleeping", () -> MolangUtils.booleanToFloat(player.isPlayerSleeping()));
-        parser.setValue("query.is_sneaking", () -> MolangUtils.booleanToFloat(player.onGround && player.isSneaking()));
+        parser.setValue("query.is_sneaking", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player) && player.isSneaking()));
         parser.setValue("query.is_spectator", () -> MolangUtils.booleanToFloat(EtfuturumCompat.isSpectator(player)));
         parser.setValue("query.is_sprinting", () -> MolangUtils.booleanToFloat(player.isSprinting()));
         parser.setValue("query.is_swimming", () -> MolangUtils.booleanToFloat(player.isInWater()));
@@ -197,7 +199,7 @@ public class AnimationRegister {
         parser.setValue("ysm.is_close_eyes", () -> getEyeCloseState(animationEvent, player));
         parser.setValue("ysm.is_passenger", () -> MolangUtils.booleanToFloat(player.isRiding()));
         parser.setValue("ysm.is_sleep", () -> MolangUtils.booleanToFloat(player.isPlayerSleeping()));
-        parser.setValue("ysm.is_sneak", () -> MolangUtils.booleanToFloat(player.onGround && player.isSneaking()));
+        parser.setValue("ysm.is_sneak", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player) && player.isSneaking()));
         // parser.setValue("ysm.is_riptide", () -> MolangUtils.booleanToFloat(player.isAutoSpinAttack()));
         parser.setValue("ysm.armor_value", player::getTotalArmorValue);
         parser.setValue("ysm.hurt_time", () -> player.hurtTime);
@@ -272,6 +274,26 @@ public class AnimationRegister {
             return MolangUtils.booleanToFloat(BackhandCompat.getOffhandItem(player) != null);
         } else {
             return MolangUtils.booleanToFloat(player.getEquipmentInSlot(slotIndex) != null);
+        }
+    }
+
+    private static boolean isPlayerOnGround(EntityPlayer player) {
+        // 本地玩家
+        if (player == Minecraft.getMinecraft().thePlayer) {
+            return player.onGround;
+        } else {
+            byte data = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
+            return (data & ON_GROUND) != 0;
+        }
+    }
+
+    private static boolean isPlayerFlying(EntityPlayer player) {
+        // 本地玩家
+        if (player == Minecraft.getMinecraft().thePlayer) {
+            return player.capabilities.isFlying;
+        } else {
+            byte data = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
+            return (data & IS_FLYING) != 0;
         }
     }
 }

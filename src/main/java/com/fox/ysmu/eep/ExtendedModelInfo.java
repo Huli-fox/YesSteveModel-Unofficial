@@ -22,9 +22,7 @@ public class ExtendedModelInfo implements IExtendedEntityProperties {
 
     // 2. 将原 ModelInfoCapability 的字段和方法直接移到这里
     private ResourceLocation modelId = new ResourceLocation(ysmu.MODID, Config.DEFAULT_MODEL_ID);
-    private ResourceLocation selectTexture = new ResourceLocation(
-        ysmu.MODID,
-        Config.DEFAULT_MODEL_ID + "/" + Config.DEFAULT_MODEL_TEXTURE);
+    private ResourceLocation selectTexture = new ResourceLocation(ysmu.MODID, Config.DEFAULT_MODEL_ID + "/" + Config.DEFAULT_MODEL_TEXTURE);
     private String animation = "idle";
     private boolean playAnimation = false;
     private boolean dirty; // dirty 标志可以保留，用于客户端渲染逻辑判断是否需要更新

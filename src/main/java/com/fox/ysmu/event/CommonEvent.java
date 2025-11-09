@@ -22,7 +22,10 @@ import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 @EventBusSubscriber
-public final class CommonEvent {
+public class CommonEvent {
+    public static final int MOTION_DATAWATCHER_ID = 28;
+    public static final int ON_GROUND = 0x01;
+    public static final int IS_FLYING = 0x02;
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
@@ -35,6 +38,7 @@ public final class CommonEvent {
     @SubscribeEvent
     public static void onEntityConstructing(EntityEvent.EntityConstructing event) {
         if (event.entity instanceof EntityPlayer player) {
+            player.getDataWatcher().addObject(MOTION_DATAWATCHER_ID, (byte) 0);
             // 注册 AuthModels
             if (ExtendedAuthModels.get(player) == null) {
                 ExtendedAuthModels.register(player);
@@ -43,7 +47,7 @@ public final class CommonEvent {
             if (ExtendedModelInfo.get(player) == null) {
                 ExtendedModelInfo.register(player);
             }
-            // 2. 注册 StarModels
+            // 注册 StarModels
             if (ExtendedStarModels.get(player) == null) {
                 ExtendedStarModels.register(player);
             }
@@ -77,7 +81,7 @@ public final class CommonEvent {
     }
 
     @SubscribeEvent
-    public static void onTrackingPlayer(PlayerEvent.StartTracking event) {
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.target instanceof EntityPlayer trackPlayer) {
             EntityPlayer player = event.entityPlayer;
             ExtendedModelInfo eep = ExtendedModelInfo.get(trackPlayer);
@@ -123,12 +127,13 @@ public final class CommonEvent {
     }
 
     @SubscribeEvent
-    public static void playerTickEvent(TickEvent.PlayerTickEvent event) {
+    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.player == null) {
             return;
         }
         EntityPlayer player = event.player;
-        if (!player.worldObj.isRemote && event.phase == TickEvent.Phase.END) {
+        if (event.side.isServer() && event.phase == TickEvent.Phase.END) {
+            updateData(player);
             ExtendedModelInfo eep = ExtendedModelInfo.get(player);
             if (eep != null && eep.isDirty()) {
                 SyncModelInfo syncMsg = new SyncModelInfo(player.getEntityId(), eep);
@@ -142,6 +147,31 @@ public final class CommonEvent {
                 NetworkHandler.CHANNEL.sendToAllAround(syncMsg, targetPoint);
                 eep.setDirty(false);
             }
+        }
+    }
+
+    private static void updateData(EntityPlayer player){
+        byte oldData = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
+        byte newData;
+        boolean oldOnGround = (oldData & ON_GROUND) != 0;
+        boolean oldIsFlying = (oldData & IS_FLYING) != 0;
+        boolean currentOnGround = player.onGround;
+        boolean currentIsFlying = player.capabilities.isFlying;
+        if (oldOnGround != currentOnGround) {
+            if (currentOnGround) {
+                newData = (byte) (oldData | ON_GROUND);
+            } else {
+                newData = (byte) (oldData & ~ON_GROUND);
+            }
+            player.getDataWatcher().updateObject(MOTION_DATAWATCHER_ID, newData);
+        }
+        if (oldIsFlying != currentIsFlying) {
+            if (currentIsFlying) {
+                newData = (byte) (oldData | IS_FLYING);
+            } else {
+                newData = (byte) (oldData & ~IS_FLYING);
+            }
+            player.getDataWatcher().updateObject(MOTION_DATAWATCHER_ID, newData);
         }
     }
 }
