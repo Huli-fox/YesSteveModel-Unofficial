@@ -2,49 +2,41 @@ package com.fox.ysmu.client.gui.button;
 
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.bukkit.message.OpenModelGuiMessage;
+import com.fox.ysmu.network.message.OpenModelGuiMessage;
 import com.fox.ysmu.network.message.SetModelAndTexture;
-import com.fox.ysmu.bukkit.message.SetNpcModelAndTexture;
+import com.fox.ysmu.network.message.SetNpcModelAndTexture;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.util.RenderUtil;
-import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.entity.player.EntityPlayer;
+import org.lwjgl.opengl.GL11;
 
 import java.util.List;
 
-public class TextureButton extends Button {
+public class TextureButton extends GuiButton {
     private final ResourceLocation modelId;
     private final ResourceLocation textureId;
     private final String name;
-    private final Player player;
+    private final EntityPlayer player;
 
-    public TextureButton(int pX, int pY, ResourceLocation modelId, ResourceLocation textureId, Player player) {
-        super(pX, pY, 54, 102, Component.empty(), (b) -> {
-        }, DEFAULT_NARRATION);
+    public TextureButton(int id, int pX, int pY, ResourceLocation modelId, ResourceLocation textureId, EntityPlayer player) {
+        super(id, pX, pY, 54, 102, "");
         this.modelId = modelId;
         this.textureId = textureId;
         this.name = ModelIdUtil.getSubNameFromId(textureId);
         this.player = player;
     }
 
-    @Override
-
-    public void onPress() {
+    public void doPress() {
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
         if (eep != null) {
             eep.setModelAndTexture(modelId, textureId);
         }
-        LocalPlayer localPlayer = Minecraft.getInstance().player;
-        if (player.equals(localPlayer)) {
+        if (player.equals(Minecraft.getMinecraft().thePlayer)) {
             NetworkHandler.CHANNEL.sendToServer(new SetModelAndTexture(modelId, textureId));
         } else {
             NetworkHandler.CHANNEL.sendToServer(new SetNpcModelAndTexture(modelId, textureId, OpenModelGuiMessage.CURRENT_NPC_ID));
@@ -52,35 +44,33 @@ public class TextureButton extends Button {
     }
 
     @Override
+    public void drawButton(Minecraft mc, int mouseX, int mouseY) {
+        FontRenderer font = mc.fontRenderer;
+        this.field_146123_n = mouseX >= this.xPosition && mouseY >= this.yPosition && mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
+        this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + this.height, 0xFF_434242, 0xFF_434242);
+        int scale = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight).getScaleFactor();
+        int scissorX = this.xPosition * scale;
+        int scissorY = mc.displayHeight - ((this.yPosition + this.height - 20) * scale);
+        int scissorW = this.width * scale;
+        int scissorH = (this.height - 20) * scale;
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
+        RenderUtil.renderEntityInInventory(this.xPosition + this.width / 2, this.yPosition + this.height / 2 + 24,
+            35, mc.thePlayer, modelId, textureId);
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Font font = minecraft.font;
-
-        graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0xFF_434242, 0xFF_434242);
-        Window window = Minecraft.getInstance().getWindow();
-        double scale = window.getGuiScale();
-        int scissorX = (int) (this.getX() * scale);
-        int scissorY = (int) (window.getHeight() - ((this.getY() + this.height - 20) * scale));
-        int scissorW = (int) (this.width * scale);
-        int scissorH = (int) ((this.height - 20) * scale);
-        RenderSystem.enableScissor(scissorX, scissorY, scissorW, scissorH);
-        RenderUtil.renderEntityInInventory(this.getX() + this.width / 2, this.getY() + this.height / 2 + 24, 35, minecraft.player, modelId, textureId);
-        RenderSystem.disableScissor();
-
-        Component message = Component.literal(name);
-        List<FormattedCharSequence> split = font.split(message, 50);
+        List<String> split = font.listFormattedStringToWidth(name, 50);
         if (split.size() > 1) {
-            graphics.drawCenteredString(font, split.get(0), this.getX() + this.width / 2, this.getY() + this.height - 19, 0xF3EFE0);
-            graphics.drawCenteredString(font, split.get(1), this.getX() + this.width / 2, this.getY() + this.height - 10, 0xF3EFE0);
+            this.drawCenteredString(font, split.get(0), this.xPosition + this.width / 2, this.yPosition + this.height - 19, 0xF3EFE0);
+            this.drawCenteredString(font, split.get(1), this.xPosition + this.width / 2, this.yPosition + this.height - 10, 0xF3EFE0);
         } else {
-            graphics.drawCenteredString(font, message, this.getX() + this.width / 2, this.getY() + this.height - 15, 0xF3EFE0);
+            this.drawCenteredString(font, name, this.xPosition + this.width / 2, this.yPosition + this.height - 15, 0xF3EFE0);
         }
-        if (this.isHoveredOrFocused()) {
-            graphics.fillGradient(this.getX(), this.getY() + 1, this.getX() + 1, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX() + this.width - 1, this.getY() + 1, this.getX() + this.width, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
+        if (this.field_146123_n) {
+            this.drawGradientRect(this.xPosition, this.yPosition + 1, this.xPosition + 1, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition + this.width - 1, this.yPosition + 1, this.xPosition + this.width, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition, this.yPosition + this.height - 1, this.xPosition + this.width, this.yPosition + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
         }
     }
 }

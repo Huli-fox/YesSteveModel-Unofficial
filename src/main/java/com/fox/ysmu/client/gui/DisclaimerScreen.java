@@ -23,7 +23,7 @@ public class DisclaimerScreen extends Screen {
 
     @Override
 
-    protected void init() {
+    public void initGui() {
         this.clearWidgets();
 
         MutableComponent mainText = Component.translatable("gui.yes_steve_model.disclaimer.text");
@@ -48,7 +48,7 @@ public class DisclaimerScreen extends Screen {
 
     @Override
 
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(graphics);
         graphics.drawWordWrap(font, Component.translatable("gui.yes_steve_model.disclaimer.text"), x, y, 400, 0xffffffff);
         super.render(graphics, pMouseX, pMouseY, pPartialTick);

@@ -3,47 +3,41 @@ package com.fox.ysmu.client.gui.button;
 import com.fox.ysmu.model.format.Type;
 import com.fox.ysmu.network.message.RequestServerModelInfo;
 import com.fox.ysmu.util.FileSizeUtils;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.resources.I18n;
 
-public class ModelInfoButton extends Button {
+public class ModelInfoButton extends GuiButton {
     private final RequestServerModelInfo.Info info;
     private boolean isSelect = false;
 
-    public ModelInfoButton(int pX, int pY, int pHeight, RequestServerModelInfo.Info info, OnPress pOnPress) {
-        super(pX, pY, 250, pHeight, Component.empty(), pOnPress, DEFAULT_NARRATION);
+    public ModelInfoButton(int id, int pX, int pY, int pHeight, RequestServerModelInfo.Info info) {
+        super(id, pX, pY, 250, pHeight, "");
         this.info = info;
     }
 
     @Override
-
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Font font = minecraft.font;
-        if (isSelect) {
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0xff_1E90FF, 0xff_1E90FF);
-        } else {
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0xff_434242, 0xff_434242);
+    public void drawButton(Minecraft mc, int mouseX, int mouseY) {
+        FontRenderer font = mc.fontRenderer;
+        this.field_146123_n = mouseX >= this.xPosition && mouseY >= this.yPosition && mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
+        int backgroundColor = isSelect ? 0xff_1E90FF : 0xff_434242;
+        this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + this.height, backgroundColor, backgroundColor);
+        if (this.field_146123_n) {
+            this.drawGradientRect(this.xPosition, this.yPosition + 1, this.xPosition + 1, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition + this.width - 1, this.yPosition + 1, this.xPosition + this.width, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition, this.yPosition + this.height - 1, this.xPosition + this.width, this.yPosition + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
         }
-        if (this.isHoveredOrFocused()) {
-            graphics.fillGradient(this.getX(), this.getY() + 1, this.getX() + 1, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX() + this.width - 1, this.getY() + 1, this.getX() + this.width, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
-        }
-        graphics.drawString(font, info.getFileName(), this.getX() + 5, this.getY() + (this.height - 8) / 2, 0xF3EFE0);
+        this.drawString(font, info.getFileName(), this.xPosition + 5, this.yPosition + (this.height - 8) / 2, 0xF3EFE0);
         if (info.getType() == Type.FOLDER) {
-            graphics.drawString(font, Component.translatable("gui.yes_steve_model.model_manage.type.folder"), this.getX() + 155, this.getY() + (this.height - 8) / 2, ChatFormatting.AQUA.getColor());
+            this.drawString(font, I18n.format("gui.yes_steve_model.model_manage.type.folder"), this.xPosition + 155, this.yPosition + (this.height - 8) / 2, 0x55FFFF);
         } else if (info.getType() == Type.ZIP) {
-            graphics.drawString(font, Component.translatable("gui.yes_steve_model.model_manage.type.zip"), this.getX() + 155, this.getY() + (this.height - 8) / 2, ChatFormatting.GOLD.getColor());
+            this.drawString(font, I18n.format("gui.yes_steve_model.model_manage.type.zip"), this.xPosition + 155, this.yPosition + (this.height - 8) / 2, 0xFFAA00);
         } else {
-            graphics.drawString(font, Component.translatable("gui.yes_steve_model.model_manage.type.ysm"), this.getX() + 155, this.getY() + (this.height - 8) / 2, ChatFormatting.YELLOW.getColor());
+            this.drawString(font, I18n.format("gui.yes_steve_model.model_manage.type.ysm"), this.xPosition + 155, this.yPosition + (this.height - 8) / 2, 0xFFFF55);
         }
-        graphics.drawString(font, FileSizeUtils.size(info.getSize()), this.getX() + 205, this.getY() + (this.height - 8) / 2, 0xC0C0C0);
+        this.drawString(font, FileSizeUtils.size(info.getSize()), this.xPosition + 205, this.yPosition + (this.height - 8) / 2, 0xC0C0C0);
     }
 
     public void setSelect(boolean select) {

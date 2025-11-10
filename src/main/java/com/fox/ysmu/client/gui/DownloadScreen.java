@@ -18,7 +18,7 @@ public class DownloadScreen extends Screen {
 
     @Override
 
-    protected void init() {
+    public void initGui() {
         this.x = (width - 420) / 2;
         this.y = (height - 235) / 2;
 
@@ -27,7 +27,7 @@ public class DownloadScreen extends Screen {
 
     @Override
 
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(graphics);
         graphics.drawCenteredString(font, "Coming Soooooooooooooooooooooooooon™", width / 2, height / 2 - 5, ChatFormatting.DARK_RED.getColor());
         super.render(graphics, pMouseX, pMouseY, pPartialTick);

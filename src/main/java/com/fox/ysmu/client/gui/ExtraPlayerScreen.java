@@ -11,7 +11,7 @@ import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 public class ExtraPlayerScreen implements IGuiOverlay {
     @Override
 
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
+    public void drawScreen(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
         if (Config.DISABLE_PLAYER_RENDER) {
             return;
         }

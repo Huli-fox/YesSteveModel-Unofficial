@@ -55,7 +55,7 @@ public class ModelManageScreen extends Screen {
 
     @Override
 
-    protected void init() {
+    public void initGui() {
         this.clearWidgets();
         this.calculateList();
         this.x = (width - 420) / 2;
@@ -115,7 +115,7 @@ public class ModelManageScreen extends Screen {
             }));
             addRenderableWidget(new FlatColorButton(x + 345, y + 235 - 23, 70, 18, Component.translatable("gui.yes_steve_model.model_manage.cancel"), (b) -> {
                 this.action = Action.EMPTY;
-                this.init();
+                this.initGui();
             }));
         }
         if (this.action == Action.RENAME) {
@@ -130,15 +130,15 @@ public class ModelManageScreen extends Screen {
     private void addActionButtons() {
         addRenderableWidget(new FlatColorButton(x + 5, y + 235 - 23, 80, 18, Component.translatable("gui.yes_steve_model.model_manage.delete"), (b) -> {
             this.action = Action.DELETE;
-            this.init();
+            this.initGui();
         }));
         addRenderableWidget(new FlatColorButton(x + 90, y + 235 - 23, 80, 18, Component.translatable("gui.yes_steve_model.model_manage.move"), (b) -> {
             this.action = Action.MOVE;
-            this.init();
+            this.initGui();
         }));
         addRenderableWidget(new FlatColorButton(x + 175, y + 235 - 23, 80, 18, Component.translatable("gui.yes_steve_model.model_manage.rename"), (b) -> {
             this.action = Action.RENAME;
-            this.init();
+            this.initGui();
         }));
     }
 
@@ -154,7 +154,7 @@ public class ModelManageScreen extends Screen {
             ModelInfoButton modelInfoButton = new ModelInfoButton(x + 5, modelsY, 12, info, (b) -> {
                 this.index = finalIndex;
                 this.action = Action.EMPTY;
-                this.init();
+                this.initGui();
             });
             if (this.index == i) {
                 modelInfoButton.setSelect(true);
@@ -168,13 +168,13 @@ public class ModelManageScreen extends Screen {
         addRenderableWidget(new FlatColorButton(x + 5, y + 28, 80, 18, Component.literal("<"), (b) -> {
             if (page > 0) {
                 page--;
-                this.init();
+                this.initGui();
             }
         }));
         addRenderableWidget(new FlatColorButton(x + 260 - 85, y + 28, 80, 18, Component.literal(">"), (b) -> {
             if ((page + 1) * MAX_COUNT < this.modelsCount) {
                 page++;
-                this.init();
+                this.initGui();
             }
         }));
     }
@@ -186,7 +186,7 @@ public class ModelManageScreen extends Screen {
                 this.index = -1;
                 page = 0;
                 this.action = Action.EMPTY;
-                this.init();
+                this.initGui();
             }
         });
         customButton.setSelect(isCustomModels);
@@ -198,7 +198,7 @@ public class ModelManageScreen extends Screen {
                 this.index = -1;
                 page = 0;
                 this.action = Action.EMPTY;
-                this.init();
+                this.initGui();
             }
         });
         authButton.setSelect(!isCustomModels);
@@ -209,7 +209,7 @@ public class ModelManageScreen extends Screen {
                 UploadManager.FILE_PATH = "";
             }
             this.action = Action.UPLOAD;
-            this.init();
+            this.initGui();
             if (UploadManager.STATUE == UploadManager.Statue.FULFILL) {
                 new Thread(this::getUploadFilePath).start();
             }
@@ -233,7 +233,7 @@ public class ModelManageScreen extends Screen {
                 return;
             }
             UploadManager.FILE_PATH = uploadFilePath;
-            Minecraft.getInstance().submit(() -> this.init());
+            Minecraft.getInstance().submit(() -> this.initGui());
         }
     }
 
@@ -250,7 +250,7 @@ public class ModelManageScreen extends Screen {
 
     @Override
 
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(graphics);
         graphics.fillGradient(x, y, x + 260, y + 235, 0xff_222222, 0xff_222222);
         graphics.fillGradient(x + 265, y, x + 420, y + 235, 0xff_222222, 0xff_222222);

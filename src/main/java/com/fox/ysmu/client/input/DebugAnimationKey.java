@@ -1,40 +1,36 @@
 package com.fox.ysmu.client.input;
 
-import com.elfmcys.yesstevemodel.YesSteveModel;
-import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.client.KeyMapping;
+import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.InputEvent;
+import cpw.mods.fml.relauncher.Side;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ChatComponentText;
+import org.lwjgl.input.Keyboard;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT, modid = YesSteveModel.MOD_ID)
+@EventBusSubscriber(side = Side.CLIENT)
 public class DebugAnimationKey {
     public static boolean DEBUG = false;
 
-    public static final KeyMapping DEBUG_ANIMATION_KEY = new KeyMapping("key.yes_steve_model.debug_animation.desc",
-            KeyConflictContext.IN_GAME, KeyModifier.ALT,
-            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B,
-            "key.category.yes_steve_model");
+    public static final KeyBinding DEBUG_ANIMATION_KEY =
+        new KeyBinding("key.yes_steve_model.debug_animation.desc", Keyboard.KEY_B, "key.category.yes_steve_model");
 
     @SubscribeEvent
-    public static void onKeyboardInput(InputEvent.Key event) {
-        if (DEBUG_ANIMATION_KEY.isDown()) {
+    public static void onKeyboardInput(InputEvent.KeyInputEvent event) {
+        boolean isAltKeyDown = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
+        if (DEBUG_ANIMATION_KEY.isPressed() && isAltKeyDown) {
             DEBUG = !DEBUG;
-            LocalPlayer player = Minecraft.getInstance().player;
+            EntityPlayer player = Minecraft.getMinecraft().thePlayer;
             if (player == null) {
                 return;
             }
             if (DEBUG) {
-                Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.yes_steve_model.model.debug_animation.true"));
+                player.addChatMessage(new ChatComponentText(I18n.format("message.yes_steve_model.model.debug_animation.true")));
             } else {
-                Minecraft.getInstance().player.sendSystemMessage(Component.translatable("message.yes_steve_model.model.debug_animation.false"));
+                player.addChatMessage(new ChatComponentText(I18n.format("message.yes_steve_model.model.debug_animation.false")));
             }
         }
     }

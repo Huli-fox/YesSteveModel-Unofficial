@@ -17,7 +17,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
+import net.minecraft.util.Math;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class PlayerTextureScreen extends Screen {
 
     @Override
 
-    protected void init() {
+    public void initGui() {
         this.clearWidgets();
 
         this.x = (width - 420) / 2;
@@ -99,25 +99,25 @@ public class PlayerTextureScreen extends Screen {
         addRenderableWidget(new FlatColorButton(x + 321, y + 213, 18, 18, Component.literal("<"), (b) -> {
             if (this.texturePage > 0) {
                 this.texturePage--;
-                this.init();
+                this.initGui();
             }
         }));
         addRenderableWidget(new FlatColorButton(x + 383, y + 213, 18, 18, Component.literal(">"), (b) -> {
             if (this.texturePage < this.maxTexturePage) {
                 this.texturePage++;
-                this.init();
+                this.initGui();
             }
         }));
         addRenderableWidget(new FlatColorButton(x + 11, y + 214, 16, 16, Component.literal("<"), (b) -> {
             if (this.animationPage > 0) {
                 this.animationPage--;
-                this.init();
+                this.initGui();
             }
         }));
         addRenderableWidget(new FlatColorButton(x + 63, y + 214, 16, 16, Component.literal(">"), (b) -> {
             if (this.animationPage < this.maxAnimationPage) {
                 this.animationPage++;
-                this.init();
+                this.initGui();
             }
         }));
 
@@ -150,7 +150,7 @@ public class PlayerTextureScreen extends Screen {
 
     @Override
 
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    public void drawScreen(int mouseX, int mouseY, float partialTick) {
         renderBackground(graphics);
         graphics.fillGradient(x, y + 22, x + 90, y + 235, 0xff_222222, 0xff_222222);
         graphics.fillGradient(x + 93, y, x + 299, y + 235, 0xff_222222, 0xff_222222);
@@ -226,12 +226,12 @@ public class PlayerTextureScreen extends Screen {
         if (delta > 0 && this.texturePage > 0) {
             this.texturePage--;
             getMinecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-            this.init();
+            this.initGui();
         }
         if (delta < 0 && this.texturePage < this.maxTexturePage) {
             this.texturePage++;
             getMinecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-            this.init();
+            this.initGui();
         }
         return true;
     }
@@ -240,12 +240,12 @@ public class PlayerTextureScreen extends Screen {
         if (delta > 0 && this.animationPage > 0) {
             this.animationPage--;
             getMinecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-            this.init();
+            this.initGui();
         }
         if (delta < 0 && this.animationPage < this.maxAnimationPage) {
             this.animationPage++;
             getMinecraft().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-            this.init();
+            this.initGui();
         }
         return true;
     }
@@ -280,7 +280,7 @@ public class PlayerTextureScreen extends Screen {
 
     private void changeScaleValue(float amount) {
         float tmp = scale + amount * scale;
-        scale = Mth.clamp(tmp, SCALE_MIN, SCALE_MAX);
+        scale = Math.clamp(tmp, SCALE_MIN, SCALE_MAX);
     }
 
     @Override

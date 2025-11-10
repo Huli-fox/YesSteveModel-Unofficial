@@ -1,4 +1,4 @@
-package com.fox.ysmu.bukkit.message;
+package com.fox.ysmu.network.message;
 
 import com.fox.ysmu.client.gui.PlayerModelScreen;
 import net.minecraft.client.Minecraft;

@@ -17,7 +17,7 @@ public class ConfigScreen extends Screen {
 
     @Override
 
-    protected void init() {
+    public void initGui() {
         int x = (width - 420) / 2;
         int y = (height - 235) / 2;
 
@@ -32,7 +32,7 @@ public class ConfigScreen extends Screen {
 
     @Override
 
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         renderBackground(graphics);
         super.render(graphics, pMouseX, pMouseY, pPartialTick);
     }

@@ -12,7 +12,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
+import net.minecraft.util.Math;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
@@ -33,7 +33,7 @@ public class DebugAnimationScreen implements IGuiOverlay {
     public static final String FIRST_PERSON_MOD_ID = "firstpersonmod";
 
     @Override
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
+    public void drawScreen(ForgeGui gui, GuiGraphics graphics, float partialTick, int screenWidth, int screenHeight) {
         if (!DebugAnimationKey.DEBUG) {
             return;
         }
@@ -48,22 +48,22 @@ public class DebugAnimationScreen implements IGuiOverlay {
             return;
         }
 
-        float lerpBodyRot = Mth.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot);
-        float lerpHeadRot = Mth.rotLerp(partialTick, player.yHeadRotO, player.yHeadRot);
+        float lerpBodyRot = Math.rotLerp(partialTick, player.yBodyRotO, player.yBodyRot);
+        float lerpHeadRot = Math.rotLerp(partialTick, player.yHeadRotO, player.yHeadRot);
         float netHeadYaw = lerpHeadRot - lerpBodyRot;
         boolean shouldSit = player.isPassenger() && (player.getVehicle() != null && player.getVehicle().shouldRiderSit());
 
         if (shouldSit && player.getVehicle() instanceof LivingEntity vehicle) {
-            lerpBodyRot = Mth.rotLerp(partialTick, vehicle.yBodyRotO, vehicle.yBodyRot);
+            lerpBodyRot = Math.rotLerp(partialTick, vehicle.yBodyRotO, vehicle.yBodyRot);
             netHeadYaw = lerpHeadRot - lerpBodyRot;
-            float clampedHeadYaw = Mth.clamp(Mth.wrapDegrees(netHeadYaw), -85, 85);
+            float clampedHeadYaw = Math.clamp(Math.wrapDegrees(netHeadYaw), -85, 85);
             lerpBodyRot = lerpHeadRot - clampedHeadYaw;
             if (clampedHeadYaw * clampedHeadYaw > 2500f) {
                 lerpBodyRot += clampedHeadYaw * 0.2f;
             }
             netHeadYaw = lerpHeadRot - lerpBodyRot;
         }
-        float headPitch = Mth.lerp(partialTick, player.xRotO, player.getXRot());
+        float headPitch = Math.lerp(partialTick, player.xRotO, player.getXRot());
         final float outputHeadPitch = -headPitch;
         final float outputNetHeadYaw = -netHeadYaw;
 
@@ -76,7 +76,7 @@ public class DebugAnimationScreen implements IGuiOverlay {
         renderText(gui, graphics, y, "query.anim_time", () -> 0.0);
 
         renderText(gui, graphics, y, "query.body_x_rotation", player::getXRot);
-        renderText(gui, graphics, y, "query.body_y_rotation", () -> Mth.wrapDegrees(player.getYRot()));
+        renderText(gui, graphics, y, "query.body_y_rotation", () -> Math.wrapDegrees(player.getYRot()));
         renderText(gui, graphics, y, "query.cardinal_facing_2d", player.getDirection().get3DDataValue());
         renderText(gui, graphics, y, "query.distance_from_camera", () -> mc.gameRenderer.getMainCamera().getPosition().distanceTo(player.position()));
         renderText(gui, graphics, y, "query.equipment_count", getEquipmentCount(player));
@@ -204,7 +204,7 @@ public class DebugAnimationScreen implements IGuiOverlay {
 
     private static float getGroundSpeed(Player player) {
         Vec3 velocity = player.getDeltaMovement();
-        return 20 * Mth.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z)));
+        return 20 * Math.sqrt((float) ((velocity.x * velocity.x) + (velocity.z * velocity.z)));
     }
 
     private static float getVerticalSpeed(Player player) {

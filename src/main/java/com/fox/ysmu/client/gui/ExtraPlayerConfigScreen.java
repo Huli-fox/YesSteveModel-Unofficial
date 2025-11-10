@@ -30,7 +30,7 @@ public class ExtraPlayerConfigScreen extends Screen {
 
 
     @Override
-    public void render(GuiGraphics graphics, int pMouseX, int pMouseY, float pPartialTick) {
+    public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         int startX = this.posX;
         int startY = this.posY;
         int endX = (int) (startX + this.scale * 1);

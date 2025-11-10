@@ -1,56 +1,58 @@
 package com.fox.ysmu.client.gui.button;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.resources.I18n;
 
 import java.util.Collections;
 import java.util.List;
 
-public class FlatColorButton extends Button {
+public class FlatColorButton extends GuiButton {
     private boolean isSelect = false;
-    private List<Component> tooltips;
+    private List<String> tooltips;
 
-    public FlatColorButton(int pX, int pY, int pWidth, int pHeight, Component pMessage, OnPress pOnPress) {
-        super(pX, pY, pWidth, pHeight, pMessage, pOnPress, DEFAULT_NARRATION);
+    public FlatColorButton(int id, int pX, int pY, int pWidth, int pHeight, String pMessage) {
+        super(id, pX, pY, pWidth, pHeight, pMessage);
     }
 
     public FlatColorButton setTooltips(String key) {
-        tooltips = Collections.singletonList(Component.translatable(key));
+        tooltips = Collections.singletonList(I18n.format(key));
         return this;
     }
 
-    public FlatColorButton setTooltips(List<Component> tooltips) {
+    public FlatColorButton setTooltips(List<String> tooltips) {
         this.tooltips = tooltips;
         return this;
     }
 
-    public void renderToolTip(GuiGraphics graphics, Screen screen, int pMouseX, int pMouseY) {
-        if (this.isHovered && tooltips != null) {
-            graphics.renderComponentTooltip(screen.getMinecraft().font, tooltips, pMouseX, pMouseY);
+    // 需要从GuiScreen的drawScreen方法中调用
+    public void renderToolTip(GuiScreen screen, int pMouseX, int pMouseY) {
+        if (this.field_146123_n && tooltips != null && !tooltips.isEmpty()) {
+            screen.func_146283_a(tooltips, pMouseX, pMouseY);
         }
     }
 
+    // renderWidget -> drawButton
     @Override
+    public void drawButton(Minecraft mc, int mouseX, int mouseY) {
+        if (!this.visible) {
+            return;
+        }
+        FontRenderer font = mc.fontRenderer;
+        this.field_146123_n = mouseX >= this.xPosition && mouseY >= this.yPosition && mouseX < this.xPosition + this.width && mouseY < this.yPosition + this.height;
+        int backgroundColor = isSelect ? 0xff_1E90FF : 0xff_434242;
+        this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + this.height, backgroundColor, backgroundColor);
 
-    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float pPartialTick) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Font font = minecraft.font;
-        if (isSelect) {
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0xff_1E90FF, 0xff_1E90FF);
-        } else {
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0xff_434242, 0xff_434242);
+        if (this.field_146123_n) {
+            this.drawGradientRect(this.xPosition, this.yPosition + 1, this.xPosition + 1, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition + this.width - 1, this.yPosition + 1, this.xPosition + this.width, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
+            this.drawGradientRect(this.xPosition, this.yPosition + this.height - 1, this.xPosition + this.width, this.yPosition + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
         }
-        if (this.isHoveredOrFocused()) {
-            graphics.fillGradient(this.getX(), this.getY() + 1, this.getX() + 1, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX(), this.getY(), this.getX() + this.width, this.getY() + 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX() + this.width - 1, this.getY() + 1, this.getX() + this.width, this.getY() + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
-            graphics.fillGradient(this.getX(), this.getY() + this.height - 1, this.getX() + this.width, this.getY() + this.height, 0xff_F3EFE0, 0xff_F3EFE0);
-        }
-        graphics.drawCenteredString(font, this.getMessage(), this.getX() + this.width / 2, this.getY() + (this.height - 8) / 2, 0xF3EFE0);
+        //GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        this.drawCenteredString(font, this.displayString, this.xPosition + this.width / 2, this.yPosition + (this.height - 8) / 2, 0xF3EFE0);
     }
 
     public void setSelect(boolean select) {
