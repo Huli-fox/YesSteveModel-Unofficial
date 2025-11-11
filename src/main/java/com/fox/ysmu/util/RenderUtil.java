@@ -3,6 +3,7 @@ package com.fox.ysmu.util;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
+import com.fox.ysmu.client.ClientProxy;
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.RenderHelper;
@@ -37,7 +38,7 @@ public final class RenderUtil {
             return;
         }
         try {
-            CustomPlayerRenderer renderer = ClientEventHandler.getInstance();
+            CustomPlayerRenderer renderer = ClientProxy.getInstance();
             IAnimatable animatable = AnimatableCacheUtil.TEXTURE_GUI_CACHE.get(modelId, CustomPlayerEntity::new);
             if (animatable instanceof CustomPlayerEntity entity) {
                 consumer.accept(entity);
@@ -65,7 +66,7 @@ public final class RenderUtil {
                 float xRot = player.rotationPitch;
                 float yHeadRotO = player.prevRotationYawHead;
                 float yHeadRot = player.rotationYawHead;
-                Pose pose = player.getPose();
+                //Pose pose = player.getPose();
 
                 // 修改玩家状态用于渲染
                 player.renderYawOffset = -yaw;
@@ -78,8 +79,8 @@ public final class RenderUtil {
                 RenderManager dispatcher = RenderManager.instance;
 
                 xp.conjugate();
-                dispatcher.overrideCameraOrientation(xp);
-                dispatcher.setRenderShadow(false);
+                //dispatcher.overrideCameraOrientation(xp);
+                //dispatcher.setRenderShadow(false);
 
                 GlStateManager.pushMatrix();
                 if (entity.hasPreviewAnimation("sleep")) {
@@ -231,7 +232,7 @@ public final class RenderUtil {
             return;
         }
         try {
-            CustomPlayerRenderer renderer = ClientEventHandler.getInstance();
+            CustomPlayerRenderer renderer = ClientProxy.getInstance();
             IAnimatable animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, CustomPlayerEntity::new);
             if (animatable instanceof CustomPlayerEntity entity) {
                 consumer.accept(entity);

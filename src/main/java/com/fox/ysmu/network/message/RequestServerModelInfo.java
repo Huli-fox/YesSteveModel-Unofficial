@@ -1,26 +1,24 @@
 package com.fox.ysmu.network.message;
 
-// import com.fox.ysmu.client.gui.ModelManageScreen;
-import java.util.List;
 
+import java.util.List;
+//import com.fox.ysmu.client.gui.ModelManageScreen;
 import com.fox.ysmu.model.format.Type;
 import com.google.common.collect.Lists;
-
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 
 public class RequestServerModelInfo implements IMessage {
 
     private List<Info> customModels;
     private List<Info> authModels;
 
-    public RequestServerModelInfo() {
-        this.customModels = Lists.newArrayList();
-        this.authModels = Lists.newArrayList();
-    }
+    public RequestServerModelInfo() {}
 
     public RequestServerModelInfo(List<Info> customModels, List<Info> authModels) {
         this.customModels = customModels;
@@ -58,18 +56,12 @@ public class RequestServerModelInfo implements IMessage {
 
         @Override
         public IMessage onMessage(RequestServerModelInfo message, MessageContext ctx) {
-            // if (ctx.side == Side.CLIENT) {
-            // openGui(message);
-            // }
+            if (ctx.side == Side.CLIENT) {
+                //Minecraft.getMinecraft().displayGuiScreen(new ModelManageScreen(message.customModels, message.authModels));
+            }
             return null;
         }
     }
-
-    // @OnlyIn(Dist.CLIENT)
-    // private static void openGui(RequestServerModelInfo message) {
-    // Minecraft mc = Minecraft.getInstance();
-    // mc.setScreen(new ModelManageScreen(message.customModels, message.authModels));
-    // }
 
     private static void infoToBuffer(ByteBuf buf, Info info) {
         ByteBufUtils.writeUTF8String(buf, info.fileName);

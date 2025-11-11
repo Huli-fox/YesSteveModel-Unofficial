@@ -18,6 +18,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.entity.player.EntityPlayer;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,6 +26,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PlayerModelScreen extends GuiScreen {
     protected final EntityPlayer player;
@@ -254,11 +256,16 @@ public class PlayerModelScreen extends GuiScreen {
         super.drawScreen(mouseX, mouseY, partialTicks);
         // Render tooltips
         for (Object button : this.buttonList) {
-            if (button instanceof FlatIconButton) {
-                ((FlatIconButton) button).renderToolTip(this, mouseX, mouseY);
+            if (button instanceof FlatIconButton f) {
+                if (f.func_146115_a() && f.tooltips != null && !f.tooltips.isEmpty()) {
+                    this.func_146283_a(f.tooltips, mouseX, mouseY);
+                }
             }
-            if (button instanceof ModelButton) {
-                ((ModelButton) button).renderTooltip(this, mouseX, mouseY);
+            if (button instanceof ModelButton m) {
+                if (m.func_146115_a() && m.tooltips != null && !m.tooltips.isEmpty()) {
+                    List<String> tooltipStrings = m.tooltips.stream().map(IChatComponent::getFormattedText).collect(Collectors.toList());
+                    this.func_146283_a(tooltipStrings, mouseX, mouseY);
+                }
             }
         }
     }
@@ -296,12 +303,12 @@ public class PlayerModelScreen extends GuiScreen {
     @Override
     public void handleMouseInput() {
         super.handleMouseInput();
-        int wheel = Mouse.getDWheel();
-        if (wheel != 0) {
+        int dWheel = Mouse.getDWheel();
+        if (dWheel != 0) {
             int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
             int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
             if (inRange(mouseX, mouseY)) {
-                scrollPage(wheel);
+                scrollPage(dWheel);
             }
         }
     }

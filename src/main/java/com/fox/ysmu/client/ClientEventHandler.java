@@ -4,8 +4,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fox.ysmu.client.gui.DebugAnimationScreen;
-import com.fox.ysmu.client.gui.ExtraPlayerScreen;
+//import com.fox.ysmu.client.gui.DebugAnimationScreen;
+//import com.fox.ysmu.client.gui.ExtraPlayerScreen;
 import com.fox.ysmu.client.input.*;
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
@@ -64,20 +64,11 @@ public class ClientEventHandler {
     private static final String BACKGROUND_BONE = "Background";
     private static boolean alreadyRenderedThisFrame = false;
 
-    @SubscribeEvent
-    public static void onClientSetup(RegisterKeyMappingsEvent event) {
-        event.register(PlayerModelScreenKey.PLAYER_MODEL_KEY);
-        event.register(AnimationRouletteKey.ANIMATION_ROULETTE_KEY);
-        event.register(DebugAnimationKey.DEBUG_ANIMATION_KEY);
-        event.register(ExtraPlayerConfigKey.EXTRA_PLAYER_RENDER_KEY);
-        ExtraAnimationKey.registerKeyBinding(event);
-    }
-
-    @SubscribeEvent
-    public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
-        event.registerAbove(DEBUG_TEXT.id(), "ysm_debug_info", new DebugAnimationScreen());
-        event.registerAbove(DEBUG_TEXT.id(), "ysm_extra_player", new ExtraPlayerScreen());
-    }
+//    @SubscribeEvent
+//    public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
+//        event.registerAbove(DEBUG_TEXT.id(), "ysm_debug_info", new DebugAnimationScreen());
+//        event.registerAbove(DEBUG_TEXT.id(), "ysm_extra_player", new ExtraPlayerScreen());
+//    }
 
     @SubscribeEvent
     public static void onTextureStitchEventPost(TextureStitchEvent.Post event) {

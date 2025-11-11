@@ -1,35 +1,38 @@
 package com.fox.ysmu.client.gui;
 
 import com.fox.ysmu.client.gui.button.FlatColorButton;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.resources.I18n;
 
-public class DownloadScreen extends Screen {
+public class DownloadScreen extends GuiScreen {
     private final PlayerModelScreen parent;
     private int x;
     private int y;
 
     public DownloadScreen(PlayerModelScreen parent) {
-        super(Component.literal("YSM Config GUI"));
         this.parent = parent;
     }
 
     @Override
-
     public void initGui() {
+        this.buttonList.clear();
         this.x = (width - 420) / 2;
         this.y = (height - 235) / 2;
-
-        addRenderableWidget(new FlatColorButton(x + 5, y, 80, 18, Component.translatable("gui.yes_steve_model.model.return"), (b) -> this.getMinecraft().setScreen(parent)));
+        this.buttonList.add(new FlatColorButton(0, x + 5, y, 80, 18, I18n.format("gui.yes_steve_model.model.return")));
     }
 
     @Override
+    protected void actionPerformed(GuiButton button) {
+        if (button.id == 0) {
+            this.mc.displayGuiScreen(parent);
+        }
+    }
 
+    @Override
     public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
-        renderBackground(graphics);
-        graphics.drawCenteredString(font, "Coming Soooooooooooooooooooooooooon™", width / 2, height / 2 - 5, ChatFormatting.DARK_RED.getColor());
-        super.render(graphics, pMouseX, pMouseY, pPartialTick);
+        this.drawDefaultBackground();
+        this.drawCenteredString(fontRendererObj, "Coming S∞n", width / 2, height / 2 - 5, 0xAA0000);
+        super.drawScreen(pMouseX, pMouseY, pPartialTick);
     }
 }

@@ -37,7 +37,6 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(RefreshModelManage.Handler.class, RefreshModelManage.class, 13, Side.SERVER);
         CHANNEL.registerMessage(HandleFile.Handler.class, HandleFile.class, 14, Side.SERVER);
 
-        // Side.CLIENT
         CHANNEL.registerMessage(SendModelFile.Handler.class, SendModelFile.class, 1, Side.CLIENT);
         CHANNEL.registerMessage(RequestSyncModel.Handler.class, RequestSyncModel.class, 2, Side.CLIENT);
         CHANNEL.registerMessage(RequestLoadModel.Handler.class, RequestLoadModel.class, 3, Side.CLIENT);
@@ -50,19 +49,10 @@ public final class NetworkHandler {
     }
 
     private static void initBukkit() {
-        // CHANNEL.registerMessage(OpenModelGuiMessage.Handler.class, OpenModelGuiMessage.class, OPEN_NPC_MODEL_GUI,
-        // Side.CLIENT);
-        CHANNEL.registerMessage(
-            SetNpcModelAndTexture.Handler.class,
-            SetNpcModelAndTexture.class,
-            SET_NPC_MODEL_ID,
-            Side.SERVER);
+        CHANNEL.registerMessage(OpenModelGuiMessage.Handler.class, OpenModelGuiMessage.class, OPEN_NPC_MODEL_GUI, Side.CLIENT);
+        CHANNEL.registerMessage(SetNpcModelAndTexture.Handler.class, SetNpcModelAndTexture.class, SET_NPC_MODEL_ID, Side.SERVER);
         CHANNEL.registerMessage(SyncNpcDataMessage.Handler.class, SyncNpcDataMessage.class, SYNC_NPC_DATA, Side.CLIENT);
-        CHANNEL.registerMessage(
-            UpdateNpcDataMessage.Handler.class,
-            UpdateNpcDataMessage.class,
-            UPDATE_NPC_DATA,
-            Side.CLIENT);
+        CHANNEL.registerMessage(UpdateNpcDataMessage.Handler.class, UpdateNpcDataMessage.class, UPDATE_NPC_DATA, Side.CLIENT);
     }
 
     public static void sendToClientPlayer(IMessage message, EntityPlayer player) {

@@ -1,50 +1,56 @@
 package com.fox.ysmu.network.message;
 
 import com.fox.ysmu.client.gui.PlayerModelScreen;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 
-import java.util.function.Supplier;
-
-public class OpenModelGuiMessage {
+public class OpenModelGuiMessage implements IMessage {
     public static int CURRENT_NPC_ID = -1;
-    private final int entityId;
-    private final int npcId;
+    private int entityId;
+    private int npcId;
+
+    public OpenModelGuiMessage() {}
 
     public OpenModelGuiMessage(int entityId, int npcId) {
         this.entityId = entityId;
         this.npcId = npcId;
     }
 
-    public static void encode(OpenModelGuiMessage message, FriendlyByteBuf buf) {
+    @Override
+    public void fromBytes(ByteBuf buf) {
+        this.entityId = buf.readInt();
+        this.npcId = buf.readInt();
     }
 
-    public static OpenModelGuiMessage decode(FriendlyByteBuf buf) {
-        return new OpenModelGuiMessage(buf.readInt(), buf.readInt());
+    @Override
+    public void toBytes(ByteBuf buf) {
+        buf.writeInt(this.entityId);
+        buf.writeInt(this.npcId);
     }
 
-    public static void handle(OpenModelGuiMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        if (context.getDirection().getReceptionSide().isClient()) {
-            context.enqueueWork(() -> handleMessage(message));
+    public static class Handler implements IMessageHandler<OpenModelGuiMessage, IMessage> {
+        @Override
+        public IMessage onMessage(OpenModelGuiMessage message, MessageContext ctx) {
+            if (ctx.side == Side.CLIENT) {
+                handleMessage(message);
+            }
+            return null;
         }
-        context.setPacketHandled(true);
     }
 
-    @OnlyIn(Dist.CLIENT)
     private static void handleMessage(OpenModelGuiMessage message) {
-        LocalPlayer localPlayer = Minecraft.getInstance().player;
+        EntityPlayer localPlayer = Minecraft.getMinecraft().thePlayer;
         if (localPlayer != null) {
-            Entity entity = localPlayer.level().getEntity(message.entityId);
-            if (entity instanceof Player player) {
+            Entity entity = localPlayer.worldObj.getEntityByID(message.entityId);
+            if (entity instanceof EntityPlayer player) {
                 CURRENT_NPC_ID = message.npcId;
-                Minecraft.getInstance().setScreen(new PlayerModelScreen(player));
+                Minecraft.getMinecraft().displayGuiScreen(new PlayerModelScreen(player));
             }
         }
     }

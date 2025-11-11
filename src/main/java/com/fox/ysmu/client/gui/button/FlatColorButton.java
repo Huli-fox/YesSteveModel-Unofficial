@@ -11,7 +11,7 @@ import java.util.List;
 
 public class FlatColorButton extends GuiButton {
     private boolean isSelect = false;
-    private List<String> tooltips;
+    public List<String> tooltips;
 
     public FlatColorButton(int id, int pX, int pY, int pWidth, int pHeight, String pMessage) {
         super(id, pX, pY, pWidth, pHeight, pMessage);
@@ -25,13 +25,6 @@ public class FlatColorButton extends GuiButton {
     public FlatColorButton setTooltips(List<String> tooltips) {
         this.tooltips = tooltips;
         return this;
-    }
-
-    // 需要从GuiScreen的drawScreen方法中调用
-    public void renderToolTip(GuiScreen screen, int pMouseX, int pMouseY) {
-        if (this.field_146123_n && tooltips != null && !tooltips.isEmpty()) {
-            screen.func_146283_a(tooltips, pMouseX, pMouseY);
-        }
     }
 
     // renderWidget -> drawButton

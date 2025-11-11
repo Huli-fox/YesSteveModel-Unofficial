@@ -11,8 +11,8 @@ import com.fox.ysmu.util.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.entity.player.EntityPlayer;
 import org.apache.commons.lang3.tuple.Pair;
@@ -25,22 +25,20 @@ public class ModelButton extends GuiButton {
     private final Pair<ResourceLocation, List<ResourceLocation>> modelInfo;
     private final boolean needAuth;
     private final int color;
-    private final List<String> tooltips;
+    public final List<IChatComponent> tooltips;
     private final EntityPlayer player;
 
     public ModelButton(int id, int pX, int pY, boolean needAuth, Pair<ResourceLocation, List<ResourceLocation>> modelInfo,
-                       List<String> tooltips, EntityPlayer player) {
-        super(id, pX, pY, 52, 90, ""); // TODO 如果下面不手动设置，“”为下面的值
+                       List<IChatComponent> tooltips, EntityPlayer player) {
+        super(id, pX, pY, 52, 90, "");
         this.modelInfo = modelInfo;
         this.needAuth = needAuth;
         this.color = needAuth ? 0x7F_000000 : 0xFF_434242;
         this.tooltips = tooltips;
         this.player = player;
-        // displayString 用于显示在按钮上的文字，这里我们手动渲染更复杂的文字
         this.displayString = modelInfo.getLeft().getResourcePath();
     }
 
-    // TODO 没改完
     public void doPress() {
         if (this.needAuth) {
             return;
@@ -105,14 +103,6 @@ public class ModelButton extends GuiButton {
         }
         if (needAuth) {
             this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + this.height, 0x9F222222, 0x9F222222);
-        }
-    }
-
-    // Tooltip 的渲染需要从外部的 GuiScreen 调用
-    public void renderTooltip(GuiScreen screen, int pMouseX, int pMouseY) {
-        if (this.field_146123_n && tooltips != null && !tooltips.isEmpty()) {
-            // func_146283_a:drawHoveringText
-            screen.func_146283_a(tooltips, pMouseX, pMouseY);
         }
     }
 }
