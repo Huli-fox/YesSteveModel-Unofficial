@@ -327,11 +327,10 @@ public final class RenderUtil {
         BackhandCompat.setOffhandItem(player, itemStacks[5]);
     }
 
-    public static void renderPlayerEntity(EntityPlayer player, double posX, double posY, float scale, float yawOffset,
-        int z) {
+    public static void renderPlayerEntity(EntityPlayer player, double posX, double posY, float scale, float yawOffset, double z) {
         GL11.glEnable(GL11.GL_COLOR_MATERIAL);
         GL11.glPushMatrix();
-        GL11.glTranslatef((float) (posX + scale * 0.5), (float) (posY + scale * 2), z);
+        GL11.glTranslatef((float) (posX + scale * 0.5), (float) (posY + scale * 2), (float) z);
         GL11.glScalef(-scale, scale, scale);
         GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
         GL11.glRotatef(player.rotationYaw + yawOffset, 0.0F, 1.0F, 0.0F);

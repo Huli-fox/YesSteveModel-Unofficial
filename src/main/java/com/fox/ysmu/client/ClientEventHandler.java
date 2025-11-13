@@ -6,7 +6,6 @@ import java.util.regex.Pattern;
 
 //import com.fox.ysmu.client.gui.DebugAnimationScreen;
 import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
-import com.fox.ysmu.client.input.*;
 import com.fox.ysmu.util.RenderUtil;
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
@@ -62,6 +61,8 @@ public class ClientEventHandler {
     private static final String BACKGROUND_BONE = "Background";
     private static boolean alreadyRenderedThisFrame = false;
 
+    private static boolean EXTRA_PLAYER = false;
+
 //    @SubscribeEvent
 //    public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
 //        event.registerAbove(DEBUG_TEXT.id(), "ysm_debug_info", new DebugAnimationScreen());
@@ -102,18 +103,28 @@ public class ClientEventHandler {
             return;
         }
         event.setCanceled(true);
-        float partialTicks = event.partialRenderTick;
-        double ix = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
-        double iy = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
-        double iz = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
-        renderer.doRender(
-            player,
-            ix - RenderManager.renderPosX,
-            iy - RenderManager.renderPosY - player.yOffset,
-            iz - RenderManager.renderPosZ,
-            player.rotationYaw,
-            partialTicks);
+        if (Minecraft.getMinecraft().currentScreen != null || EXTRA_PLAYER) {
+            renderer.doRender(
+                player,
+                0,
+                0 - player.yOffset,
+                0,
+                player.rotationYaw,
+                1.0F);
+        } else {
+            float partialTicks = event.partialRenderTick;
+            double ix = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
+            double iy = player.lastTickPosY + (player.posY - player.lastTickPosY) * partialTicks;
+            double iz = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * partialTicks;
+            renderer.doRender(
+                player,
+                ix - RenderManager.renderPosX,
+                iy - RenderManager.renderPosY - player.yOffset,
+                iz - RenderManager.renderPosZ,
+                player.rotationYaw,
+                partialTicks);
+        }
     }
 
     @SubscribeEvent
@@ -233,7 +244,9 @@ public class ClientEventHandler {
         double posY = Config.PLAYER_POS_Y;
         float scale = (float) Config.PLAYER_SCALE;
         float yawOffset = (float) Config.PLAYER_YAW_OFFSET;
+        EXTRA_PLAYER = true;
         RenderUtil.renderPlayerEntity(player, posX, posY, scale, yawOffset, -500);
+        EXTRA_PLAYER = false;
     }
 
     @SubscribeEvent
