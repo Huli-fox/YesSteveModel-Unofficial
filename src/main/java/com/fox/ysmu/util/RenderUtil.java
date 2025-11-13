@@ -1,10 +1,12 @@
 package com.fox.ysmu.util;
 
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-
 import com.fox.ysmu.client.ClientProxy;
 import net.geckominecraft.client.renderer.GlStateManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.entity.RenderManager;
@@ -13,20 +15,21 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
-
 import org.joml.Quaternionf;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 import org.lwjgl.util.vector.Quaternion;
-
-import com.fox.ysmu.client.ClientEventHandler;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
 import com.fox.ysmu.compat.Axis;
 import com.fox.ysmu.compat.BackhandCompat;
 import com.fox.ysmu.compat.Utils;
-
 import software.bernie.geckolib3.core.IAnimatable;
+import software.bernie.geckolib3.core.IAnimatableModel;
+import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
 import software.bernie.geckolib3.geo.GeoReplacedEntityRenderer;
+import software.bernie.geckolib3.geo.render.built.GeoModel;
+import software.bernie.geckolib3.model.AnimatedGeoModel;
 
 @SuppressWarnings("all")
 public final class RenderUtil {
@@ -236,15 +239,7 @@ public final class RenderUtil {
             IAnimatable animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, CustomPlayerEntity::new);
             if (animatable instanceof CustomPlayerEntity entity) {
                 consumer.accept(entity);
-                renderModel(
-                    (double) pPosX,
-                    (double) pPosY,
-                    (float) pScale,
-                    player,
-                    modelId,
-                    textureId,
-                    renderer,
-                    entity);
+                renderModel((double) pPosX, (double) pPosY, (float) pScale, player, modelId, textureId, renderer, entity);
             }
         } catch (ExecutionException e) {
             e.printStackTrace();
@@ -266,19 +261,13 @@ public final class RenderUtil {
         entity.setMainModel(ModelIdUtil.getMainId(modelId));
         entity.setTexture(textureId);
 
-        GlStateManager.pushMatrix();
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-        GlStateManager.translate(pPosX, pPosY, 1050.0D);
-        GlStateManager.scale(1.0F, 1.0F, -1.0F);
-
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(0.0D, 0.0D, 1000.0D);
-        GlStateManager.scale(pScale, pScale, pScale);
-
-        Quaternionf zp = Axis.ZP.rotationDegrees(180.0F);
-        Quaternionf xp = Axis.XP.rotationDegrees(-10);
-        zp.mul(xp);
-        GlStateManager.rotate(j2l(zp));
+        GL11.glEnable(GL11.GL_COLOR_MATERIAL);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glPushMatrix();
+        GL11.glTranslatef((float) pPosX, (float) pPosY, 100.0F);
+        GL11.glScalef(pScale, pScale, -pScale);
+        GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F); // 将模型从倒置状态翻转过来
+        GL11.glRotatef(-25.0F, 0.4F, 0.8F, -0.08F); // 倾斜一点
 
         // 保存玩家状态
         float yBodyRot = player.renderYawOffset;
@@ -309,18 +298,21 @@ public final class RenderUtil {
         player.rotationYawHead = player.rotationYaw;
         player.prevRotationYawHead = player.rotationYaw;
 
-        RenderHelper.enableGUIStandardItemLighting();
-        RenderManager dispatcher = RenderManager.instance;
-        // TODO camera shadow
-        // xp.conjugate();
-        // dispatcher.overrideCameraOrientation(xp);
-        // dispatcher.setRenderShadow(false);
-
-        // renderer.doRender();
+        RenderHelper.enableStandardItemLighting();
+        AnimatedGeoModel provider = renderer.getGeoModelProvider();
+        ResourceLocation modelLocation = provider.getModelLocation(entity);
+        GeoModel model = provider.getModel(modelLocation);
+        AnimationEvent<CustomPlayerEntity> predicate = new AnimationEvent<>(entity, 0, 0, 0, false, Collections.emptyList());
+        if (renderer.getGeoModelProvider() instanceof IAnimatableModel) {
+            ((IAnimatableModel<CustomPlayerEntity>) renderer.getGeoModelProvider()).setLivingAnimations(entity, entity.hashCode(), predicate);
+        }
+        Minecraft.getMinecraft().getTextureManager().bindTexture(provider.getTextureLocation(entity));
+        renderer.render(model, entity, 0, 1.0f, 1.0f, 1.0f, 1.0f);
+        RenderHelper.disableStandardItemLighting();
+        GL11.glPopMatrix();
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
 
         // 恢复状态
-        // dispatcher.setRenderShadow(true);
-
         player.renderYawOffset = yBodyRot;
         player.rotationYaw = yRot;
         player.rotationPitch = xRot;
@@ -333,40 +325,30 @@ public final class RenderUtil {
         player.inventory.armorInventory[0] = itemStacks[3];
         player.inventory.mainInventory[player.inventory.currentItem] = itemStacks[4];
         BackhandCompat.setOffhandItem(player, itemStacks[5]);
-
-        GlStateManager.popMatrix();
-        GlStateManager.popMatrix();
-        RenderHelper.enableStandardItemLighting();
     }
 
     public static void renderPlayerEntity(EntityPlayer player, double posX, double posY, float scale, float yawOffset,
         int z) {
-        GlStateManager.pushMatrix();
-        GlStateManager.matrixMode(GL11.GL_MODELVIEW);
-        GlStateManager.translate(posX + scale * 0.5, posY + scale * 2, z);
-        GlStateManager.scale(1, 1, -1);
+        GL11.glEnable(GL11.GL_COLOR_MATERIAL);
+        GL11.glPushMatrix();
+        GL11.glTranslatef((float) (posX + scale * 0.5), (float) (posY + scale * 2), z);
+        GL11.glScalef(-scale, scale, scale);
+        GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
+        GL11.glRotatef(player.rotationYaw + yawOffset, 0.0F, 1.0F, 0.0F);
 
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(scale, scale, scale);
-        Quaternionf zRot = Axis.ZP.rotationDegrees(180.0F);
-        Quaternionf yRot = Axis.YP.rotationDegrees(player.renderYawOffset + yawOffset - 180);
-        zRot.mul(yRot);
-        GlStateManager.rotate(j2l(zRot));
-
-        RenderHelper.enableGUIStandardItemLighting();
-        RenderManager dispatcher = RenderManager.instance;
-
-        yRot.conjugate();
-        // dispatcher.overrideCameraOrientation(yRot);
-        // dispatcher.setRenderShadow(false);
-
-        dispatcher.renderEntityWithPosYaw(player, 0, 0, 0.0D, 0.0F, 1.0F);
-
-        // dispatcher.setRenderShadow(true);
-
-        GlStateManager.popMatrix();
-        GlStateManager.popMatrix();
+        GL11.glRotatef(135.0F, 0.0F, 1.0F, 0.0F);
         RenderHelper.enableStandardItemLighting();
+        GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
+
+        GL11.glTranslatef(0.0F, player.yOffset, 0.0F);
+        RenderManager.instance.renderEntityWithPosYaw(player, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F);
+
+        GL11.glPopMatrix();
+        RenderHelper.disableStandardItemLighting();
+        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
     private static Quaternion j2l(Quaternionf jomlQuat) {

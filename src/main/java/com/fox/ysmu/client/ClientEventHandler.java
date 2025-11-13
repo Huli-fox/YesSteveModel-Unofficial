@@ -5,8 +5,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //import com.fox.ysmu.client.gui.DebugAnimationScreen;
-//import com.fox.ysmu.client.gui.ExtraPlayerScreen;
+import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
 import com.fox.ysmu.client.input.*;
+import com.fox.ysmu.util.RenderUtil;
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
@@ -19,10 +20,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.client.event.RenderPlayerEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.client.event.TextureStitchEvent;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.joml.Quaternionf;
@@ -67,7 +65,6 @@ public class ClientEventHandler {
 //    @SubscribeEvent
 //    public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
 //        event.registerAbove(DEBUG_TEXT.id(), "ysm_debug_info", new DebugAnimationScreen());
-//        event.registerAbove(DEBUG_TEXT.id(), "ysm_extra_player", new ExtraPlayerScreen());
 //    }
 
     @SubscribeEvent
@@ -214,6 +211,29 @@ public class ClientEventHandler {
 
             GlStateManager.popMatrix();
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderScreen(RenderGameOverlayEvent.Pre event) {
+        if (event.type != RenderGameOverlayEvent.ElementType.HOTBAR) {
+            return;
+        }
+        if (Config.DISABLE_PLAYER_RENDER) {
+            return;
+        }
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayer player = mc.thePlayer;
+        if (player == null) {
+            return;
+        }
+        if (mc.currentScreen instanceof ExtraPlayerConfigScreen) {
+            return;
+        }
+        double posX = Config.PLAYER_POS_X;
+        double posY = Config.PLAYER_POS_Y;
+        float scale = (float) Config.PLAYER_SCALE;
+        float yawOffset = (float) Config.PLAYER_YAW_OFFSET;
+        RenderUtil.renderPlayerEntity(player, posX, posY, scale, yawOffset, -500);
     }
 
     @SubscribeEvent

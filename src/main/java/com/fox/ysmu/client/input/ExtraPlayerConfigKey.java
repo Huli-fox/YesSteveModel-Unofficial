@@ -1,6 +1,6 @@
 package com.fox.ysmu.client.input;
 
-//import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
+import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
 import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent;
@@ -18,7 +18,7 @@ public class ExtraPlayerConfigKey {
     public static void onKeyboardInput(InputEvent.KeyInputEvent event) {
         boolean isAltKeyDown = Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU);
         if (EXTRA_PLAYER_RENDER_KEY.isPressed() && isAltKeyDown) {
-            //Minecraft.getMinecraft().displayGuiScreen(new ExtraPlayerConfigScreen());
+            Minecraft.getMinecraft().displayGuiScreen(new ExtraPlayerConfigScreen());
         }
     }
 }

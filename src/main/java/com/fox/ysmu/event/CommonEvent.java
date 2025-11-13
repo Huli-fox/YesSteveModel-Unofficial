@@ -23,7 +23,9 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 @EventBusSubscriber
 public class CommonEvent {
-    public static final int MOTION_DATAWATCHER_ID = 28;  // WARNING:If you don't know what this does,DO NOT CHANGE IT
+    // WARNING:If you don't know what this does,DO NOT CHANGE IT
+    // TODO 不安全的实现方法
+    public static final int MOTION_DATAWATCHER_ID = 28;
     public static final int ON_GROUND = 0x01;
     public static final int IS_FLYING = 0x02;
 
