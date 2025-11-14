@@ -12,15 +12,16 @@ public class DisclaimerScreen extends GuiScreen {
     private boolean hasAgreed;
     private int x;
     private int y;
+    private List<String> textLines;
 
     @Override
     public void initGui() {
         hasAgreed = !Config.DISCLAIMER_SHOW;
         this.buttonList.clear();
 
-        String mainText = I18n.format("gui.yes_steve_model.disclaimer.text");
-        List<String> splitMainText = this.fontRendererObj.listFormattedStringToWidth(mainText, 400);
-        int totalHeight = splitMainText.size() * this.fontRendererObj.FONT_HEIGHT + 20 + 20 + 10 + 20;
+        String mainText = I18n.format("gui.yes_steve_model.disclaimer.text").replace("\\n", "\n");
+        this.textLines = this.fontRendererObj.listFormattedStringToWidth(mainText, 400);
+        int totalHeight = this.textLines.size() * this.fontRendererObj.FONT_HEIGHT + 20 + 20 + 10 + 20;
         x = (this.width - 400) / 2;
         y = (this.height - totalHeight) / 2;
 
@@ -41,6 +42,7 @@ public class DisclaimerScreen extends GuiScreen {
             case 1:
                 if (hasAgreed) {
                     Config.DISCLAIMER_SHOW = false;
+                    Config.save();
                     this.mc.displayGuiScreen(new PlayerModelScreen());
                 } else {
                     this.mc.displayGuiScreen(null);
@@ -51,7 +53,13 @@ public class DisclaimerScreen extends GuiScreen {
     @Override
     public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         this.drawDefaultBackground();
-        this.fontRendererObj.drawSplitString(I18n.format("gui.yes_steve_model.disclaimer.text"), x, y, 400, 0xffffffff);
+        int currentY = this.y;
+        if (this.textLines != null) {
+            for (String line : this.textLines) {
+                this.fontRendererObj.drawString(line, this.x, currentY, 0xFFFFFF);
+                currentY += this.fontRendererObj.FONT_HEIGHT;
+            }
+        }
         super.drawScreen(pMouseX, pMouseY, pPartialTick);
     }
 }

@@ -9,7 +9,7 @@ public class ConfigCheckBox extends GuiButton {
     private final String Key;
 
     public ConfigCheckBox(int id, int pX, int pY, String key, boolean isChecked) {
-        super(id, pX, pY, 400, 20, "");
+        super(id, pX, pY, 130, 20, "");
         this.Key = key;
         this.isChecked = isChecked;
         this.displayString = (isChecked ? "[X] " : "[ ] ") + I18n.format("gui.yes_steve_model.config." + key);

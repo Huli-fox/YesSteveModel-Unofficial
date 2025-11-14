@@ -62,4 +62,9 @@ public class ConfigScreen extends GuiScreen {
         this.drawDefaultBackground();
         super.drawScreen(pMouseX, pMouseY, pPartialTick);
     }
+
+    @Override
+    public void onGuiClosed() {
+        Config.save();
+    }
 }

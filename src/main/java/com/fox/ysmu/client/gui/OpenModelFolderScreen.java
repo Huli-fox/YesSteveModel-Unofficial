@@ -7,6 +7,7 @@ import net.minecraft.client.resources.I18n;
 
 import java.awt.Desktop;
 import java.io.File;
+import java.util.List;
 
 public class OpenModelFolderScreen extends GuiScreen {
     private final PlayerModelScreen screen;
@@ -46,9 +47,13 @@ public class OpenModelFolderScreen extends GuiScreen {
     @Override
     public void drawScreen(int pMouseX, int pMouseY, float pPartialTick) {
         this.drawDefaultBackground();
-        // 绘制自动换行的文本 drawWordWrap -> drawSplitString
-        this.fontRendererObj.drawSplitString(I18n.format("gui.yes_steve_model.open_model_folder.tips"),
-                (this.width - 400) / 2, this.height / 2 - 80, 400, 0XFFFFFF);
+        String mainText = I18n.format("gui.yes_steve_model.open_model_folder.tips").replace("\\n", "\n");
+        List<String> textLines = this.fontRendererObj.listFormattedStringToWidth(mainText, 400);
+        int currentY = this.height / 2 - 80;
+        for (String line : textLines) {
+            this.fontRendererObj.drawString(line, (this.width - 400) / 2, currentY, 0xFFFFFF);
+            currentY += this.fontRendererObj.FONT_HEIGHT;
+        }
         super.drawScreen(pMouseX, pMouseY, pPartialTick);
     }
 }

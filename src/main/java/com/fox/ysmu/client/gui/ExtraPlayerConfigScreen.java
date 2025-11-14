@@ -54,12 +54,12 @@ public class ExtraPlayerConfigScreen extends GuiScreen {
         this.drawGradientRect(startX - 5, startY - 5, startX + 5, startY + 5, 0xFF00FF9F, 0xFF00FF9F);
         this.drawGradientRect(endX - 5, endY - 5, endX + 5, endY + 5, 0xFF00009F, 0xFF00009F);
 
+        String mainText = I18n.format("gui.yes_steve_model.extra_player_render.tips").replace("\\n", "\n");
+        List<String> textLines = this.fontRendererObj.listFormattedStringToWidth(mainText, 500);
         int y = 15;
-        String component = I18n.format("gui.yes_steve_model.extra_player_render.tips");
-        List<String> split = fontRendererObj.listFormattedStringToWidth(component, 500);
-        for (String charSequence : split) {
-            int w = fontRendererObj.getStringWidth(charSequence);
-            this.drawString(fontRendererObj, charSequence, width - 15 - w, y, 0xFFFFFF);
+        for (String line : textLines) {
+            int w = fontRendererObj.getStringWidth(line);
+            this.drawString(fontRendererObj, line, width - 15 - w, y, 0xFFFFFF);
             y += 10;
         }
 
@@ -138,6 +138,6 @@ public class ExtraPlayerConfigScreen extends GuiScreen {
         Config.PLAYER_POS_Y = this.posY;
         Config.PLAYER_SCALE = this.scale;
         Config.PLAYER_YAW_OFFSET = this.yawOffset;
-        super.onGuiClosed();
+        Config.save();
     }
 }
