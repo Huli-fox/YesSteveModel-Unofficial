@@ -23,7 +23,7 @@ import software.bernie.geckolib3.model.provider.data.EntityModelData;
 import software.bernie.geckolib3.resource.GeckoLibCache;
 import software.bernie.geckolib3.util.MolangUtils;
 
-import static com.fox.ysmu.event.CommonEvent.*;
+import static com.fox.ysmu.event.CommonEventHandler.*;
 
 public class AnimationRegister {
 

@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.resources.I18n;
@@ -23,6 +24,7 @@ import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
 
 import org.joml.Quaternionf;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Quaternion;
 
 import com.fox.ysmu.Config;
@@ -104,7 +106,7 @@ public class ClientEventHandler {
         }
         event.setCanceled(true);
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
-        if (Minecraft.getMinecraft().currentScreen != null || EXTRA_PLAYER) {
+        if ((Minecraft.getMinecraft().currentScreen != null || EXTRA_PLAYER) && player.equals(playerSelf)) {
             renderer.doRender(
                 player,
                 0,
@@ -132,97 +134,67 @@ public class ClientEventHandler {
         MODEL_BIPED = event.renderer.modelBipedMain;
     }
 
-//    @SubscribeEvent
-//    // TODO 它在每一帧的世界渲染结束后触发，适合用来重置每帧的状态?
-//    public static void onRenderWorldLast(RenderWorldLastEvent event) {
-//        alreadyRenderedThisFrame = false;
-//    }
-//
-//    @SubscribeEvent
-//    public static void onRenderHand(RenderHandEvent event) {
-//        if (Config.DISABLE_SELF_MODEL || Config.DISABLE_SELF_HANDS) {
-//            return;
-//        }
-//
-//        AbstractClientPlayer player = Minecraft.getMinecraft().thePlayer;
-//        if (player == null) {
-//            return;
-//        }
-//
-//        event.setCanceled(true);
-//
-//        ExtendedModelInfo eep = ExtendedModelInfo.get(player);
-//        if (eep != null) {
-//            ResourceLocation modelId = eep.getModelId();
-//            // 注意：我们加载的是包含手臂和背景的完整第一人称模型
-//            GeoModel geoModel = GeckoLibCache.getInstance()
-//                .getGeoModels()
-//                .get(ModelIdUtil.getArmId(modelId));
-//            if (geoModel == null) {
-//                return;
-//            }
-//
-//            CustomPlayerRenderer rendererInstance = ClientProxy.getInstance();
-//            if (rendererInstance == null) {
-//                return;
-//            }
-//
-//            // --- 通用渲染设置 ---
-//            IAnimatable animatable;
-//            try {
-//                animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, () -> {
-//                    CustomPlayerEntity entity = new CustomPlayerEntity();
-//                    entity.setTexture(eep.getSelectTexture());
-//                    return entity;
-//                });
-//            } catch (ExecutionException e) {
-//                throw new RuntimeException(e);
-//            }
-//
-//            if (!(animatable instanceof CustomPlayerEntity customPlayer)) {
-//                return;
-//            }
-//
-//            customPlayer.setTexture(eep.getSelectTexture());
-//            if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) {
-//                return;
-//            }
-//            Tessellator tess = Tessellator.instance;
-//
-//            // --- 渲染逻辑 ---
-//            GlStateManager.pushMatrix();
-//
-//            // 1. 背景渲染和视角摇晃（每帧仅一次）
-//            if (!alreadyRenderedThisFrame) {
-//                alreadyRenderedThisFrame = true;
-//
-//                // 应用视角摇晃
-//                GlStateManager.pushMatrix();
-//                if (Minecraft.getMinecraft().gameSettings.viewBobbing) {
-//                    bobView(event.partialTicks, player);
-//                }
-//
-//                // 渲染背景骨骼
-//                if (geoModel.hasTopLevelBone(BACKGROUND_BONE)) {
-//                    GlStateManager.translate(0, -1.5, 0); // 背景模型的特定位移
-//                    geoModel.getTopLevelBone(BACKGROUND_BONE)
-//                        .ifPresent(bone -> rendererInstance.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
-//                }
-//                GlStateManager.popMatrix();
-//            }
-//
-//            // 2. 手臂渲染（每次事件触发时都执行）
-//            // 渲染右臂
-//            GlStateManager.pushMatrix();
-//            GlStateManager.translate(-0.25, 1.8, 0);
-//            GlStateManager.scale(-1, -1, 1);
-//            geoModel.getTopLevelBone(RIGHT_ARM)
-//                .ifPresent(bone -> rendererInstance.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
-//            GlStateManager.popMatrix();
-//
-//            GlStateManager.popMatrix();
-//        }
-//    }
+    // TODO 不完善的实现
+    @SubscribeEvent
+    public static void onRenderHand(RenderHandEvent event) {
+        if (Config.DISABLE_SELF_MODEL || Config.DISABLE_SELF_HANDS) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayer player = mc.thePlayer;
+        if (mc.gameSettings.thirdPersonView != 0 || player.getHeldItem() != null) return;
+        event.setCanceled(true);
+
+        ExtendedModelInfo eep = ExtendedModelInfo.get(player);
+        if (eep == null) return;
+        ResourceLocation modelId = eep.getModelId();
+        GeoModel geoModel = GeckoLibCache.getInstance().getGeoModels().get(ModelIdUtil.getArmId(modelId));
+        if (geoModel == null) return;
+        CustomPlayerRenderer renderer = ClientProxy.getInstance();
+        if (renderer == null) return;
+        IAnimatable animatable;
+        try {
+            animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, () -> {
+                CustomPlayerEntity entity = new CustomPlayerEntity();
+                entity.setTexture(eep.getSelectTexture());
+                return entity;
+            });
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        if (!(animatable instanceof CustomPlayerEntity customPlayer)) return;
+        customPlayer.setTexture(eep.getSelectTexture());
+        if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) return;
+
+        GlStateManager.pushMatrix();
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        GlStateManager.enableBlend(); // 开启混合，处理透明贴图
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA); // 设置混合函数
+        GlStateManager.disableCull(); // 禁用面剔除，可选，但可以防止模型内侧消失
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F); // 重置颜色
+
+        mc.getTextureManager().bindTexture(customPlayer.getTexture());
+
+        float partialTicks = event.partialTicks;
+        float interpolatedYaw = player.prevRotationYaw + (player.rotationYaw - player.prevRotationYaw) * partialTicks;
+        float interpolatedPitch = player.prevRotationPitch + (player.rotationPitch - player.prevRotationPitch) * partialTicks;
+        GlStateManager.rotate(interpolatedYaw, 0.0F, -1.0F, 0.0F);
+        GlStateManager.rotate(interpolatedPitch, 1.0F, 0.0F, 0.0F);
+        GlStateManager.translate(-1, 0, 2);
+        GlStateManager.scale(-1, -1, 1);
+        GlStateManager.rotate(25, -1.5F, 3, -0.5F);
+        GlStateManager.rotate(53, 0, 3, 0);
+        GlStateManager.rotate(30, -1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(30, 0.0F, 0.0F, -1.0F);
+
+        Tessellator tess = Tessellator.instance;
+        tess.startDrawing(GL11.GL_QUADS);
+        geoModel.getTopLevelBone(RIGHT_ARM)
+            .ifPresent(bone -> renderer.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
+        tess.draw();
+
+        GlStateManager.enableCull();
+        GlStateManager.disableBlend();
+        GlStateManager.popMatrix();
+    }
 
     @SubscribeEvent
     public static void onRenderScreen(RenderGameOverlayEvent.Pre event) {
