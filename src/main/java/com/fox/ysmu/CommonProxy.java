@@ -16,7 +16,7 @@ public class CommonProxy {
     // preInit "Run before anything else. Read your config, create blocks, items, etc, and register them with the
     // GameRegistry." (Remove if not needed)
     public void preInit(FMLPreInitializationEvent event) {
-        Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
+        Config.init(event.getSuggestedConfigurationFile());
         ServerModelManager.reloadPacks();
         ysmu.LOG.info("I am ysmu at version " + Tags.VERSION);
     }

@@ -1,6 +1,8 @@
 package com.fox.ysmu.client;
 
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
+import com.fox.ysmu.client.input.*;
+import cpw.mods.fml.client.registry.ClientRegistry;
 import net.minecraft.client.Minecraft;
 
 import com.fox.ysmu.CommonProxy;
@@ -27,6 +29,11 @@ public class ClientProxy extends CommonProxy {
         AnimationRegister.registerVariables();
         CUSTOM_PLAYER_RENDERER = new CustomPlayerRenderer();
         GeoReplacedEntityRenderer.registerReplacedEntity(CustomPlayerEntity.class, CUSTOM_PLAYER_RENDERER);
+        ClientRegistry.registerKeyBinding(AnimationRouletteKey.ANIMATION_ROULETTE_KEY);
+        //ClientRegistry.registerKeyBinding(DebugAnimationKey.DEBUG_ANIMATION_KEY);
+        ExtraAnimationKey.registerKeyBindings();
+        ClientRegistry.registerKeyBinding(ExtraPlayerConfigKey.EXTRA_PLAYER_RENDER_KEY);
+        ClientRegistry.registerKeyBinding(PlayerModelScreenKey.PLAYER_MODEL_KEY);
     }
 
     public static CustomPlayerRenderer getInstance() {
