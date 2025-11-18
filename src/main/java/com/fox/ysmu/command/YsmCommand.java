@@ -1,4 +1,4 @@
-package com.fox.ysmu.command.sub;
+package com.fox.ysmu.command;
 
 import static com.fox.ysmu.compat.Utils.isValidResourceLocation;
 import static com.fox.ysmu.model.ServerModelManager.*;
@@ -12,7 +12,6 @@ import java.util.*;
 import net.minecraft.command.*;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.ResourceLocation;
 
@@ -22,33 +21,21 @@ import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
-import com.fox.ysmu.compat.Utils;
 import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.model.ServerModelManager;
-import com.fox.ysmu.model.format.ServerModelInfo;
-import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.ysmu;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.relauncher.Side;
-
-public class ModelCommand extends CommandBase {
-
-    public static final Gson GSON = new GsonBuilder().disableHtmlEscaping()
-        .excludeFieldsWithoutExposeAnnotation()
-        .create();
+public class YsmCommand extends CommandBase {
 
     @Override
     public String getCommandName() {
-        return "model";
+        return "ysm";
     }
 
     @Override
     public String getCommandUsage(ICommandSender sender) {
-        return "/ysm model <reload|set|export> ...";
+        return "/ysm reload";
     }
 
     @Override
@@ -58,21 +45,10 @@ public class ModelCommand extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (args.length < 1) {
+        if (args.length != 1 || !"reload".equalsIgnoreCase(args[0])) {
             throw new WrongUsageException(getCommandUsage(sender));
         }
-
-        String subCommand = args[0];
-
-        if ("reload".equalsIgnoreCase(subCommand)) {
-            processReload(sender);
-        } else if ("set".equalsIgnoreCase(subCommand)) {
-            processSet(sender, args);
-        } else if ("export".equalsIgnoreCase(subCommand)) {
-            processExport(sender);
-        } else {
-            throw new WrongUsageException(getCommandUsage(sender));
-        }
+        processReload(sender);
     }
 
     private void processReload(ICommandSender sender) {
@@ -105,79 +81,6 @@ public class ModelCommand extends CommandBase {
         }
         watch.stop();
         sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.reload.info", watch.getTime()));
-    }
-
-    private void processSet(ICommandSender sender, String[] args) {
-        // 用法: /ysm model set <targets> <model_id> <texture_id> [ignore_auth]
-        // args[0] 是 "set"
-        if (args.length < 4) {
-            throw new WrongUsageException("/ysm model set <targets> <model_id> <texture_id> [ignore_auth]");
-        }
-
-        String targetSelector = args[1];
-        String modelName = args[2];
-        String textureName = args[3];
-        boolean ignoreAuth = false;
-        if (args.length >= 5) {
-            ignoreAuth = parseBoolean(sender, args[4]);
-        }
-
-        List<EntityPlayerMP> targets;
-        if (PlayerSelector.hasArguments(targetSelector)) {
-            EntityPlayerMP[] matchedPlayers = PlayerSelector.matchPlayers(sender, targetSelector);
-            if (matchedPlayers == null || matchedPlayers.length == 0) {
-                targets = Collections.emptyList();
-            } else {
-                targets = Arrays.asList(matchedPlayers);
-            }
-        } else {
-            EntityPlayerMP singlePlayer = getPlayer(sender, targetSelector);
-            targets = Collections.singletonList(singlePlayer);
-        }
-        if (targets.isEmpty()) {
-            throw new PlayerNotFoundException();
-        }
-
-        if (!ServerModelManager.CACHE_NAME_INFO.containsKey(modelName)) {
-            sender.addChatMessage(new ChatComponentTranslation("commands.yes_steve_model.export.not_exist", modelName));
-            return;
-        }
-
-        ServerModelInfo info = ServerModelManager.CACHE_NAME_INFO.get(modelName);
-        if (!info.getTexture().isPresent()) {
-            return;
-        }
-
-        ResourceLocation modelId = new ResourceLocation(ysmu.MODID, modelName);
-        ResourceLocation textureId = ModelIdUtil.getSubModelId(modelId, textureName);
-
-        for (EntityPlayerMP player : targets) {
-            if (ignoreAuth) {
-                ExtendedModelInfo eep = ExtendedModelInfo.get(player);
-                if (eep != null) {
-                    eep.setModelAndTexture(modelId, textureId);
-                    sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.set.success", modelName, player.getCommandSenderName()));
-                }
-            } else {
-                ExtendedModelInfo eep = ExtendedModelInfo.get(player);
-                if (eep != null) {
-                    ExtendedAuthModels authEEP = ExtendedAuthModels.get(player);
-                    if (authEEP != null) {
-                        if (!ServerModelManager.AUTH_MODELS.contains(modelName) || authEEP.containModel(modelId)) {
-                            eep.setModelAndTexture(modelId, textureId);
-                            sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.set.success", modelName, player.getCommandSenderName()));
-                        } else {
-                            sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.set.need_auth", modelName, player.getCommandSenderName()));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private void processExport(ICommandSender sender) {
-        String infoText = GSON.toJson(ServerModelManager.CACHE_NAME_INFO);
-        sender.addChatMessage(new ChatComponentText(infoText));
     }
 
     private void checkModelFiles(ICommandSender sender, Path rootPath) {

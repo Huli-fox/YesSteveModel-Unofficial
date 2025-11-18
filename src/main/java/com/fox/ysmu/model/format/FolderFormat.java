@@ -67,13 +67,13 @@ public final class FolderFormat {
                 continue;
             }
             if (rootPath.equals(AUTH)) {
-                ServerModelInfo info = cacheModel(AUTH, dirName, true);
+                ServerModelInfo info = cacheModel(AUTH, dirName);
                 if (info != null) {
                     CACHE_NAME_INFO.put(dirName, info);
                     AUTH_MODELS.add(dirName);
                 }
             } else {
-                ServerModelInfo info = cacheModel(CUSTOM, dirName, false);
+                ServerModelInfo info = cacheModel(CUSTOM, dirName);
                 if (info != null) {
                     CACHE_NAME_INFO.put(dirName, info);
                 }
@@ -81,9 +81,9 @@ public final class FolderFormat {
         }
     }
 
-    private static ServerModelInfo cacheModel(Path rootPath, String modelId, boolean isAuth) {
+    private static ServerModelInfo cacheModel(Path rootPath, String modelId) {
         try {
-            ModelData data = getModelData(rootPath, modelId, isAuth);
+            ModelData data = getModelData(rootPath, modelId, false);
             byte[] dataBytes = EncryptTools.assembleEncryptModels(data);
             data.setMd5(
                 Md5Utils.md5Hex(dataBytes)

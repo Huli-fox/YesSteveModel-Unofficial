@@ -33,9 +33,6 @@ public final class NetworkHandler {
         CHANNEL.registerMessage(SetModelAndTexture.Handler.class, SetModelAndTexture.class, 5, Side.SERVER);
         CHANNEL.registerMessage(SetPlayAnimation.Handler.class, SetPlayAnimation.class, 7, Side.SERVER);
         CHANNEL.registerMessage(SetStarModel.Handler.class, SetStarModel.class, 9, Side.SERVER);
-        CHANNEL.registerMessage(UploadFile.Handler.class, UploadFile.class, 11, Side.SERVER);
-        CHANNEL.registerMessage(RefreshModelManage.Handler.class, RefreshModelManage.class, 13, Side.SERVER);
-        CHANNEL.registerMessage(HandleFile.Handler.class, HandleFile.class, 14, Side.SERVER);
 
         CHANNEL.registerMessage(SendModelFile.Handler.class, SendModelFile.class, 1, Side.CLIENT);
         CHANNEL.registerMessage(RequestSyncModel.Handler.class, RequestSyncModel.class, 2, Side.CLIENT);

@@ -1,6 +1,6 @@
 package com.fox.ysmu;
 
-import com.fox.ysmu.command.RootCommand;
+import com.fox.ysmu.command.YsmCommand;
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.SyncAuthModels;
@@ -31,7 +31,7 @@ public class CommonProxy {
 
     // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {
-        event.registerServerCommand(new RootCommand());
+        event.registerServerCommand(new YsmCommand());
     }
 
     public void handleAuthModels(SyncAuthModels message) {}

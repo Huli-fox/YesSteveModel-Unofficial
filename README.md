@@ -8,7 +8,7 @@
 
 ## Issue/Todo
 ### Major
-- [ ] 移除除ModelCommand外的所有命令，移除ModelManageGUI、DebugGUI，移除所有Auth模型相关代码
+- [x] 移除除ModelCommand外的所有命令，移除ModelManageGUI、DebugGUI。移除授权功能，现在所有模型都不需要授权
 - [ ] 清理代码，提高可读性
 - [ ] 第一人称手臂实现不完善，第三人称下手上物品不显示
 - [ ] 1.7.10服务器中本机似乎无法得知其他玩家的OnGround和飞行状态，导致动画判断出错。现有代码为了图省事将这两个状态写入了玩家元数据，须改用EEP同步

@@ -21,7 +21,7 @@ public class ServerModelInfo {
 
     public ServerModelInfo(Set<String> textures, boolean needAuth, Type type) {
         this.textures = textures;
-        this.needAuth = needAuth;
+        this.needAuth = false;
         this.type = type;
     }
 

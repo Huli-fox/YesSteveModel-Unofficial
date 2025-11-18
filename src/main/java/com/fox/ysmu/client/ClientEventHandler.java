@@ -1,10 +1,7 @@
 package com.fox.ysmu.client;
 
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-//import com.fox.ysmu.client.gui.DebugAnimationScreen;
 import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
 import com.fox.ysmu.util.RenderUtil;
 import net.geckominecraft.client.renderer.GlStateManager;
@@ -12,10 +9,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.MathHelper;
@@ -53,9 +48,6 @@ import software.bernie.geckolib3.resource.GeckoLibCache;
 @EventBusSubscriber(side = Side.CLIENT)
 public class ClientEventHandler {
 
-    public static int DEBUG_BG_WIDTH = 1000;
-    private static final Pattern INT_REG = Pattern.compile("^[0-9]*$");
-
     private static ModelBiped MODEL_BIPED;
 
     private static final String LEFT_ARM = "LeftArm";
@@ -65,20 +57,11 @@ public class ClientEventHandler {
 
     private static boolean EXTRA_PLAYER = false;
 
-//    @SubscribeEvent
-//    public static void onRegisterGuiOverlays(RegisterGuiOverlaysEvent event) {
-//        event.registerAbove(DEBUG_TEXT.id(), "ysm_debug_info", new DebugAnimationScreen());
-//    }
-
     @SubscribeEvent
     public static void onTextureStitchEventPost(TextureStitchEvent.Post event) {
         if (event.map.getTextureType() == 0) {
             ClientModelManager.loadDefaultModel();
             ClientModelManager.CACHE_MD5.forEach(RequestLoadModel::loadModel);
-            Matcher matcher = INT_REG.matcher(I18n.format("molang.yes_steve_model.bg_width"));
-            if (matcher.matches()) {
-                DEBUG_BG_WIDTH = Integer.parseInt(I18n.format("molang.yes_steve_model.bg_width"));
-            }
         }
     }
 

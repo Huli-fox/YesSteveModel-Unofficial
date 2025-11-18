@@ -36,7 +36,7 @@ public class ExtendedAuthModels implements IExtendedEntityProperties {
     }
 
     public boolean containModel(ResourceLocation modelId) {
-        return authModels.contains(modelId);
+        return true;
     }
 
     public Set<ResourceLocation> getAuthModels() {

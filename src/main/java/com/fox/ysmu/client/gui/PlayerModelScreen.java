@@ -113,7 +113,6 @@ public class PlayerModelScreen extends GuiScreen {
         this.buttonList.add(new FlatIconButton(4, x + 308, y + 5, 18, 18, 48, 0).setTooltips("gui.yes_steve_model.auth_models"));
         this.buttonList.add(new FlatIconButton(5, x + 288, y + 5, 18, 18, 0, 0).setTooltips("gui.yes_steve_model.star_models"));
         this.buttonList.add(new FlatIconButton(6, x + 397, y + 5, 18, 18, 16, 16).setTooltips("gui.yes_steve_model.config"));
-        this.buttonList.add(new FlatIconButton(7, x + 377, y + 5, 18, 18, 0, 16).setTooltips("gui.yes_steve_model.download"));
         this.buttonList.add(new FlatIconButton(8, x + 357, y + 5, 18, 18, 80, 0).setTooltips("gui.yes_steve_model.open_model_folder.open"));
         this.buttonList.add(new FlatColorButton(9, x + 198, y + 215, 52, 14, I18n.format("gui.yes_steve_model.pre_page")));
         this.buttonList.add(new FlatColorButton(10, x + 308, y + 215, 52, 14, I18n.format("gui.yes_steve_model.next_page")));
@@ -132,7 +131,7 @@ public class PlayerModelScreen extends GuiScreen {
             int yStart = y + 28 + 93 * (i / 5);
             ExtendedAuthModels eep = ExtendedAuthModels.get(player);
             if (eep != null) {
-                boolean needAuth = ClientModelManager.AUTH_MODELS.contains(id.getResourcePath()) && !eep.containModel(id);
+                boolean needAuth = false;
                 this.buttonList.add(new ModelButton(buttonId++, xStart, yStart, needAuth, Pair.of(id, models.get(id)), ClientModelManager.EXTRA_INFO.get(ModelIdUtil.getMainId(id)), player));
             }
         }
@@ -181,9 +180,6 @@ public class PlayerModelScreen extends GuiScreen {
                 break;
             case 6:
                 this.mc.displayGuiScreen(new ConfigScreen(this));
-                break;
-            case 7:
-                this.mc.displayGuiScreen(new DownloadScreen(this));
                 break;
             case 8:
                 this.mc.displayGuiScreen(new OpenModelFolderScreen(this));

@@ -39,7 +39,7 @@ public final class ModelData {
     }
 
     public boolean isAuth() {
-        return this.info.isNeedAuth();
+        return false;
     }
 
     public void setMd5(String md5) {
