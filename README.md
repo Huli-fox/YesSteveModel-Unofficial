@@ -1,11 +1,7 @@
 ## 如何使用
-
 1.前置Mod：[unimixins](https://github.com/LegacyModdingMC/UniMixins/releases/download/0.1.23/+unimixins-all-1.7.10-0.1.23.jar)、[gtnhlib](https://github.com/GTNewHorizons/GTNHLib/releases/download/0.6.40/gtnhlib-0.6.40.jar)
 
 2.前往[release](https://github.com/Huli-fox/YesSteveModel-Unofficial/releases)下载最新版
-
-注：不建议使用游戏内下载功能，一是新旧版本模型文件结构差异很大，可能无法读取；二是我将zip文件设置为下载后自动解压，实现方法健壮性还不高
-
 ## Issue/Todo
 ### Major
 - [x] 移除除ModelCommand外的所有命令，移除ModelManageGUI、DebugGUI。移除授权功能，现在所有模型都不需要授权
@@ -18,3 +14,4 @@
 - [ ] 修复选取皮肤（TextureScreen）界面的模型预览
 - [ ] 修复睡觉时模型立起来、爬梯时模型平躺的问题
 - [ ] 修复多人游戏下，玩家每次进入游戏，跳跃动画在其他玩家眼中不播放，必须先受伤一次才会正常播放跳跃动画
+- [ ] 多人游戏下玩家头上名字标签不显示
