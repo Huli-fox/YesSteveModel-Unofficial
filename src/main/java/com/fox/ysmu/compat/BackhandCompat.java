@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 
 import cpw.mods.fml.common.Loader;
 import xonin.backhand.api.core.BackhandUtils;
+import xonin.backhand.client.hooks.ItemRendererHooks;
 
 public class BackhandCompat {
 
@@ -14,7 +15,7 @@ public class BackhandCompat {
 
     /**
      * 检查Backhand mod是否已加载
-     * 
+     *
      * @return 如果Backhand mod已加载则返回true，否则返回false
      */
     public static boolean isBackhandLoaded() {
@@ -23,7 +24,7 @@ public class BackhandCompat {
 
     /**
      * 获取玩家副手物品
-     * 
+     *
      * @param player 玩家实体
      * @return 如果加载了Backhand则返回副手物品，否则返回null
      */
@@ -42,7 +43,7 @@ public class BackhandCompat {
 
     /**
      * 获取指定手的物品
-     * 
+     *
      * @param player     玩家实体
      * @param isMainHand 是否为主手
      * @return 对应手的物品
@@ -68,5 +69,29 @@ public class BackhandCompat {
 
     public static boolean getUsedItemHand(EntityPlayer player) {
         return swingingArm(player);
+    }
+
+    /**
+     * 检查当前是否正在渲染副手 (防止递归)
+     */
+    public static boolean isRenderingOffhand(EntityPlayer player) {
+        if (BACKHAND_LOADED) {
+            return BackhandUtils.isUsingOffhand(player);
+        }
+        return false;
+    }
+
+    /**
+     * 手动触发 Backhand 的副手渲染逻辑
+     * 应在主手渲染完成后调用
+     */
+    public static void renderOffhand(float partialTicks) {
+        if (BACKHAND_LOADED) {
+            try {
+                ItemRendererHooks.renderOffhandReturn(partialTicks);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

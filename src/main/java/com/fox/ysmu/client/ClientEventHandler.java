@@ -3,12 +3,15 @@ package com.fox.ysmu.client;
 import java.util.concurrent.ExecutionException;
 
 import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
+import com.fox.ysmu.compat.BackhandCompat;
 import com.fox.ysmu.util.RenderUtil;
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.settings.KeyBinding;
@@ -20,6 +23,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 import org.joml.Quaternionf;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Quaternion;
 
 import com.fox.ysmu.Config;
@@ -49,12 +53,7 @@ import software.bernie.geckolib3.resource.GeckoLibCache;
 public class ClientEventHandler {
 
     private static ModelBiped MODEL_BIPED;
-
-    private static final String LEFT_ARM = "LeftArm";
     private static final String RIGHT_ARM = "RightArm";
-    private static final String BACKGROUND_BONE = "Background";
-    private static boolean alreadyRenderedThisFrame = false;
-
     private static boolean EXTRA_PLAYER = false;
 
     @SubscribeEvent
@@ -117,13 +116,13 @@ public class ClientEventHandler {
         MODEL_BIPED = event.renderer.modelBipedMain;
     }
 
-    // TODO 不完善的实现
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
         if (Config.DISABLE_SELF_MODEL || Config.DISABLE_SELF_HANDS) return;
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
-        if (mc.gameSettings.thirdPersonView != 0 || player.getHeldItem() != null) return;
+        ItemRenderer itemRenderer = mc.entityRenderer.itemRenderer;
+        if (mc.gameSettings.thirdPersonView != 0 || BackhandCompat.isRenderingOffhand(player) || itemRenderer.itemToRender != null) return;
         event.setCanceled(true);
 
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
@@ -148,25 +147,59 @@ public class ClientEventHandler {
         if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) return;
 
         GlStateManager.pushMatrix();
-        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
-        GlStateManager.enableBlend(); // 开启混合，处理透明贴图
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA); // 设置混合函数
-        GlStateManager.disableCull(); // 禁用面剔除，可选，但可以防止模型内侧消失
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F); // 重置颜色
-
-        mc.getTextureManager().bindTexture(customPlayer.getTexture());
-
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPushMatrix();
+        GL11.glLoadIdentity();
+        Project.gluPerspective(70.0F, (float)mc.displayWidth / (float)mc.displayHeight, 0.05F, 3000.0F);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
         float partialTicks = event.partialTicks;
+        if (mc.gameSettings.viewBobbing) bobView(partialTicks, player);
+
+        GL11.glPushMatrix(); // 隔离主手变换
+        // 切物品动画
+        float equippedProgress = itemRenderer.equippedProgress;
+        float prevEquippedProgress = itemRenderer.prevEquippedProgress;
+        float progress = prevEquippedProgress + (equippedProgress - prevEquippedProgress) * partialTicks;
+        if (progress < 1.0F) {
+            float transY = (1.0F - progress) * -0.6F;
+            GL11.glTranslatef(0.0F, transY, 0.0F);
+        }
+        // 光照
         float interpolatedYaw = player.prevRotationYaw + (player.rotationYaw - player.prevRotationYaw) * partialTicks;
         float interpolatedPitch = player.prevRotationPitch + (player.rotationPitch - player.prevRotationPitch) * partialTicks;
-        GlStateManager.rotate(interpolatedYaw, 0.0F, -1.0F, 0.0F);
-        GlStateManager.rotate(interpolatedPitch, 1.0F, 0.0F, 0.0F);
-        GlStateManager.translate(-1, 0, 2);
-        GlStateManager.scale(-1, -1, 1);
-        GlStateManager.rotate(25, -1.5F, 3, -0.5F);
-        GlStateManager.rotate(53, 0, 3, 0);
-        GlStateManager.rotate(30, -1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(30, 0.0F, 0.0F, -1.0F);
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(interpolatedPitch, -1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(interpolatedYaw, 0.0F, 1.0F, 0.0F);
+        RenderHelper.enableStandardItemLighting();
+        GlStateManager.popMatrix();
+        // 一些准备
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.disableCull();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        // 材质
+        mc.getTextureManager().bindTexture(customPlayer.getTexture());
+        // 空手攻击/挖掘动画
+        float swingProgress = player.getSwingProgress(partialTicks);
+        float f1 = MathHelper.sin(swingProgress * (float)Math.PI);
+        float f2 = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
+        GlStateManager.translate(
+            -f2 * 0.18F,
+            MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI * 2.0F) * 0.24F,
+            -f2 * 0.24F
+        );
+        GlStateManager.rotate(f2 * 27.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(f2 * 12.0F, 0.0F, 0.0F, 1.0F);
+        GlStateManager.rotate(-f1 * 12.0F, 1.0F, 0.0F, 0.0F);
+        // 调整手臂位置
+        GlStateManager.translate(0.85F, 0.25F, -1.85F);
+        GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(-35.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(-30.0F, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(30.0F, 0.0F, 0.0F, 1.0F);
+        GlStateManager.rotate(100.0F, 0.0F, 1.0F, 0.0F);
 
         Tessellator tess = Tessellator.instance;
         tess.startDrawing(GL11.GL_QUADS);
@@ -176,6 +209,14 @@ public class ClientEventHandler {
 
         GlStateManager.enableCull();
         GlStateManager.disableBlend();
+        RenderHelper.disableStandardItemLighting();
+        GL11.glPopMatrix();
+        // 主手结束，渲染副手
+        BackhandCompat.renderOffhand(partialTicks);
+
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPopMatrix();
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GlStateManager.popMatrix();
     }
 
@@ -234,11 +275,10 @@ public class ClientEventHandler {
         float lerp = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * pPartialTicks;
         GlStateManager.translate(
             -MathHelper.sin(walk2 * (float) Math.PI) * lerp * 0.5F,
-            Math.abs(MathHelper.cos(walk2 * (float) Math.PI) * lerp),
+            -Math.abs(MathHelper.cos(walk2 * (float) Math.PI) * lerp),
             0.0D);
-        GlStateManager.rotate(j2l(Axis.ZN.rotationDegrees(MathHelper.sin(walk2 * (float) Math.PI) * lerp * 3.0F)));
-        GlStateManager.rotate(
-            j2l(Axis.XN.rotationDegrees(Math.abs(MathHelper.cos(walk2 * (float) Math.PI - 0.2F) * lerp) * 5.0F)));
+        GlStateManager.rotate(j2l(Axis.ZN.rotationDegrees(-MathHelper.sin(walk2 * (float) Math.PI) * lerp * 3.0F)));
+        GlStateManager.rotate(j2l(Axis.XN.rotationDegrees(Math.abs(MathHelper.cos(walk2 * (float) Math.PI - 0.2F) * lerp) * 5.0F)));
     }
 
     private static boolean isMoveKey() {
