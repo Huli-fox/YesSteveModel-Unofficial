@@ -35,8 +35,8 @@ public class AnimationRegister {
         // TODO 睡觉站着睡，爬梯子躺着爬
         register("sleep", Priority.HIGHEST, (player, event) -> player.isPlayerSleeping());
         register("swim", Priority.HIGHEST, (player, event) -> player.isInWater() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
-        register("climb", Priority.HIGHEST, (player, event) -> player.isOnLadder() && Math.abs(player.motionY) > 0);
-        register("climbing", Priority.HIGHEST, (player, event) -> player.isOnLadder());
+        register("ladder_up", Priority.HIGHEST, (player, event) -> player.isOnLadder() && Math.abs(player.motionY) > 0);
+        register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.isOnLadder());
         register("ride_pig", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityPig);
         register("ride", Priority.HIGH, (player, event) -> player.isRiding() && !(player.ridingEntity instanceof EntityBoat));
         register("boat", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityBoat);
