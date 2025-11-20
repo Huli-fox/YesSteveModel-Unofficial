@@ -17,7 +17,6 @@ import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.model.format.FolderFormat;
 import com.fox.ysmu.model.format.ServerModelInfo;
 import com.fox.ysmu.model.format.YsmFormat;
-import com.fox.ysmu.model.format.ZipFormat;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.RequestSyncModel;
 import com.fox.ysmu.util.GetJarResources;
@@ -198,7 +197,6 @@ public final class ServerModelManager {
 
     private static void cacheAllModels(Path rootPath) {
         YsmFormat.cacheAllModels(rootPath);
-        ZipFormat.cacheAllModels(rootPath);
         FolderFormat.cacheAllModels(rootPath);
     }
 

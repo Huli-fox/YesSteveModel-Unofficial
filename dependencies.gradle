@@ -40,6 +40,7 @@ dependencies {
     devOnlyNonPublishable("com.github.GTNewHorizons:Backhand:1.8.0:dev")
     compileOnly(rfg.deobf("maven.modrinth:etfuturum:2.6.2")) {transitive = false}
     devOnlyNonPublishable("com.github.GTNewHorizons:GTNHLib:0.6.40:dev")
+    implementation("com.github.promeg:tinypinyin:2.0.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.0")
     shadowImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.0")

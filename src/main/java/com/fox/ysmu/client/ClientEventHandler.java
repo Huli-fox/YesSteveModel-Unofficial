@@ -122,7 +122,8 @@ public class ClientEventHandler {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
         ItemRenderer itemRenderer = mc.entityRenderer.itemRenderer;
-        if (mc.gameSettings.thirdPersonView != 0 || BackhandCompat.isRenderingOffhand(player) || itemRenderer.itemToRender != null) return;
+        if (mc.gameSettings.hideGUI || mc.gameSettings.thirdPersonView != 0 ||
+            BackhandCompat.isRenderingOffhand(player) || itemRenderer.itemToRender != null) return;
         event.setCanceled(true);
 
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);

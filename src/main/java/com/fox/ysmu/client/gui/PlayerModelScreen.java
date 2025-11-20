@@ -1,6 +1,7 @@
 package com.fox.ysmu.client.gui;
 
 import com.fox.ysmu.Tags;
+import com.fox.ysmu.compat.YsmConverter;
 import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
@@ -17,16 +18,20 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
+import net.minecraft.util.*;
 import net.minecraft.entity.player.EntityPlayer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.fox.ysmu.model.ServerModelManager.CUSTOM;
+import static com.fox.ysmu.model.ServerModelManager.removeExtension;
 
 public class PlayerModelScreen extends GuiScreen {
     protected final EntityPlayer player;
@@ -113,6 +118,7 @@ public class PlayerModelScreen extends GuiScreen {
         this.buttonList.add(new FlatIconButton(4, x + 308, y + 5, 18, 18, 48, 0).setTooltips("gui.yes_steve_model.auth_models"));
         this.buttonList.add(new FlatIconButton(5, x + 288, y + 5, 18, 18, 0, 0).setTooltips("gui.yes_steve_model.star_models"));
         this.buttonList.add(new FlatIconButton(6, x + 397, y + 5, 18, 18, 16, 16).setTooltips("gui.yes_steve_model.config"));
+        this.buttonList.add(new FlatIconButton(7, x + 377, y + 5, 18, 18, 48, 16).setTooltips("gui.yes_steve_model.fix"));
         this.buttonList.add(new FlatIconButton(8, x + 357, y + 5, 18, 18, 80, 0).setTooltips("gui.yes_steve_model.open_model_folder.open"));
         this.buttonList.add(new FlatColorButton(9, x + 198, y + 215, 52, 14, I18n.format("gui.yes_steve_model.pre_page")));
         this.buttonList.add(new FlatColorButton(10, x + 308, y + 215, 52, 14, I18n.format("gui.yes_steve_model.next_page")));
@@ -180,6 +186,9 @@ public class PlayerModelScreen extends GuiScreen {
                 break;
             case 6:
                 this.mc.displayGuiScreen(new ConfigScreen(this));
+                break;
+            case 7:
+                fix();
                 break;
             case 8:
                 this.mc.displayGuiScreen(new OpenModelFolderScreen(this));
@@ -338,5 +347,63 @@ public class PlayerModelScreen extends GuiScreen {
          * 不同页面类别
          */
         ALL, AUTH, STAR
+    }
+
+    private void fix() {
+        File customDir = CUSTOM.toFile();
+        if (!customDir.exists() || !customDir.isDirectory()) return;
+        EntityPlayer player = this.mc.thePlayer;
+        boolean isFileChanged = false;
+
+        File[] ysmFiles = customDir.listFiles((dir, name) -> name.endsWith(".ysm"));
+        if (ysmFiles != null) {
+            for (File file : ysmFiles) {
+                String rawName = removeExtension(file.getName());
+                String validName = YsmConverter.sanitizeDirName(rawName);
+                if (!rawName.equals(validName)) {
+                    File newFile = new File(customDir, validName + ".ysm");
+                    if (!newFile.exists()) {
+                        file.renameTo(newFile);
+                        isFileChanged = true;
+                        player.addChatMessage(new ChatComponentTranslation(
+                            "message.yes_steve_model.model.compat.rename", rawName ,validName));
+                    }
+                }
+            }
+        }
+
+        Set<String> loadedModelNames = new HashSet<>();
+        if (modelOrderList != null) {
+            for (ResourceLocation resourceLocation : modelOrderList) {
+                loadedModelNames.add(resourceLocation.getResourcePath());
+            }
+        }
+        File[] subDirs = customDir.listFiles(File::isDirectory);
+        if (subDirs != null) {
+            for (File folder : subDirs) {
+                String folderName = folder.getName();
+                if (!loadedModelNames.contains(folderName)) {
+                    try {
+                        YsmConverter.convertAndReplace(folder, customDir);
+                        isFileChanged = true;
+                        String newName = YsmConverter.sanitizeDirName(folderName);
+                        player.addChatMessage(new ChatComponentTranslation(
+                            "message.yes_steve_model.model.compat.fix.true", folderName, newName));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        player.addChatMessage(new ChatComponentTranslation(
+                            "message.yes_steve_model.model.compat.fix.false", folderName));
+                    }
+                }
+            }
+        }
+
+        if (isFileChanged) {
+            IChatComponent reload = new ChatComponentTranslation("message.yes_steve_model.model.compat.click");
+            reload.getChatStyle().setColor(EnumChatFormatting.GOLD);
+            reload.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ysm reload"));
+            reload.getChatStyle().setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("/ysm reload")));
+            player.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.compat.reload", reload));
+        }
     }
 }

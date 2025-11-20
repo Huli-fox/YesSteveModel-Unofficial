@@ -32,8 +32,6 @@ public class ModelInfoButton extends GuiButton {
         this.drawString(font, info.getFileName(), this.xPosition + 5, this.yPosition + (this.height - 8) / 2, 0xF3EFE0);
         if (info.getType() == Type.FOLDER) {
             this.drawString(font, I18n.format("gui.yes_steve_model.model_manage.type.folder"), this.xPosition + 155, this.yPosition + (this.height - 8) / 2, 0x55FFFF);
-        } else if (info.getType() == Type.ZIP) {
-            this.drawString(font, I18n.format("gui.yes_steve_model.model_manage.type.zip"), this.xPosition + 155, this.yPosition + (this.height - 8) / 2, 0xFFAA00);
         } else {
             this.drawString(font, I18n.format("gui.yes_steve_model.model_manage.type.ysm"), this.xPosition + 155, this.yPosition + (this.height - 8) / 2, 0xFFFF55);
         }
