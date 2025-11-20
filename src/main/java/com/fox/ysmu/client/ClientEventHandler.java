@@ -223,20 +223,12 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void onRenderScreen(RenderGameOverlayEvent.Pre event) {
-        if (event.type != RenderGameOverlayEvent.ElementType.HOTBAR) {
-            return;
-        }
-        if (Config.DISABLE_PLAYER_RENDER) {
-            return;
-        }
+        if (event.type != RenderGameOverlayEvent.ElementType.HOTBAR) return;
+        if (Config.DISABLE_PLAYER_RENDER) return;
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
-        if (player == null) {
-            return;
-        }
-        if (mc.currentScreen instanceof ExtraPlayerConfigScreen) {
-            return;
-        }
+        if (player == null) return;
+        if (mc.currentScreen instanceof ExtraPlayerConfigScreen) return;
         double posX = Config.PLAYER_POS_X;
         double posY = Config.PLAYER_POS_Y;
         float scale = (float) Config.PLAYER_SCALE;

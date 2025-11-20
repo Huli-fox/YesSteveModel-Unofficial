@@ -35,8 +35,9 @@ public class AnimationRegister {
         // TODO 睡觉站着睡，爬梯子躺着爬
         register("sleep", Priority.HIGHEST, (player, event) -> player.isPlayerSleeping());
         register("swim", Priority.HIGHEST, (player, event) -> player.isInWater() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
-        register("ladder_up", Priority.HIGHEST, (player, event) -> player.isOnLadder() && Math.abs(player.motionY) > 0);
-        register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.isOnLadder());
+        register("ladder_up", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == 1);
+        register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == 0);
+        register("ladder_down", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == -1);
         register("ride_pig", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityPig);
         register("ride", Priority.HIGH, (player, event) -> player.isRiding() && !(player.ridingEntity instanceof EntityBoat));
         register("boat", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityBoat);
@@ -45,7 +46,7 @@ public class AnimationRegister {
         register("elytra_fly", Priority.HIGH, (player, event) -> EtfuturumCompat.isFallFlying(player));
         register("swim_stand", Priority.NORMAL, (player, event) -> player.isInWater());
         register("attacked", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.NORMAL, (player, event) -> player.hurtTime > 0);
-        register("jump", Priority.NORMAL, (player, event) -> !isPlayerOnGround(player) && !player.isInWater() && Math.abs(player.motionY) > 0);
+        register("jump", Priority.NORMAL, (player, event) -> !isPlayerOnGround(player) && !player.isInWater() && motionYState(player, 0.0D) != 0);
         register("sneak", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
         register("sneaking", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking());
         register("run", Priority.LOW, (player, event) -> isPlayerOnGround(player) && player.isSprinting());
@@ -159,7 +160,7 @@ public class AnimationRegister {
         parser.setValue("query.is_first_person", () -> MolangUtils.booleanToFloat(mc.gameSettings.thirdPersonView == 0));
         parser.setValue("query.is_in_water", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_in_water_or_rain", () -> MolangUtils.booleanToFloat(player.isWet()));
-        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!isPlayerFlying(player) && !player.isRiding() && !isPlayerOnGround(player) && Math.abs(player.motionY) > 0 && !player.isInWater()));
+        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!isPlayerFlying(player) && !player.isRiding() && !isPlayerOnGround(player) && motionYState(player, 0.0D) != 0 && !player.isInWater()));
         parser.setValue("query.is_on_fire", () -> MolangUtils.booleanToFloat(player.isBurning()));
         parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
         parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
@@ -294,6 +295,26 @@ public class AnimationRegister {
         } else {
             byte data = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
             return (data & IS_FLYING) != 0;
+        }
+    }
+
+    /**
+     * 获取玩家的垂直移动状态
+     * 返回值: 0=静止/未知, 1=向上, -1=向下
+     */
+    private static int motionYState(EntityPlayer player, double threshold) {
+        double motionY;
+        if (player == Minecraft.getMinecraft().thePlayer) {
+            motionY = player.motionY;
+        } else {
+            motionY = (player.posY - player.prevPosY) * 2.0D;
+        }
+        if (motionY > threshold) {
+            return 1;
+        } else if (motionY < -threshold) {
+            return -1;
+        } else {
+            return 0;
         }
     }
 }

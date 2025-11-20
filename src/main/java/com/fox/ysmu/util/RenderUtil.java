@@ -328,6 +328,7 @@ public final class RenderUtil {
     }
 
     public static void renderPlayerEntity(EntityPlayer player, double posX, double posY, float scale, float yawOffset, double z) {
+        if (player != Minecraft.getMinecraft().thePlayer) return;  // 不知道为什么如果不加这句，额外玩家会渲染串了
         GL11.glEnable(GL11.GL_COLOR_MATERIAL);
         GL11.glPushMatrix();
         GL11.glTranslatef((float) (posX + scale * 0.5), (float) (posY + scale * 2), (float) z);
