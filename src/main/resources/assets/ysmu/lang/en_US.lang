@@ -3,7 +3,6 @@ gui.yes_steve_model.close=Close
 gui.yes_steve_model.pre_page=Pre Page
 gui.yes_steve_model.next_page=Next Page
 gui.yes_steve_model.all_models=All Models
-gui.yes_steve_model.auth_models=Auth Models
 gui.yes_steve_model.star_models=Star Models
 gui.yes_steve_model.config=Open Config GUI
 gui.yes_steve_model.download=Open Download GUI
