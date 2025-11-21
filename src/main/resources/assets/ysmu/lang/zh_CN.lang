@@ -3,7 +3,6 @@ gui.yes_steve_model.close=关闭
 gui.yes_steve_model.pre_page=前一页
 gui.yes_steve_model.next_page=后一页
 gui.yes_steve_model.all_models=所有模型
-gui.yes_steve_model.auth_models=授权模型
 gui.yes_steve_model.star_models=收藏模型
 gui.yes_steve_model.config=打开配置界面
 gui.yes_steve_model.download=打开下载界面

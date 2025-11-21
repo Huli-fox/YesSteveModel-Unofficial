@@ -103,7 +103,7 @@ public class PlayerModelScreen extends GuiScreen {
             perText = textField.getText();
             focus = textField.isFocused();
         }
-        textField = new GuiTextField(this.fontRendererObj, x + 144, y + 6, 140, 16);
+        textField = new GuiTextField(this.fontRendererObj, x + 144, y + 6, 158, 16);
         textField.setText(perText);
         textField.setTextColor(0xF3EFE0);
         textField.setFocused(focus);
@@ -115,8 +115,7 @@ public class PlayerModelScreen extends GuiScreen {
         this.buttonList.add(new FlatIconButton(1, x + 28, y + 5, 79, 20, 32, 16).setTooltips("gui.yes_steve_model.model.texture"));
         this.buttonList.add(new StarButton(2, x + 110, y + 5));
         this.buttonList.add(new FlatIconButton(3, x + 328, y + 5, 18, 18, 32, 0).setTooltips("gui.yes_steve_model.all_models"));
-        this.buttonList.add(new FlatIconButton(4, x + 308, y + 5, 18, 18, 48, 0).setTooltips("gui.yes_steve_model.auth_models"));
-        this.buttonList.add(new FlatIconButton(5, x + 288, y + 5, 18, 18, 0, 0).setTooltips("gui.yes_steve_model.star_models"));
+        this.buttonList.add(new FlatIconButton(5, x + 308, y + 5, 18, 18, 0, 0).setTooltips("gui.yes_steve_model.star_models"));
         this.buttonList.add(new FlatIconButton(6, x + 397, y + 5, 18, 18, 16, 16).setTooltips("gui.yes_steve_model.config"));
         this.buttonList.add(new FlatIconButton(7, x + 377, y + 5, 18, 18, 48, 16).setTooltips("gui.yes_steve_model.fix"));
         this.buttonList.add(new FlatIconButton(8, x + 357, y + 5, 18, 18, 80, 0).setTooltips("gui.yes_steve_model.open_model_folder.open"));

@@ -247,19 +247,35 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
 
             GlStateManager.rotate(f * this.getDeathMaxRotation(entityLiving), 0, 0, 1);
         }
-        /*
-         * TODO: probably doesn't exist in 1.12.2 as well else if
-         * (entityLiving.isSpinAttacking()) {
-         * matrixStackIn.rotate(Vector3f.XP.rotationDegrees(-90.0F -
-         * entityLiving.rotationPitch));
-         * matrixStackIn.rotate(Vector3f.YP.rotationDegrees(((float)
-         * entityLiving.ticksExisted + partialTicks) * -75.0F)); } else if (pose ==
-         * Pose.SLEEPING) { Direction direction = entityLiving.getBedDirection(); float
-         * f1 = direction != null ? getFacingAngle(direction) : rotationYaw;
-         * matrixStackIn.rotate(Vector3f.YP.rotationDegrees(f1));
-         * matrixStackIn.rotate(Vector3f.ZP.rotationDegrees(this.getDeathMaxRotation(
-         * entityLiving))); matrixStackIn.rotate(Vector3f.YP.rotationDegrees(270.0F)); }
-         */
+        else if (entityLiving.isPlayerSleeping()) {
+            float sleepRotation = 0.0F;
+            if (entityLiving instanceof EntityPlayer) {
+                EntityPlayer player = (EntityPlayer) entityLiving;
+                if (player.playerLocation != null) {
+                    try {
+                        int direction = player.worldObj.getBlockMetadata(
+                            player.playerLocation.posX,
+                            player.playerLocation.posY,
+                            player.playerLocation.posZ
+                        ) & 3;
+                        // 床的方向
+                        switch (direction) {
+                            case 0: sleepRotation = 180.0F; break;
+                            case 1: sleepRotation = 90.0F; break;
+                            case 2: sleepRotation = 0.0F; break;
+                            case 3: sleepRotation = 270.0F; break;
+                        }
+
+                    } catch (Exception e) {
+                        sleepRotation = 180.0F - rotationYaw;
+                    }
+                }
+            }
+
+            GlStateManager.rotate(sleepRotation, 0, 1, 0);
+            GlStateManager.rotate(-90.0F, 1.0F, 0.0F, 0.0F);//旋转玩家
+            GlStateManager.translate(0.0F, -1.8F, 0.0F); //向后偏移1.8
+        }
         else if ((entityLiving instanceof EntityLiving && ((EntityLiving) entityLiving).hasCustomNameTag())
             || entityLiving instanceof EntityPlayer) {
                 String s = ChatFormatting.stripFormatting(entityLiving.getCommandSenderName());
