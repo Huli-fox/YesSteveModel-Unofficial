@@ -9,7 +9,6 @@ import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
-import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
@@ -52,7 +51,6 @@ import software.bernie.geckolib3.resource.GeckoLibCache;
 @EventBusSubscriber(side = Side.CLIENT)
 public class ClientEventHandler {
 
-    private static ModelBiped MODEL_BIPED;
     private static final String RIGHT_ARM = "RightArm";
     private static boolean EXTRA_PLAYER = false;
 
@@ -109,11 +107,6 @@ public class ClientEventHandler {
                 player.rotationYaw,
                 partialTicks);
         }
-    }
-
-    @SubscribeEvent
-    public static void onRender3rdPersonHand(RenderPlayerEvent.Specials.Post event) {
-        MODEL_BIPED = event.renderer.modelBipedMain;
     }
 
     @SubscribeEvent
@@ -252,10 +245,6 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         NPCData.clear();
-    }
-
-    public static ModelBiped getModelBiped() {
-        return MODEL_BIPED;
     }
 
     private static boolean isVanillaPlayer(ResourceLocation modelId) {

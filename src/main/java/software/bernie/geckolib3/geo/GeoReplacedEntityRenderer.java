@@ -94,8 +94,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
             // 修复头部旋转角度突变问题
             netHeadYaw = wrapDegrees(netHeadYaw);
 
-            if (shouldSit && entity.ridingEntity instanceof EntityLivingBase) {
-                EntityLivingBase livingentity = (EntityLivingBase) entity.ridingEntity;
+            if (shouldSit && entity.ridingEntity instanceof EntityLivingBase livingentity) {
                 f = Interpolations
                     .lerpYaw(livingentity.prevRenderYawOffset, livingentity.renderYawOffset, partialTicks);
                 netHeadYaw = f1 - f;
@@ -174,15 +173,8 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
 
                 if (entity instanceof EntityPlayer) {
                     for (GeoLayerRenderer layerRenderer : this.layerRenderers) {
-                        layerRenderer.doRenderLayer(
-                            entity,
-                            limbSwing,
-                            limbSwingAmount,
-                            partialTicks,
-                            f7,
-                            netHeadYaw,
-                            headPitch,
-                            1 / 16F);
+                        layerRenderer.render(entity, limbSwing, limbSwingAmount, partialTicks, f7, netHeadYaw,
+                            headPitch, renderColor);
                     }
                 }
                 if (entity instanceof EntityLiving) {
@@ -249,8 +241,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
         }
         else if (entityLiving.isPlayerSleeping()) {
             float sleepRotation = 0.0F;
-            if (entityLiving instanceof EntityPlayer) {
-                EntityPlayer player = (EntityPlayer) entityLiving;
+            if (entityLiving instanceof EntityPlayer player) {
                 if (player.playerLocation != null) {
                     try {
                         int direction = player.worldObj.getBlockMetadata(
