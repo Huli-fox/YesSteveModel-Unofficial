@@ -67,13 +67,15 @@ public class AnimationRouletteScreen extends GuiScreen {
         float startDeg = (float) (Math.PI / count);
         for (int i = 0; i < count; i++) {
             int r = 65;
+
             ChatComponentText keyText = new ChatComponentText("[ ");
             keyText.getChatStyle().setColor(EnumChatFormatting.YELLOW);
             KeyBinding keyMapping = ExtraAnimationKey.EXTRA_ANIMATION_KEYS.get(i);
             if (keyMapping.getKeyCode() == Keyboard.KEY_NONE) {
                 keyText.appendSibling(new ChatComponentTranslation("key.yes_steve_model.extra_animation.none"));
             } else {
-                keyText.appendSibling(new ChatComponentText(keyMapping.getKeyDescription()));
+                String keyName = Keyboard.getKeyName(keyMapping.getKeyCode());
+                keyText.appendSibling(new ChatComponentText(keyName));
             }
             keyText.appendSibling(new ChatComponentText(" ]"));
             int textX = (int) (x + r * MathHelper.cos(startDeg));
@@ -84,6 +86,7 @@ public class AnimationRouletteScreen extends GuiScreen {
                 this.drawCenteredString(fontRendererObj, String.valueOf(i), textX, textY - 8, 0xF3EFE0);
             }
             this.drawCenteredString(fontRendererObj, keyText.getFormattedText(), textX, textY + 4, 0xF3EFE0);
+
             startDeg = (float) (startDeg + 2 * Math.PI / count);
         }
     }
