@@ -43,6 +43,7 @@ dependencies {
     implementation("com.github.promeg:tinypinyin:2.0.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.0")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.0")
+    shadowImplementation("com.github.promeg:tinypinyin:2.0.3")
     shadowImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.0")
     shadowImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.6.2")
