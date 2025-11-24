@@ -19,3 +19,17 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+------------------------------------------------------------------------------
+
+THIRD PARTY NOTICES
+
+This project is a derivative work based on software developed by "Yes Steve Model Dev Group".
+The original software is licensed under the BSD 3-Clause License.
+
+Portions of this software are:
+Copyright (c) 2025, Yes Steve Model Dev Group
+All rights reserved.
+
+Please refer to the "LICENSE-ORIGINAL.txt" file in the source distribution for
+the full text of the BSD 3-Clause License applicable to the original code.

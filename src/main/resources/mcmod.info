@@ -3,7 +3,7 @@
 	"modList": [{
 		"modid": "${modId}",
 		"name": "${modName}",
-		"description": "YesSteveModel for Minecraft 1.7.10.",
+		"description": "YesSteveModel for Minecraft 1.7.10.Special thanks to TartaricAcid and Yes Steve Model Dev Group.",
 		"version": "${modVersion}",
 		"mcversion": "${minecraftVersion}",
 		"url": "https://github.com/Huli-fox/YesSteveModel-Unofficial",
