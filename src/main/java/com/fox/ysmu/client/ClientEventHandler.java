@@ -248,7 +248,7 @@ public class ClientEventHandler {
     }
 
     private static boolean isVanillaPlayer(ResourceLocation modelId) {
-        return modelId.getResourcePath().equals("steve");
+            return modelId.getResourcePath().equals("steve") || modelId.getResourcePath().equals("alex");
     }
 
     private static void bobView(float pPartialTicks, EntityPlayer player) {
