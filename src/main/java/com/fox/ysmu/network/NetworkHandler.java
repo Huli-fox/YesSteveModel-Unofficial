@@ -27,6 +27,7 @@ public final class NetworkHandler {
     private static final int CLIENTBOUND_SYNC_AUTH_MODELS = 6;
     private static final int CLIENTBOUND_SYNC_STAR_MODELS = 8;
     private static final int CLIENTBOUND_REQUEST_SERVER_MODEL_INFO = 10;
+    private static final int CLIENTBOUND_SYNC_PLAYER_MOTION_STATE = 11;
     private static final int CLIENTBOUND_COMPLETE_FEEDBACK = 12;
 
     public static final int OPEN_NPC_MODEL_GUI = 93;
@@ -98,6 +99,11 @@ public final class NetworkHandler {
             RequestServerModelInfo.Handler.class,
             RequestServerModelInfo.class,
             CLIENTBOUND_REQUEST_SERVER_MODEL_INFO,
+            Side.CLIENT);
+        CHANNEL.registerMessage(
+            SyncPlayerMotionState.Handler.class,
+            SyncPlayerMotionState.class,
+            CLIENTBOUND_SYNC_PLAYER_MOTION_STATE,
             Side.CLIENT);
         CHANNEL.registerMessage(
             CompleteFeedback.Handler.class,

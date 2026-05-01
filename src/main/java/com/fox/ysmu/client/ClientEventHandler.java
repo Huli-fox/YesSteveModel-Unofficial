@@ -26,6 +26,7 @@ import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Quaternion;
 
 import com.fox.ysmu.Config;
+import com.fox.ysmu.client.animation.RemotePlayerMotionStates;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
 import com.fox.ysmu.compat.Axis;
@@ -300,6 +301,7 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+        RemotePlayerMotionStates.clear();
         NPCData.clear();
     }
 
