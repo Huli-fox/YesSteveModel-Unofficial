@@ -17,6 +17,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 ## 构建和运行
 
 - Windows 优先使用 `.\gradlew.bat build`、`.\gradlew.bat runClient`、`.\gradlew.bat runServer`、`.\gradlew.bat test`。
+- 由于当前协作沙箱可能无法访问本机 Gradle 缓存，构建与测试由用户执行。代码代理需要验证时，应停下来要求用户运行相应 Gradle 命令并回传结果，不要反复自行尝试构建/测试。
 - Gradle Wrapper 使用 Gradle `8.13`。`gradle.properties` 启用了 `enableModernJavaSyntax=true`，可写较新的 Java 语法，但最终仍面向 JVM 8/1.7.10 生态。
 - `disableSpotless=true`、`disableCheckstyle=true` 当前是项目状态，不要在无关改动里打开或重排全仓库格式。
 - Access Transformer 在 `src/main/resources/META-INF/geckolib_at.cfg` 和 `ysmu_at.cfg`，当前 `ysmu_at.cfg` 暴露了 `net.minecraft.client.renderer.ItemRenderer *`。
@@ -49,7 +50,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 - `CustomPlayerEntity` 注册多个动画控制器：预并行、主状态、主/副手持有、挥手、使用、并行、盔甲槽位、额外播放控制器。
 - `AnimationRegister` 定义主状态优先级和 Molang 变量。优先级从 `Priority.HIGHEST` 到 `Priority.LOWEST`，最后兜底 `idle`。
 - `ConditionManager` 根据动画名建立 swing/use/hold/armor 条件索引；客户端重新同步模型时会清空并重建。
-- 1.7.10 远程玩家缺少可靠的 `onGround` 和飞行状态，项目用 `DataWatcher` id `28` 的 bit flags 同步：`ON_GROUND=0x01`、`IS_FLYING=0x02`。改这里前必须检查是否与其他 mod 冲突。
+- 1.7.10 远程玩家缺少可靠的 `onGround` 和飞行状态，项目通过 `SyncPlayerMotionState` 客户端网络包同步到 `RemotePlayerMotionStates` 缓存。bit flags 定义在 `PlayerMotionState`：`ON_GROUND=0x01`、`IS_FLYING=0x02`。不要为这两个状态使用玩家 `DataWatcher`/元数据槽位。
 
 ## 客户端/服务端边界
 
@@ -75,7 +76,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 
 - README 中列出若干未修问题：多人 onGround/飞行状态、默认模型、GUI 光照、TextureScreen 预览、多人原地跳跃动画重复、玩家名牌不显示。
 - 授权模型逻辑当前按 `config/ysmu/auth` 生效：`ModelData.isAuth()` 和 `ServerModelInfo.needAuth` 会保留授权标记，`ExtendedAuthModels.containModel()` 检查玩家持有集合，`SetModelAndTexture` 会把未授权选择重置到默认模型。改授权授予/撤销流程时要补测服务端校验和客户端 `SyncAuthModels` 同步。
-- `CommonEventHandler.updateData()` 已改为先计算完整 motion byte 再对 `DataWatcher` id `28` 更新一次，避免同 tick 同时改变 `ON_GROUND` 和 `IS_FLYING` 时互相覆盖。改这里仍必须保持客户端/服务端 id 和 bit 定义一致。
+- `CommonEventHandler.syncDirtyMotionState()` 会先计算完整 motion byte，只在状态变化时发送 `SyncPlayerMotionState`，`onStartTracking` 会给新追踪者补发当前状态。改这里必须保持 `PlayerMotionState` 的 bit 定义与客户端 `RemotePlayerMotionStates` 读取一致。
 - `ThreadTools.THREAD_POOL` 是全局 0-10 线程池，当前用于网络文件发送、等待世界/密码、延迟加载。新增后台任务要避免无限等待和直接触碰客户端渲染状态。
 - `SendModelFile` 用 `message.data.length == 48` 判断密码包，依赖 `EncryptTools.PASSWORD_SIZE` 加密后的长度假设。调整密码格式或加密方式时必须同步改协议。
 - 二进制模型包有 `EncryptTools.HEAD` 和 `VERSION`。任何格式变更都应 bump version，并保留旧缓存兼容或明确清理策略。
@@ -88,4 +89,4 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 - 新增动画状态时在 `AnimationRegister.registerAnimationState()` 选择合适优先级，并确认对应动画名不存在时的兜底行为。
 - 修改渲染矩阵、光照、blend、cull、depth 后要成对恢复 OpenGL 状态，优先参考现有 `pushMatrix/popMatrix` 和 `RenderHelper` 调用方式。
 - 修改 UI/按键时检查 `client/input`、`client/gui` 和语言文件 `assets/ysmu/lang/*.lang`。
-- 提交前至少运行 `.\gradlew.bat build`；如果只改文档，可说明未运行构建。
+- 提交前需要构建验证时，请要求用户运行 `.\gradlew.bat build`；如果只改文档，可说明未运行构建。

@@ -23,8 +23,6 @@ import software.bernie.geckolib3.model.provider.data.EntityModelData;
 import software.bernie.geckolib3.resource.GeckoLibCache;
 import software.bernie.geckolib3.util.MolangUtils;
 
-import static com.fox.ysmu.event.CommonEventHandler.*;
-
 public class AnimationRegister {
 
     private static final double MIN_SPEED = 0.05;
@@ -330,8 +328,7 @@ public class AnimationRegister {
         if (player == Minecraft.getMinecraft().thePlayer) {
             return player.onGround;
         } else {
-            byte data = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
-            return (data & ON_GROUND) != 0;
+            return RemotePlayerMotionStates.isOnGround(player);
         }
     }
 
@@ -340,8 +337,7 @@ public class AnimationRegister {
         if (player == Minecraft.getMinecraft().thePlayer) {
             return player.capabilities.isFlying;
         } else {
-            byte data = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
-            return (data & IS_FLYING) != 0;
+            return RemotePlayerMotionStates.isFlying(player);
         }
     }
 

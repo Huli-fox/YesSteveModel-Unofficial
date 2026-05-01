@@ -1,5 +1,9 @@
 package com.fox.ysmu.event;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import net.minecraft.entity.player.EntityPlayer;
@@ -8,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import com.fox.ysmu.data.PlayerMotionState;
 import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
@@ -15,6 +20,7 @@ import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.SyncAuthModels;
 import com.fox.ysmu.network.message.SyncModelInfo;
+import com.fox.ysmu.network.message.SyncPlayerMotionState;
 import com.fox.ysmu.network.message.SyncStarModels;
 import com.fox.ysmu.ysmu;
 import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
@@ -23,16 +29,20 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 @EventBusSubscriber
 public class CommonEventHandler {
-    // WARNING:If you don't know what this does,DO NOT CHANGE IT
-    // TODO 不安全的实现方法
-    public static final int MOTION_DATAWATCHER_ID = 28;
-    public static final int ON_GROUND = 0x01;
-    public static final int IS_FLYING = 0x02;
+
+    private static final Map<UUID, Byte> LAST_MOTION_STATES = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent event) {
         if (event.player != null) {
             requestModelSync(event.player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.player instanceof EntityPlayerMP) {
+            LAST_MOTION_STATES.remove(event.player.getUniqueID());
         }
     }
 
@@ -54,6 +64,7 @@ public class CommonEventHandler {
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         if (event.target instanceof EntityPlayer trackPlayer) {
             syncTrackedPlayerModelInfo(event.entityPlayer, trackPlayer);
+            syncTrackedPlayerMotionState(event.entityPlayer, trackPlayer);
         }
     }
 
@@ -67,7 +78,7 @@ public class CommonEventHandler {
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (shouldHandleServerEndPlayerTick(event)) {
-            updateData(event.player);
+            syncDirtyMotionState(event.player);
             broadcastDirtyModelInfo(event.player);
         }
     }
@@ -77,7 +88,6 @@ public class CommonEventHandler {
     }
 
     private static void registerPlayerProperties(EntityPlayer player) {
-        player.getDataWatcher().addObject(MOTION_DATAWATCHER_ID, (byte) 0);
         if (ExtendedAuthModels.get(player) == null) {
             ExtendedAuthModels.register(player);
         }
@@ -86,6 +96,14 @@ public class CommonEventHandler {
         }
         if (ExtendedStarModels.get(player) == null) {
             ExtendedStarModels.register(player);
+        }
+    }
+
+    private static void syncTrackedPlayerMotionState(EntityPlayer trackingPlayer, EntityPlayer trackedPlayer) {
+        if (!trackedPlayer.worldObj.isRemote) {
+            NetworkHandler.sendToClientPlayer(
+                createMotionStateMessage(trackedPlayer, PlayerMotionState.pack(trackedPlayer)),
+                trackingPlayer);
         }
     }
 
@@ -182,20 +200,17 @@ public class CommonEventHandler {
         );
     }
 
-    private static void updateData(EntityPlayer player) {
-        byte oldData = player.getDataWatcher().getWatchableObjectByte(MOTION_DATAWATCHER_ID);
-        byte newData = oldData;
-        newData = setFlag(newData, ON_GROUND, player.onGround);
-        newData = setFlag(newData, IS_FLYING, player.capabilities.isFlying);
-        if (newData != oldData) {
-            player.getDataWatcher().updateObject(MOTION_DATAWATCHER_ID, newData);
+    private static void syncDirtyMotionState(EntityPlayer player) {
+        UUID playerId = player.getUniqueID();
+        byte newState = PlayerMotionState.pack(player);
+        Byte oldState = LAST_MOTION_STATES.get(playerId);
+        if (oldState == null || oldState.byteValue() != newState) {
+            LAST_MOTION_STATES.put(playerId, newState);
+            NetworkHandler.CHANNEL.sendToDimension(createMotionStateMessage(player, newState), player.dimension);
         }
     }
 
-    private static byte setFlag(byte data, int flag, boolean enabled) {
-        if (enabled) {
-            return (byte) (data | flag);
-        }
-        return (byte) (data & ~flag);
+    private static SyncPlayerMotionState createMotionStateMessage(EntityPlayer player, byte motionState) {
+        return new SyncPlayerMotionState(player.getUniqueID(), motionState);
     }
 }

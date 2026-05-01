@@ -11,7 +11,9 @@ import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
 import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedStarModels;
 import com.fox.ysmu.network.message.SyncAuthModels;
+import com.fox.ysmu.network.message.SyncPlayerMotionState;
 import com.fox.ysmu.network.message.SyncStarModels;
+import com.fox.ysmu.client.animation.RemotePlayerMotionStates;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import software.bernie.geckolib3.geo.GeoReplacedEntityRenderer;
@@ -59,5 +61,10 @@ public class ClientProxy extends CommonProxy {
                 eep.setStarModels(message.getStarModels());
             }
         }
+    }
+
+    @Override
+    public void handlePlayerMotionState(SyncPlayerMotionState message) {
+        RemotePlayerMotionStates.update(message.getPlayerId(), message.getFlags());
     }
 }
