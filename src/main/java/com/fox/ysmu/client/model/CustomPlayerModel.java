@@ -1,6 +1,8 @@
 package com.fox.ysmu.client.model;
 
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -31,6 +33,7 @@ public class CustomPlayerModel extends AnimatedGeoModel {
         .getMainId(new ResourceLocation(ysmu.MODID, "default"));
     public static final ResourceLocation DEFAULT_TEXTURE = new ResourceLocation(ysmu.MODID, "default/default.png");
     public static float FIRST_PERSON_HEAD_POS;
+    private final Map<IBone, HeadPoseOffset> headPoseOffsets = new IdentityHashMap<>();
 
     @Override
 
@@ -61,6 +64,7 @@ public class CustomPlayerModel extends AnimatedGeoModel {
 
     @Override
     public void setLivingAnimations(IAnimatable animatable, Integer instanceId, AnimationEvent animationEvent) {
+        clearHeadPoseOffsets();
         List extraData = animationEvent.getExtraData();
         MolangParser parser = GeckoLibCache.getInstance().parser;
         if (!Minecraft.getMinecraft()
@@ -82,8 +86,11 @@ public class CustomPlayerModel extends AnimatedGeoModel {
         IBone head = getBone("Head");
         FIRST_PERSON_HEAD_POS = 24;
         if (head != null) {
-            head.setRotationX(head.getRotationX() + (float) Math.toRadians(data.headPitch));
-            head.setRotationY(head.getRotationY() + (float) Math.toRadians(data.netHeadYaw));
+            float headPitch = (float) Math.toRadians(data.headPitch);
+            float headYaw = (float) Math.toRadians(data.netHeadYaw);
+            head.setRotationX(head.getRotationX() + headPitch);
+            head.setRotationY(head.getRotationY() + headYaw);
+            headPoseOffsets.put(head, new HeadPoseOffset(headPitch, headYaw));
             FIRST_PERSON_HEAD_POS = head.getPivotY()
                 * ((CustomPlayerEntity) animationEvent.getAnimatable()).getHeightScale();
         }
@@ -91,6 +98,29 @@ public class CustomPlayerModel extends AnimatedGeoModel {
             float heightScale = ((CustomPlayerEntity) animationEvent.getAnimatable()).getHeightScale();
             GeoBone locator = getCurrentModel().firstPersonViewLocator;
             FIRST_PERSON_HEAD_POS = locator.getPivotY() * heightScale;
+        }
+    }
+
+    private void clearHeadPoseOffsets() {
+        if (headPoseOffsets.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<IBone, HeadPoseOffset> entry : headPoseOffsets.entrySet()) {
+            IBone bone = entry.getKey();
+            HeadPoseOffset offset = entry.getValue();
+            bone.setRotationX(bone.getRotationX() - offset.rotationX);
+            bone.setRotationY(bone.getRotationY() - offset.rotationY);
+        }
+        headPoseOffsets.clear();
+    }
+
+    private static final class HeadPoseOffset {
+        private final float rotationX;
+        private final float rotationY;
+
+        private HeadPoseOffset(float rotationX, float rotationY) {
+            this.rotationX = rotationX;
+            this.rotationY = rotationY;
         }
     }
 

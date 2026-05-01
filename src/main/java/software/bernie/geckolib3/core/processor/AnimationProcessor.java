@@ -20,12 +20,13 @@ import software.bernie.geckolib3.core.molang.MolangParser;
 import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
 import software.bernie.geckolib3.core.snapshot.DirtyTracker;
 import software.bernie.geckolib3.core.util.MathUtil;
+import software.bernie.geckolib3.model.provider.data.EntityModelData;
 
 public class AnimationProcessor<T extends IAnimatable> {
 
     public boolean reloadAnimations = false;
     private List<IBone> modelRendererList = new ArrayList();
-    private Map<Integer, Double> animatedEntities = new HashMap<>();
+    private Map<Integer, AnimationRenderState> animatedEntities = new HashMap<>();
     private final IAnimatableModel animatedModel;
 
     public AnimationProcessor(IAnimatableModel animatedModel) {
@@ -34,11 +35,11 @@ public class AnimationProcessor<T extends IAnimatable> {
 
     public void tickAnimation(IAnimatable entity, Integer uniqueID, double seekTime, AnimationEvent event,
         MolangParser parser, boolean crashWhenCantFindBone) {
-        if (seekTime != animatedEntities.getOrDefault(uniqueID, 0.0)) {
-            animatedEntities.put(uniqueID, seekTime);
-        } else {
+        AnimationRenderState renderState = AnimationRenderState.from(seekTime, event);
+        if (renderState.equals(animatedEntities.get(uniqueID))) {
             return;
         }
+        animatedEntities.put(uniqueID, renderState);
 
         // Each animation has it's own collection of animations (called the
         // EntityAnimationManager), which allows for multiple independent animations
@@ -293,5 +294,85 @@ public class AnimationProcessor<T extends IAnimatable> {
 
     public void preAnimationSetup(IAnimatable animatable, double seekTime) {
         this.animatedModel.setMolangQueries(animatable, seekTime);
+    }
+
+    private static final class AnimationRenderState {
+        private final double seekTime;
+        private final float limbSwing;
+        private final float limbSwingAmount;
+        private final float partialTick;
+        private final boolean moving;
+        private final boolean hasEntityModelData;
+        private final int entityModelDataIdentity;
+        private final boolean sitting;
+        private final boolean child;
+        private final float netHeadYaw;
+        private final float headPitch;
+
+        private AnimationRenderState(double seekTime, AnimationEvent event, EntityModelData entityModelData) {
+            this.seekTime = seekTime;
+            this.limbSwing = event.getLimbSwing();
+            this.limbSwingAmount = event.getLimbSwingAmount();
+            this.partialTick = event.getPartialTick();
+            this.moving = event.isMoving();
+            this.hasEntityModelData = entityModelData != null;
+            // EntityModelData is recreated per render call; its identity separates GUI and world poses at the same tick.
+            this.entityModelDataIdentity = entityModelData == null ? 0 : System.identityHashCode(entityModelData);
+            this.sitting = entityModelData != null && entityModelData.isSitting;
+            this.child = entityModelData != null && entityModelData.isChild;
+            this.netHeadYaw = entityModelData == null ? 0.0F : entityModelData.netHeadYaw;
+            this.headPitch = entityModelData == null ? 0.0F : entityModelData.headPitch;
+        }
+
+        private static AnimationRenderState from(double seekTime, AnimationEvent event) {
+            return new AnimationRenderState(seekTime, event, getEntityModelData(event));
+        }
+
+        private static EntityModelData getEntityModelData(AnimationEvent event) {
+            for (Object data : event.getExtraData()) {
+                if (data instanceof EntityModelData) {
+                    return (EntityModelData) data;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof AnimationRenderState)) {
+                return false;
+            }
+            AnimationRenderState other = (AnimationRenderState) obj;
+            return Double.doubleToLongBits(this.seekTime) == Double.doubleToLongBits(other.seekTime)
+                && Float.floatToIntBits(this.limbSwing) == Float.floatToIntBits(other.limbSwing)
+                && Float.floatToIntBits(this.limbSwingAmount) == Float.floatToIntBits(other.limbSwingAmount)
+                && Float.floatToIntBits(this.partialTick) == Float.floatToIntBits(other.partialTick)
+                && this.moving == other.moving
+                && this.hasEntityModelData == other.hasEntityModelData
+                && this.entityModelDataIdentity == other.entityModelDataIdentity
+                && this.sitting == other.sitting
+                && this.child == other.child
+                && Float.floatToIntBits(this.netHeadYaw) == Float.floatToIntBits(other.netHeadYaw)
+                && Float.floatToIntBits(this.headPitch) == Float.floatToIntBits(other.headPitch);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (int) (Double.doubleToLongBits(this.seekTime) ^ (Double.doubleToLongBits(this.seekTime) >>> 32));
+            result = 31 * result + Float.floatToIntBits(this.limbSwing);
+            result = 31 * result + Float.floatToIntBits(this.limbSwingAmount);
+            result = 31 * result + Float.floatToIntBits(this.partialTick);
+            result = 31 * result + (this.moving ? 1 : 0);
+            result = 31 * result + (this.hasEntityModelData ? 1 : 0);
+            result = 31 * result + this.entityModelDataIdentity;
+            result = 31 * result + (this.sitting ? 1 : 0);
+            result = 31 * result + (this.child ? 1 : 0);
+            result = 31 * result + Float.floatToIntBits(this.netHeadYaw);
+            result = 31 * result + Float.floatToIntBits(this.headPitch);
+            return result;
+        }
     }
 }

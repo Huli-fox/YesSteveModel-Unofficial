@@ -98,7 +98,8 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void onRender(RenderPlayerEvent.Pre event) {
         EntityPlayer player = event.entityPlayer;
-        EntityClientPlayerMP playerSelf = Minecraft.getMinecraft().thePlayer;
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityClientPlayerMP playerSelf = mc.thePlayer;
         if (player.equals(playerSelf) && Config.DISABLE_SELF_MODEL) {
             return;
         }
@@ -107,14 +108,8 @@ public class ClientEventHandler {
         }
         event.setCanceled(true);
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
-        if ((Minecraft.getMinecraft().currentScreen != null || EXTRA_PLAYER) && player.equals(playerSelf)) {
-            renderer.doRender(
-                player,
-                0,
-                0 - player.yOffset,
-                0,
-                player.rotationYaw,
-                1.0F);
+        if ((mc.currentScreen != null || EXTRA_PLAYER) && player.equals(playerSelf)) {
+            renderSelfGuiPlayer(renderer, player);
         } else {
             float partialTicks = event.partialRenderTick;
             double ix = player.lastTickPosX + (player.posX - player.lastTickPosX) * partialTicks;
@@ -128,6 +123,29 @@ public class ClientEventHandler {
                 player.rotationYaw,
                 partialTicks);
         }
+    }
+
+    private static void renderSelfGuiPlayer(CustomPlayerRenderer renderer, EntityPlayer player) {
+        PlayerPreviousRotationSnapshot snapshot = PlayerPreviousRotationSnapshot.capture(player);
+        try {
+            syncPreviousRotationsToPreview(player);
+            renderer.doRender(
+                player,
+                0,
+                0 - player.yOffset,
+                0,
+                player.rotationYaw,
+                1.0F);
+        } finally {
+            snapshot.restore(player);
+        }
+    }
+
+    private static void syncPreviousRotationsToPreview(EntityPlayer player) {
+        player.prevRenderYawOffset = player.renderYawOffset;
+        player.prevRotationYaw = player.rotationYaw;
+        player.prevRotationPitch = player.rotationPitch;
+        player.prevRotationYawHead = player.rotationYawHead;
     }
 
     @SubscribeEvent
@@ -327,6 +345,31 @@ public class ClientEventHandler {
 
     private static boolean isVanillaPlayer(ResourceLocation modelId) {
             return modelId.getResourcePath().equals("steve") || modelId.getResourcePath().equals("alex");
+    }
+
+    private static final class PlayerPreviousRotationSnapshot {
+        private final float prevRenderYawOffset;
+        private final float prevRotationYaw;
+        private final float prevRotationPitch;
+        private final float prevRotationYawHead;
+
+        private PlayerPreviousRotationSnapshot(EntityPlayer player) {
+            this.prevRenderYawOffset = player.prevRenderYawOffset;
+            this.prevRotationYaw = player.prevRotationYaw;
+            this.prevRotationPitch = player.prevRotationPitch;
+            this.prevRotationYawHead = player.prevRotationYawHead;
+        }
+
+        private static PlayerPreviousRotationSnapshot capture(EntityPlayer player) {
+            return new PlayerPreviousRotationSnapshot(player);
+        }
+
+        private void restore(EntityPlayer player) {
+            player.prevRenderYawOffset = this.prevRenderYawOffset;
+            player.prevRotationYaw = this.prevRotationYaw;
+            player.prevRotationPitch = this.prevRotationPitch;
+            player.prevRotationYawHead = this.prevRotationYawHead;
+        }
     }
 
     private static void bobView(float pPartialTicks, EntityPlayer player) {
