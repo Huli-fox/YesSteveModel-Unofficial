@@ -58,6 +58,7 @@ public class SyncModelFiles implements IMessage {
         public IMessage onMessage(SyncModelFiles message, MessageContext ctx) {
             EntityPlayerMP sender = ctx.getServerHandler().playerEntity;
             if (sender != null) {
+                // Model sync starts here after RequestSyncModel asks the client for its cached MD5 names.
                 sendPassword(sender);
                 sendModelFiles(message.md5Info, sender);
             }
@@ -81,6 +82,7 @@ public class SyncModelFiles implements IMessage {
                     .toFile();
                 try {
                     byte[] modelBytes = FileUtils.readFileToByteArray(modelFile);
+                    // Send large model bytes off the packet handler path; this task only enqueues a Forge packet.
                     ThreadTools.THREAD_POOL
                         .submit(() -> NetworkHandler.sendToClientPlayer(new SendModelFile(modelBytes), sender));
                 } catch (IOException e) {
@@ -94,6 +96,7 @@ public class SyncModelFiles implements IMessage {
                 byte[] password = FileUtils.readFileToByteArray(PASSWORD_FILE.toFile());
                 byte[] uuid = UuidUtils.asBytes(sender.getUniqueID());
                 byte[] output = EncryptTools.encryptPassword(uuid, password);
+                // The client must receive the password blob before RequestLoadModel can decrypt cached files.
                 ThreadTools.THREAD_POOL
                     .submit(() -> NetworkHandler.sendToClientPlayer(new SendModelFile(output), sender));
             } catch (Exception e) {

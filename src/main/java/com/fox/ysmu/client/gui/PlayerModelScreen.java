@@ -136,7 +136,7 @@ public class PlayerModelScreen extends GuiScreen {
             int yStart = y + 28 + 93 * (i / 5);
             ExtendedAuthModels eep = ExtendedAuthModels.get(player);
             if (eep != null) {
-                boolean needAuth = false;
+                boolean needAuth = ClientModelManager.AUTH_MODELS.contains(id.getResourcePath()) && !eep.containModel(id);
                 this.buttonList.add(new ModelButton(buttonId++, xStart, yStart, needAuth, Pair.of(id, models.get(id)), ClientModelManager.EXTRA_INFO.get(ModelIdUtil.getMainId(id)), player));
             }
         }

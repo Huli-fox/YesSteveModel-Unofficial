@@ -12,6 +12,7 @@ public final class ModelData {
     private final Map<String, byte[]> texture;
     private final Map<String, byte[]> animation;
     private final ServerModelInfo info;
+    private final boolean auth;
 
     public ModelData(String modelId, boolean isAuth, Type type, Map<String, byte[]> geo, Map<String, byte[]> texture,
         Map<String, byte[]> animation) {
@@ -19,6 +20,7 @@ public final class ModelData {
         this.model = geo;
         this.texture = texture;
         this.animation = animation;
+        this.auth = isAuth;
         this.info = new ServerModelInfo(texture.keySet(), isAuth, type);
     }
 
@@ -39,7 +41,7 @@ public final class ModelData {
     }
 
     public boolean isAuth() {
-        return false;
+        return auth;
     }
 
     public void setMd5(String md5) {

@@ -13,14 +13,22 @@ The work is successful when the code is organized into clearer responsibilities,
 ## Progress
 
 - [x] (2026-05-01 14:36 +08:00) Read `PLANS.md` and created this initial ExecPlan for the cleanup work.
-- [ ] Establish the current build and runtime baseline before changing source code.
-- [ ] Clarify or fix the misleading authorization-model fields and methods.
-- [ ] Refactor model loading and cache creation into smaller, named responsibilities.
-- [ ] Organize network packet ids, message direction, and thread-boundary documentation.
-- [ ] Split common player event logic and make the motion `DataWatcher` update readable.
-- [ ] Split client model registration and first-person hand rendering into smaller helper methods.
-- [ ] Organize animation registration, Molang variable setup, and compatibility boundaries.
-- [ ] Run final build and smoke tests, then update this plan with actual outcomes.
+- [x] (2026-05-01 14:43 +08:00) Established the current build baseline. `.\gradlew.bat build` needs access outside the workspace for the Gradle wrapper cache; after escalation it reached Gradle but failed because the Gradle process was running on Java 8 while `shadowJar` uses a dependency compiled for Java 11. A follow-up attempt to run Gradle with `E:\Java\Java21` was not authorized, so runtime smoke tests were not started from this baseline.
+- [x] (2026-05-01 14:50 +08:00) Clarified and fixed the authorization-model fields and methods in source: `ModelData.isAuth()` now returns stored data, `ServerModelInfo.needAuth` now reflects the constructor argument, `ExtendedAuthModels.containModel()` checks the saved set, folder models under `auth` are cached as auth models, unauthorized `SetModelAndTexture` requests reset to the default model, and the model GUI marks unauthorized auth models as locked.
+- [x] (2026-05-01 14:50 +08:00) User reported `BUILD SUCCESSFUL` for the authorization-model milestone.
+- [x] (2026-05-01 14:52 +08:00) Refactored model loading and cache creation responsibilities. `ServerModelManager.reloadPacks()` now delegates to named private steps, and `FolderFormat` plus `YsmFormat` now share `ModelCacheWriter` for encryption, MD5 naming, and writing cache files under `cache/server`.
+- [x] (2026-05-01 14:52 +08:00) User reported `BUILD SUCCESSFUL` for the model-loading/cache-creation milestone.
+- [x] (2026-05-01 14:56 +08:00) Organized network packet ids and thread-boundary documentation. `NetworkHandler` now uses named ids grouped by serverbound, clientbound, and NPC compatibility messages, and model sync packets now include short comments for password ordering, large file sending, cached model decryption, client-thread registration, and delayed remote-player EEP application.
+- [x] (2026-05-01 14:56 +08:00) User reported `BUILD SUCCESSFUL` for the network packet organization milestone.
+- [x] (2026-05-01 15:00 +08:00) Split common player event logic and made the motion `DataWatcher` update readable. `CommonEventHandler` now delegates EEP registration, clone copying, tracking sync, join-world auth/star/model sync, dirty model broadcasts, and tracking-point construction to named helpers. `updateData(EntityPlayer)` now computes a fresh byte from current ground/flying state and updates watcher id `28` at most once per tick.
+- [x] (2026-05-01 15:00 +08:00) User reported `BUILD SUCCESSFUL` for the common event cleanup milestone.
+- [x] (2026-05-01 15:03 +08:00) Split client model registration and first-person hand rendering into smaller helper methods. `ClientModelManager.registerAll()` now reads as deriving a model id, recording auth state, registering geometry, registering animations, and registering textures. `ClientEventHandler.onRenderHand()` now delegates custom-hand eligibility, arm model lookup, cached animatable preparation, first-person matrix setup, main-hand transforms, right-arm drawing, and OpenGL state restoration to named helpers.
+- [x] (2026-05-01 15:03 +08:00) User reported `BUILD SUCCESSFUL` for the client model/rendering cleanup milestone.
+- [x] (2026-05-01 15:08 +08:00) Organized animation registration, Molang variable setup, and compatibility boundaries. `AnimationRegister` now groups animation state registration by high-priority states, riding/flying states, damage/jump/sneak states, movement states, and idle fallback; Molang variable registration and value assignment are split into named helpers; the duplicate `query.is_on_ground` assignment was removed. `AnimationManager` now centralizes repeated conditional animation lookups for hold, swing, use, and armor controllers. Compat scanning found only the expected Backhand optional render marker outside `BackhandCompat`, and that marker is now documented.
+- [x] (2026-05-01 15:08 +08:00) User reported `BUILD SUCCESSFUL` for the animation/compat cleanup milestone.
+- [x] (2026-05-01 15:09 +08:00) Updated `AGENTS.md` to reflect the now-enforced authorization model behavior, the fixed motion watcher byte update, and the documented Backhand optional marker exception.
+- [x] (2026-05-01 15:09 +08:00) Ran static diff hygiene check with `git diff --check`; it produced no output.
+- [x] (2026-05-01 15:28 +08:00) User reported `OK` for the final runtime smoke-test request. Treat this as the requested `runClient` smoke workflows passing; no separate multiplayer transcript was provided.
 
 ## Surprises & Discoveries
 
@@ -32,6 +40,18 @@ The work is successful when the code is organized into clearer responsibilities,
 
 - Observation: Remote-player ground and flying state is implemented through a 1.7.10 `DataWatcher` byte at id `28`.
   Evidence: `src/main/java/com/fox/ysmu/event/CommonEventHandler.java` declares `MOTION_DATAWATCHER_ID = 28`, `ON_GROUND = 0x01`, and `IS_FLYING = 0x02`.
+
+- Observation: The baseline build is blocked by the Java version used for the Gradle process, not by source compilation.
+  Evidence: `.\gradlew.bat build` first failed in the sandbox with `FileNotFoundException: E:\JetBrains\cache\.gradle\wrapper\...\gradle-8.13-bin.zip.lck (拒绝访问。)`. After running outside the sandbox, it failed at `:shadowJar` with `org/vafer/jdependency/Clazzpath has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0`.
+
+- Observation: The previous motion watcher update could lose a simultaneous state change because the second branch was based on `oldData`, not the byte written by the first branch.
+  Evidence: `CommonEventHandler.updateData()` previously called `updateObject()` separately for `ON_GROUND` and `IS_FLYING`. If both changed in the same server tick, the second computed byte reused `oldData`. The new code computes both flags into `newData` first and calls `updateObject()` once if needed.
+
+- Observation: `AnimationRegister.setParserValue()` assigned `query.is_on_ground` twice with the same lambda.
+  Evidence: Before the animation cleanup, `src/main/java/com/fox/ysmu/client/animation/AnimationRegister.java` contained two adjacent `parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)))` calls. After cleanup there is one registration and one runtime value assignment.
+
+- Observation: The only Backhand type reference outside `compat/BackhandCompat.java` is the optional render opt-out marker on `CustomPlayerItemInHandLayer`; Et Futurum classes are only referenced inside `compat/EtfuturumCompat.java`.
+  Evidence: `rg -n 'xonin\.backhand|ganymedes01\.etfuturum|IOffhandRenderOptOut' src\main\java\com\fox\ysmu` reports Backhand API calls in `BackhandCompat`, Et Futurum API calls in `EtfuturumCompat`, and `xonin.backhand.compat.IOffhandRenderOptOut` in `client/renderer/layer/CustomPlayerItemInHandLayer.java`.
 
 ## Decision Log
 
@@ -47,9 +67,41 @@ The work is successful when the code is organized into clearer responsibilities,
   Rationale: This is a Forge 1.7.10 mod with little or no automated test coverage. Rendering, model selection, and model synchronization need runtime observation.
   Date/Author: 2026-05-01 / Codex
 
+- Decision: Continue cleanup after recording the baseline build blocker, but do not claim build verification until Gradle can be run on a newer JDK.
+  Rationale: The failure happens before useful project compilation evidence is available and a Java 21 retry was not authorized. The plan already allows continuing with recorded baseline failures as long as later outcomes state the limitation.
+  Date/Author: 2026-05-01 / Codex
+
+- Decision: Codex will not run build or test commands after the user clarified that sandbox effects make local validation unreliable; instead, Codex will stop at validation points and ask the user to run the exact command.
+  Rationale: Build and runtime smoke-test results need to reflect the user's actual environment, not the restricted tool sandbox.
+  Date/Author: 2026-05-01 / Codex
+
+- Decision: Preserve `MOTION_DATAWATCHER_ID = 28` and only change how its byte value is computed.
+  Rationale: Clients and servers must agree on the watcher id. The cleanup goal is to remove confusing update semantics, not to migrate protocol state or investigate mod conflicts.
+  Date/Author: 2026-05-01 / Codex
+
+- Decision: Keep `IOffhandRenderOptOut` implemented directly on `CustomPlayerItemInHandLayer`, but document why this direct Backhand type is allowed.
+  Rationale: The optional interface is a marker used by Backhand's renderer to avoid duplicate layer rendering. Moving it behind `BackhandCompat` would not work because Java interface implementation is part of the class declaration. Actual Backhand behavior calls remain isolated in `BackhandCompat`.
+  Date/Author: 2026-05-01 / Codex
+
 ## Outcomes & Retrospective
 
-This section is intentionally empty for implementation outcomes because the cleanup work has not started yet. When a milestone is completed, add a short entry here that states what changed, what was verified, what remains risky, and whether the plan needs adjustment.
+Baseline outcome, 2026-05-01 14:43 +08:00: the initial build could not complete because Gradle was launched with Java 8 and `shadowJar` needs a dependency compiled for Java 11. The machine has `E:\Java\Java21`, but the attempt to run the wrapper with that `JAVA_HOME` was not authorized. Runtime smoke tests were not started because there is no successful baseline build in this environment yet. This is an environment blocker rather than a source-code result.
+
+Authorization milestone outcome, 2026-05-01 14:50 +08:00: source changes now enforce the existing authorization design rather than bypassing it. Auth model metadata is preserved through server cache creation and encrypted model data, the client can mark locked auth models, and the server resets an unauthorized selection to `ysmu:default` with texture `ysmu:default/default.png`. The user ran the build and reported `BUILD SUCCESSFUL`, so this milestone is accepted.
+
+Model loading/cache milestone outcome, 2026-05-01 14:52 +08:00: source code now separates `reloadPacks()` into named steps and centralizes encrypted cache file writing in `src/main/java/com/fox/ysmu/model/format/ModelCacheWriter.java`. The supported inputs and cache format are intended to remain unchanged. The user ran the build and reported `BUILD SUCCESSFUL`, so this milestone is accepted.
+
+Network milestone outcome, 2026-05-01 14:56 +08:00: packet ids are now named constants instead of scattered numeric literals, registration is split by direction, and the model-sync message comments document the current ordering/thread constraints without changing serialization. The user ran the build and reported `BUILD SUCCESSFUL`, so this milestone is accepted.
+
+Common event milestone outcome, 2026-05-01 15:00 +08:00: source code now separates common player event responsibilities into named helpers and fixes the readable computation of the synchronized motion byte while keeping watcher id `28` unchanged. The user ran the build and reported `BUILD SUCCESSFUL`, so this milestone is accepted.
+
+Client model/rendering milestone outcome, 2026-05-01 15:03 +08:00: source code now makes client model registration steps explicit and splits first-person custom-hand rendering into named helpers without changing the intended OpenGL operation order. Geometry, animation, and default-model failures now include resource context in the log before printing the stack trace. The user ran the build and reported `BUILD SUCCESSFUL`, so this milestone is accepted.
+
+Animation/compat milestone outcome, 2026-05-01 15:08 +08:00: source code now organizes animation state registration and Molang value setup into smaller named helpers, removes a duplicate `query.is_on_ground` assignment, and centralizes repeated conditional animation lookup code in `AnimationManager`. Optional mod API boundaries remain intact; the one direct Backhand optional marker is documented. The user ran the build and reported `BUILD SUCCESSFUL`, so this milestone is accepted.
+
+Final source cleanup outcome, 2026-05-01 15:09 +08:00: all planned source cleanup milestones are implemented. The user reported `BUILD SUCCESSFUL` after each source milestone from authorization through animation/compat cleanup. `AGENTS.md` now matches the changed authorization and motion watcher behavior. Codex ran `git diff --check` and it produced no output.
+
+Final validation outcome, 2026-05-01 15:28 +08:00: the user reported `OK` after the final runtime smoke-test request. This plan treats the requested client smoke checks as passing: default model loading, model GUI opening, model/texture switching, first-person empty-hand arm rendering, and integrated-world `/ysm reload` did not reveal a reported blocker. No separate multiplayer smoke-test transcript was provided, so multiplayer synchronization remains residual risk beyond the repeated successful builds and client smoke report.
 
 ## Context and Orientation
 
@@ -107,6 +159,8 @@ Run the baseline build. On Windows use:
 
 If dependency resolution fails because the machine is offline or a Maven repository is unreachable, record the failure exactly in `Surprises & Discoveries`. If the build succeeds, record the successful task summary in `Artifacts and Notes`.
 
+The 2026-05-01 baseline did not reach a successful build. The first sandboxed run failed because the Gradle wrapper cache lock file under `E:\JetBrains\cache\.gradle` could not be accessed. The escalated run entered Gradle but failed at `:shadowJar` because the wrapper used Java 8 and the dependency `org.vafer:jdependency` was compiled for Java 11. A retry with `E:\Java\Java21` was requested and denied, so source cleanup proceeds with this baseline limitation recorded.
+
 Run the client for baseline smoke testing:
 
     .\gradlew.bat runClient
@@ -120,6 +174,8 @@ The expected result is a chat message using the translation key behind `message.
 After each milestone, rerun:
 
     .\gradlew.bat build
+
+Per user instruction from 2026-05-01, Codex does not run the build or test commands directly. At each validation point, Codex asks the user to run the command in their environment and records the result here.
 
 For milestones that touch rendering, model registration, or network sync, also rerun `.\gradlew.bat runClient` and repeat the relevant manual checks. If a milestone touches multiplayer synchronization, start a server with:
 
@@ -171,6 +227,71 @@ Initial repository observations from 2026-05-01:
     git status --short
     A  AGENTS.md
     A  PLANS.md
+
+Baseline build attempt from 2026-05-01:
+
+    .\gradlew.bat build
+    Exception in thread "main" java.io.FileNotFoundException: E:\JetBrains\cache\.gradle\wrapper\dists\gradle-8.13-bin\...\gradle-8.13-bin.zip.lck (拒绝访问。)
+
+    .\gradlew.bat build   # rerun outside the sandbox
+    Execution failed for task ':shadowJar'.
+    > org/vafer/jdependency/Clazzpath has been compiled by a more recent version of the Java Runtime (class file version 55.0), this version of the Java Runtime only recognizes class file versions up to 52.0
+
+Authorization cleanup source summary from 2026-05-01:
+
+    src/main/java/com/fox/ysmu/data/ModelData.java now stores the constructor's isAuth value and returns it from isAuth().
+    src/main/java/com/fox/ysmu/model/format/ServerModelInfo.java now stores the constructor's needAuth value.
+    src/main/java/com/fox/ysmu/eep/ExtendedAuthModels.java now checks authModels.contains(modelId).
+    src/main/java/com/fox/ysmu/model/format/FolderFormat.java now passes true when caching folder models from config/ysmu/auth.
+    src/main/java/com/fox/ysmu/network/message/SetModelAndTexture.java now resets unauthorized auth-model selections to ysmu:default.
+    src/main/java/com/fox/ysmu/client/gui/PlayerModelScreen.java now marks unauthorized auth models as locked buttons.
+
+Model loading/cache cleanup source summary from 2026-05-01:
+
+    src/main/java/com/fox/ysmu/model/ServerModelManager.java reloadPacks() now calls clearModelCaches(), createConfigDirectories(), copyBuiltInModels(), initPassword(), and rebuildModelCaches().
+    src/main/java/com/fox/ysmu/model/format/ModelCacheWriter.java was added as the single place that calls EncryptTools.assembleEncryptModels(), computes the uppercase MD5 name, writes to ServerModelManager.CACHE_SERVER, and returns ServerModelInfo.
+    src/main/java/com/fox/ysmu/model/format/FolderFormat.java and src/main/java/com/fox/ysmu/model/format/YsmFormat.java now parse their respective formats and delegate cache writing to ModelCacheWriter.
+
+Network cleanup source summary from 2026-05-01:
+
+    src/main/java/com/fox/ysmu/network/NetworkHandler.java now declares named packet ids for serverbound packets, clientbound packets, and NPC compatibility packets. init() delegates to registerServerboundMessages(), registerClientboundMessages(), and initBukkit().
+    src/main/java/com/fox/ysmu/network/message/SyncModelFiles.java now documents the RequestSyncModel -> SyncModelFiles -> SendModelFile/RequestLoadModel ordering and why large file sends are submitted to ThreadTools.THREAD_POOL.
+    src/main/java/com/fox/ysmu/network/message/SendModelFile.java now documents the existing encrypted-password length check.
+    src/main/java/com/fox/ysmu/network/message/RequestLoadModel.java now documents that decryption waits for the password and then uses Minecraft.func_152344_a for client-thread model registration.
+    src/main/java/com/fox/ysmu/network/message/SyncModelInfo.java now documents the short wait for remote entities before applying synced EEP data.
+
+Common event cleanup source summary from 2026-05-01:
+
+    src/main/java/com/fox/ysmu/event/CommonEventHandler.java event methods now call helpers for requestModelSync(), registerPlayerProperties(), copyPlayerProperties(), syncTrackedPlayerModelInfo(), syncJoinedPlayerState(), syncAuthModelsAndValidateSelection(), syncStarModels(), broadcastDirtyModelInfo(), and getPlayerTrackingPoint().
+    CommonEventHandler.updateData(EntityPlayer) now starts from the old watcher byte, applies ON_GROUND and IS_FLYING through setFlag(), and calls DataWatcher.updateObject(MOTION_DATAWATCHER_ID, newData) once only when the byte changed.
+
+Client model/rendering cleanup source summary from 2026-05-01:
+
+    src/main/java/com/fox/ysmu/client/ClientModelManager.java registerAll(ModelData) now delegates to getModelId(), recordAuthState(), registerGeometry(), registerModelAnimations(), and registerModelTextures().
+    ClientModelManager now logs the affected geometry id, animation name, or default model load context before printing stack traces for those failures.
+    src/main/java/com/fox/ysmu/client/ClientEventHandler.java onRenderHand(RenderHandEvent) now delegates to shouldRenderCustomHand(), getArmGeoModel(), getCustomHandPlayer(), renderCustomHand(), pushFirstPersonMatrices(), popFirstPersonMatrices(), renderMainHandArm(), applyEquipProgress(), setupHandLighting(), prepareHandRenderState(), applySwingTransform(), applyRightArmPlacement(), renderRightArmBone(), and restoreHandRenderState().
+    The custom-hand render path still cancels the vanilla hand before checking EEP/model/renderer availability, matching the previous behavior after the same eligibility checks pass.
+
+Animation/compat cleanup source summary from 2026-05-01:
+
+    src/main/java/com/fox/ysmu/client/animation/AnimationRegister.java registerAnimationState() now delegates to registerHighPriorityStates(), registerRidingFlyingStates(), registerDamageJumpSneakStates(), registerMovementStates(), and registerIdleFallback().
+    AnimationRegister.registerVariables() now delegates to registerQueryVariables() and registerYsmVariables(). setParserValue() now delegates to setEntityQueryValues(), setStateQueryValues(), setItemUseQueryValues(), setWorldQueryValues(), and setYsmValues().
+    AnimationRegister no longer sets query.is_on_ground twice during runtime Molang value assignment.
+    src/main/java/com/fox/ysmu/client/animation/AnimationManager.java now uses getAnimationId(), playLoopIfPresent(), findHoldAnimation(), findSwingAnimation(), findUseAnimation(), and findArmorAnimation() to remove repeated conditional lookup code while keeping controller names and fallback animation names stable.
+    src/main/java/com/fox/ysmu/client/renderer/layer/CustomPlayerItemInHandLayer.java now documents why the direct Backhand optional marker remains in the class declaration.
+
+Final documentation and static check summary from 2026-05-01:
+
+    AGENTS.md now says auth models under config/ysmu/auth are enforced through ModelData.isAuth(), ServerModelInfo.needAuth, ExtendedAuthModels.containModel(), and SetModelAndTexture server-side reset behavior.
+    AGENTS.md now says CommonEventHandler.updateData() computes a complete motion byte before updating DataWatcher id 28 once.
+    AGENTS.md now documents that CustomPlayerItemInHandLayer's IOffhandRenderOptOut declaration is the allowed Backhand optional marker exception.
+    git diff --check
+    <no output>
+
+Final user validation summary from 2026-05-01:
+
+    After Codex requested runClient smoke testing for default model loading, model GUI opening, model/texture switching, first-person empty-hand rendering, and integrated-world /ysm reload, the user replied:
+    OK
 
 Relevant files already inspected while preparing this plan include:
 
@@ -252,3 +373,21 @@ The cleanup should not add a new mandatory runtime dependency. If a test-only de
 ## Revision Notes
 
 2026-05-01 / Codex: Initial ExecPlan created from the project cleanup analysis. The plan emphasizes baseline capture, narrow milestones, behavior-preserving refactors, and explicit validation because the mod’s model sync, rendering, and animation paths are tightly coupled.
+
+2026-05-01 / Codex: Recorded the actual baseline build blocker and the decision to continue cleanup with the build limitation stated. This keeps the plan restartable for a future contributor who can authorize or configure a newer Gradle JDK.
+
+2026-05-01 / Codex: Recorded the user instruction that builds and tests are user-run validation steps because sandbox behavior makes Codex-run Gradle results unreliable. Added the authorization cleanup source summary and pending validation item.
+
+2026-05-01 / Codex: Recorded the model loading/cache cleanup source changes and the pending user-run build validation. This note exists because the cache protocol is sensitive: the refactor should change responsibility boundaries only, not encrypted bytes, MD5 naming rules, or supported model inputs.
+
+2026-05-01 / Codex: Recorded the network cleanup source changes and pending user-run build validation. This note exists because packet ids are protocol state and must remain stable across clients and servers.
+
+2026-05-01 / Codex: Recorded the common event cleanup source changes and pending user-run build validation. This note exists because player EEP sync and motion watcher updates cross the client/server boundary and need clear restartable context.
+
+2026-05-01 / Codex: Recorded the client model/rendering cleanup source changes and pending user-run build validation. This note exists because first-person hand rendering depends on paired matrix/state operations and should be easy to audit after a restart.
+
+2026-05-01 / Codex: Recorded the animation/compat cleanup source changes and pending user-run build validation. This note exists because animation priorities, controller names, and optional mod boundaries are user-visible through model animation behavior.
+
+2026-05-01 / Codex: Recorded the user-reported animation/compat build success, final AGENTS.md documentation updates, and clean `git diff --check` result. Runtime smoke tests are still pending user execution because Codex is not running build or test commands in this sandboxed environment.
+
+2026-05-01 / Codex: Recorded the user-reported `OK` for final runtime smoke testing and closed the remaining validation progress item. Multiplayer smoke testing was not separately evidenced, so it is recorded as residual risk rather than silently assumed.

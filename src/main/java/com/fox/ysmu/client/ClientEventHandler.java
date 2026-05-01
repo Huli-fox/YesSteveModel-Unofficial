@@ -111,21 +111,39 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
-        if (Config.DISABLE_SELF_MODEL || Config.DISABLE_SELF_HANDS) return;
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
         ItemRenderer itemRenderer = mc.entityRenderer.itemRenderer;
-        if (mc.gameSettings.hideGUI || mc.gameSettings.thirdPersonView != 0 ||
-            BackhandCompat.isRenderingOffhand(player) || itemRenderer.itemToRender != null) return;
+        if (!shouldRenderCustomHand(mc, player, itemRenderer)) return;
         event.setCanceled(true);
 
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
         if (eep == null) return;
         ResourceLocation modelId = eep.getModelId();
-        GeoModel geoModel = GeckoLibCache.getInstance().getGeoModels().get(ModelIdUtil.getArmId(modelId));
+        GeoModel geoModel = getArmGeoModel(modelId);
         if (geoModel == null) return;
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
         if (renderer == null) return;
+        CustomPlayerEntity customPlayer = getCustomHandPlayer(modelId, eep);
+        if (customPlayer == null) return;
+        if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) return;
+
+        renderCustomHand(event, mc, player, itemRenderer, renderer, geoModel, customPlayer);
+    }
+
+    private static boolean shouldRenderCustomHand(Minecraft mc, EntityPlayer player, ItemRenderer itemRenderer) {
+        return !Config.DISABLE_SELF_MODEL && !Config.DISABLE_SELF_HANDS && player != null && !mc.gameSettings.hideGUI
+            && mc.gameSettings.thirdPersonView == 0 && !BackhandCompat.isRenderingOffhand(player)
+            && itemRenderer.itemToRender == null;
+    }
+
+    private static GeoModel getArmGeoModel(ResourceLocation modelId) {
+        return GeckoLibCache.getInstance()
+            .getGeoModels()
+            .get(ModelIdUtil.getArmId(modelId));
+    }
+
+    private static CustomPlayerEntity getCustomHandPlayer(ResourceLocation modelId, ExtendedModelInfo eep) {
         IAnimatable animatable;
         try {
             animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, () -> {
@@ -136,10 +154,26 @@ public class ClientEventHandler {
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
-        if (!(animatable instanceof CustomPlayerEntity customPlayer)) return;
-        customPlayer.setTexture(eep.getSelectTexture());
-        if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) return;
+        if (animatable instanceof CustomPlayerEntity customPlayer) {
+            customPlayer.setTexture(eep.getSelectTexture());
+            return customPlayer;
+        }
+        return null;
+    }
 
+    private static void renderCustomHand(RenderHandEvent event, Minecraft mc, EntityPlayer player,
+        ItemRenderer itemRenderer, CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer) {
+        float partialTicks = event.partialTicks;
+        pushFirstPersonMatrices(mc);
+        if (mc.gameSettings.viewBobbing) {
+            bobView(partialTicks, player);
+        }
+        renderMainHandArm(mc, player, itemRenderer, partialTicks, renderer, geoModel, customPlayer);
+        BackhandCompat.renderOffhand(partialTicks);
+        popFirstPersonMatrices();
+    }
+
+    private static void pushFirstPersonMatrices(Minecraft mc) {
         GlStateManager.pushMatrix();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPushMatrix();
@@ -147,11 +181,30 @@ public class ClientEventHandler {
         Project.gluPerspective(70.0F, (float)mc.displayWidth / (float)mc.displayHeight, 0.05F, 3000.0F);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
-        float partialTicks = event.partialTicks;
-        if (mc.gameSettings.viewBobbing) bobView(partialTicks, player);
+    }
 
+    private static void popFirstPersonMatrices() {
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPopMatrix();
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GlStateManager.popMatrix();
+    }
+
+    private static void renderMainHandArm(Minecraft mc, EntityPlayer player, ItemRenderer itemRenderer,
+        float partialTicks, CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer) {
         GL11.glPushMatrix(); // 隔离主手变换
-        // 切物品动画
+        applyEquipProgress(itemRenderer, partialTicks);
+        setupHandLighting(player, partialTicks);
+        prepareHandRenderState();
+        mc.getTextureManager().bindTexture(customPlayer.getTexture());
+        applySwingTransform(player, partialTicks);
+        applyRightArmPlacement();
+        renderRightArmBone(renderer, geoModel, customPlayer);
+        restoreHandRenderState();
+        GL11.glPopMatrix();
+    }
+
+    private static void applyEquipProgress(ItemRenderer itemRenderer, float partialTicks) {
         float equippedProgress = itemRenderer.equippedProgress;
         float prevEquippedProgress = itemRenderer.prevEquippedProgress;
         float progress = prevEquippedProgress + (equippedProgress - prevEquippedProgress) * partialTicks;
@@ -159,7 +212,9 @@ public class ClientEventHandler {
             float transY = (1.0F - progress) * -0.6F;
             GL11.glTranslatef(0.0F, transY, 0.0F);
         }
-        // 光照
+    }
+
+    private static void setupHandLighting(EntityPlayer player, float partialTicks) {
         float interpolatedYaw = player.prevRotationYaw + (player.rotationYaw - player.prevRotationYaw) * partialTicks;
         float interpolatedPitch = player.prevRotationPitch + (player.rotationPitch - player.prevRotationPitch) * partialTicks;
         GlStateManager.pushMatrix();
@@ -167,15 +222,17 @@ public class ClientEventHandler {
         GlStateManager.rotate(interpolatedYaw, 0.0F, 1.0F, 0.0F);
         RenderHelper.enableStandardItemLighting();
         GlStateManager.popMatrix();
-        // 一些准备
+    }
+
+    private static void prepareHandRenderState() {
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GlStateManager.disableCull();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        // 材质
-        mc.getTextureManager().bindTexture(customPlayer.getTexture());
-        // 空手攻击/挖掘动画
+    }
+
+    private static void applySwingTransform(EntityPlayer player, float partialTicks) {
         float swingProgress = player.getSwingProgress(partialTicks);
         float f1 = MathHelper.sin(swingProgress * (float)Math.PI);
         float f2 = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
@@ -187,31 +244,30 @@ public class ClientEventHandler {
         GlStateManager.rotate(f2 * 27.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(f2 * 12.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(-f1 * 12.0F, 1.0F, 0.0F, 0.0F);
-        // 调整手臂位置
+    }
+
+    private static void applyRightArmPlacement() {
         GlStateManager.translate(0.85F, 0.25F, -1.85F);
         GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(-35.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.rotate(-30.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(30.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(100.0F, 0.0F, 1.0F, 0.0F);
+    }
 
+    private static void renderRightArmBone(CustomPlayerRenderer renderer, GeoModel geoModel,
+        CustomPlayerEntity customPlayer) {
         Tessellator tess = Tessellator.instance;
         tess.startDrawing(GL11.GL_QUADS);
         geoModel.getTopLevelBone(RIGHT_ARM)
-            .ifPresent(bone -> renderer.renderRecursively(tess, animatable, bone, 1, 1, 1, 1));
+            .ifPresent(bone -> renderer.renderRecursively(tess, customPlayer, bone, 1, 1, 1, 1));
         tess.draw();
+    }
 
+    private static void restoreHandRenderState() {
         GlStateManager.enableCull();
         GlStateManager.disableBlend();
         RenderHelper.disableStandardItemLighting();
-        GL11.glPopMatrix();
-        // 主手结束，渲染副手
-        BackhandCompat.renderOffhand(partialTicks);
-
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GlStateManager.popMatrix();
     }
 
     @SubscribeEvent

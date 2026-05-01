@@ -125,16 +125,7 @@ public final class AnimationManager {
         // 修改为使用BackhandCompat兼容层
         ItemStack offhandItem = BackhandCompat.getOffhandItem(player);
         if (offhandItem != null && checkSwingAndUse(player, false)) {
-            ResourceLocation id = event.getAnimatable()
-                .getAnimation();
-            ConditionalHold conditionalHold = ConditionManager.getHoldOffhand(id);
-            if (conditionalHold != null) {
-                // 为兼容性传递false表示副手
-                String name = conditionalHold.doTest(player, false);
-                if (StringUtils.isNoneBlank(name)) {
-                    return playAnimation(event, name, ILoopType.EDefaultLoopTypes.LOOP);
-                }
-            }
+            return playLoopIfPresent(event, findHoldAnimation(event, player, false));
         }
         return PlayState.STOP;
     }
@@ -160,15 +151,7 @@ public final class AnimationManager {
         }
 
         if (player.getHeldItem() != null && checkSwingAndUse(player, true)) {
-            ResourceLocation id = event.getAnimatable()
-                .getAnimation();
-            ConditionalHold conditionalHold = ConditionManager.getHoldMainhand(id);
-            if (conditionalHold != null) {
-                String name = conditionalHold.doTest(player, true);
-                if (StringUtils.isNoneBlank(name)) {
-                    return playAnimation(event, name, ILoopType.EDefaultLoopTypes.LOOP);
-                }
-            }
+            return playLoopIfPresent(event, findHoldAnimation(event, player, true));
         }
         return PlayState.STOP;
     }
@@ -185,15 +168,9 @@ public final class AnimationManager {
                 event.getController()
                     .adjustTick(0);
             }
-            ResourceLocation id = event.getAnimatable()
-                .getAnimation();
-            ConditionalSwing conditionalSwing = ConditionManager.getSwing(id);
-            if (conditionalSwing != null) {
-                // 修改为使用兼容性方法
-                String name = conditionalSwing.doTest(player, BackhandCompat.swingingArm(player));
-                if (StringUtils.isNoneBlank(name)) {
-                    return playAnimation(event, name, ILoopType.EDefaultLoopTypes.LOOP);
-                }
+            String conditionalAnimation = findSwingAnimation(event, player);
+            if (StringUtils.isNoneBlank(conditionalAnimation)) {
+                return playLoopAnimation(event, conditionalAnimation);
             }
             return playAnimation(event, "swing_hand", ILoopType.EDefaultLoopTypes.LOOP);
         }
@@ -212,29 +189,12 @@ public final class AnimationManager {
                 event.getController()
                     .adjustTick(0);
             }
-            if (BackhandCompat.getUsedItemHand(player)) { // 主手
-                ResourceLocation id = event.getAnimatable()
-                    .getAnimation();
-                ConditionalUse conditionalUse = ConditionManager.getUseMainhand(id);
-                if (conditionalUse != null) {
-                    String name = conditionalUse.doTest(player, true); // true表示主手
-                    if (StringUtils.isNoneBlank(name)) {
-                        return playAnimation(event, name, ILoopType.EDefaultLoopTypes.LOOP);
-                    }
-                }
-                return playAnimation(event, "use_mainhand", ILoopType.EDefaultLoopTypes.LOOP);
-            } else {
-                ResourceLocation id = event.getAnimatable()
-                    .getAnimation();
-                ConditionalUse conditionalUse = ConditionManager.getUseOffhand(id);
-                if (conditionalUse != null) {
-                    String name = conditionalUse.doTest(player, false); // false表示副手
-                    if (StringUtils.isNoneBlank(name)) {
-                        return playAnimation(event, name, ILoopType.EDefaultLoopTypes.LOOP);
-                    }
-                }
-                return playAnimation(event, "use_offhand", ILoopType.EDefaultLoopTypes.LOOP);
+            boolean isMainHand = BackhandCompat.getUsedItemHand(player);
+            String conditionalAnimation = findUseAnimation(event, player, isMainHand);
+            if (StringUtils.isNoneBlank(conditionalAnimation)) {
+                return playLoopAnimation(event, conditionalAnimation);
             }
+            return playAnimation(event, isMainHand ? "use_mainhand" : "use_offhand", ILoopType.EDefaultLoopTypes.LOOP);
         }
         return PlayState.STOP;
     }
@@ -250,18 +210,12 @@ public final class AnimationManager {
             return PlayState.STOP;
         }
 
-        ResourceLocation id = event.getAnimatable()
-            .getAnimation();
-        ConditionArmor conditionArmor = ConditionManager.getArmor(id);
-        if (conditionArmor != null) {
-            String name = conditionArmor.doTest(player, slotIndex);
-            if (StringUtils.isNoneBlank(name)) {
-                return playAnimation(event, name, ILoopType.EDefaultLoopTypes.LOOP);
-            }
+        String conditionalAnimation = findArmorAnimation(event, player, slotIndex);
+        if (StringUtils.isNoneBlank(conditionalAnimation)) {
+            return playLoopAnimation(event, conditionalAnimation);
         }
 
-        ResourceLocation animation = event.getAnimatable()
-            .getAnimation();
+        ResourceLocation animation = getAnimationId(event);
         String slotName = ConditionArmor.getSlotNameFromIndex(slotIndex);
         String defaultName = slotName + ":default";
         if (GeckoLibCache.getInstance()
@@ -270,6 +224,45 @@ public final class AnimationManager {
             return playAnimation(event, defaultName, ILoopType.EDefaultLoopTypes.LOOP);
         }
         return PlayState.STOP;
+    }
+
+    private static ResourceLocation getAnimationId(AnimationEvent<CustomPlayerEntity> event) {
+        return event.getAnimatable()
+            .getAnimation();
+    }
+
+    private static PlayState playLoopIfPresent(AnimationEvent<CustomPlayerEntity> event, String animationName) {
+        if (StringUtils.isNoneBlank(animationName)) {
+            return playLoopAnimation(event, animationName);
+        }
+        return PlayState.STOP;
+    }
+
+    private static String findHoldAnimation(AnimationEvent<CustomPlayerEntity> event, EntityPlayer player,
+        boolean isMainHand) {
+        ResourceLocation id = getAnimationId(event);
+        ConditionalHold conditionalHold = isMainHand ? ConditionManager.getHoldMainhand(id)
+            : ConditionManager.getHoldOffhand(id);
+        return conditionalHold == null ? null : conditionalHold.doTest(player, isMainHand);
+    }
+
+    private static String findSwingAnimation(AnimationEvent<CustomPlayerEntity> event, EntityPlayer player) {
+        ConditionalSwing conditionalSwing = ConditionManager.getSwing(getAnimationId(event));
+        return conditionalSwing == null ? null : conditionalSwing.doTest(player, BackhandCompat.swingingArm(player));
+    }
+
+    private static String findUseAnimation(AnimationEvent<CustomPlayerEntity> event, EntityPlayer player,
+        boolean isMainHand) {
+        ResourceLocation id = getAnimationId(event);
+        ConditionalUse conditionalUse = isMainHand ? ConditionManager.getUseMainhand(id)
+            : ConditionManager.getUseOffhand(id);
+        return conditionalUse == null ? null : conditionalUse.doTest(player, isMainHand);
+    }
+
+    private static String findArmorAnimation(AnimationEvent<CustomPlayerEntity> event, EntityPlayer player,
+        int slotIndex) {
+        ConditionArmor conditionArmor = ConditionManager.getArmor(getAnimationId(event));
+        return conditionArmor == null ? null : conditionArmor.doTest(player, slotIndex);
     }
 
     private boolean checkSwingAndUse(EntityPlayer player, boolean isMainHand) {

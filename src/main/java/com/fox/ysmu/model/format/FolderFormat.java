@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -18,9 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import com.fox.ysmu.compat.Utils;
-import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.data.ModelData;
-import com.fox.ysmu.util.Md5Utils;
 import com.google.common.collect.Maps;
 
 import software.bernie.geckolib3.geo.raw.pojo.Converter;
@@ -67,13 +64,13 @@ public final class FolderFormat {
                 continue;
             }
             if (rootPath.equals(AUTH)) {
-                ServerModelInfo info = cacheModel(AUTH, dirName);
+                ServerModelInfo info = cacheModel(AUTH, dirName, true);
                 if (info != null) {
                     CACHE_NAME_INFO.put(dirName, info);
                     AUTH_MODELS.add(dirName);
                 }
             } else {
-                ServerModelInfo info = cacheModel(CUSTOM, dirName);
+                ServerModelInfo info = cacheModel(CUSTOM, dirName, false);
                 if (info != null) {
                     CACHE_NAME_INFO.put(dirName, info);
                 }
@@ -81,20 +78,10 @@ public final class FolderFormat {
         }
     }
 
-    private static ServerModelInfo cacheModel(Path rootPath, String modelId) {
+    private static ServerModelInfo cacheModel(Path rootPath, String modelId, boolean isAuth) {
         try {
-            ModelData data = getModelData(rootPath, modelId, false);
-            byte[] dataBytes = EncryptTools.assembleEncryptModels(data);
-            data.setMd5(
-                Md5Utils.md5Hex(dataBytes)
-                    .toUpperCase(Locale.US));
-            FileUtils.writeByteArrayToFile(
-                CACHE_SERVER.resolve(
-                    data.getInfo()
-                        .getMd5())
-                    .toFile(),
-                dataBytes);
-            return data.getInfo();
+            ModelData data = getModelData(rootPath, modelId, isAuth);
+            return ModelCacheWriter.write(data);
         } catch (Exception e) {
             e.printStackTrace();
         }

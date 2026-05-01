@@ -85,9 +85,19 @@ public final class ServerModelManager {
     }
 
     public static void reloadPacks() {
+        clearModelCaches();
+        createConfigDirectories();
+        copyBuiltInModels();
+        initPassword();
+        rebuildModelCaches();
+    }
+
+    private static void clearModelCaches() {
         CACHE_NAME_INFO.clear();
         AUTH_MODELS.clear();
+    }
 
+    private static void createConfigDirectories() {
         createFolder(FOLDER);
         createFolder(CUSTOM);
         createFolder(AUTH);
@@ -96,12 +106,16 @@ public final class ServerModelManager {
         createFolder(CACHE);
         createFolder(CACHE_SERVER);
         createFolder(CACHE_CLIENT);
+    }
 
+    private static void copyBuiltInModels() {
         // 不管存不存在，强行覆盖
         copyDefaultModel();
         copyWineFoxModel();
         copyVanillaModel();
-        initPassword();
+    }
+
+    private static void rebuildModelCaches() {
         cacheAllModels(CUSTOM);
         cacheAllModels(AUTH);
     }

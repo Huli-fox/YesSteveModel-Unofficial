@@ -54,6 +54,7 @@ public class SyncModelInfo implements IMessage {
         private void handleEEP(SyncModelInfo message) {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.theWorld != null) {
+                // Remote players can arrive after this packet, so wait briefly before applying synced EEP data.
                 ThreadTools.THREAD_POOL.submit(() -> {
                     try {
                         int time = 0;

@@ -58,6 +58,7 @@ public class RequestLoadModel implements IMessage {
     public static void loadModel(String fileName) {
         ThreadTools.THREAD_POOL.submit(() -> {
             try {
+                // Decryption waits for SendModelFile to deliver the password; resource registration returns to the client thread.
                 while (ClientModelManager.PASSWORD == null) {
                     Thread.sleep(500);
                 }

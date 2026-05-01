@@ -30,6 +30,14 @@ public class AnimationRegister {
     private static final double MIN_SPEED = 0.05;
 
     public static void registerAnimationState() {
+        registerHighPriorityStates();
+        registerRidingFlyingStates();
+        registerDamageJumpSneakStates();
+        registerMovementStates();
+        registerIdleFallback();
+    }
+
+    private static void registerHighPriorityStates() {
         register("death", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.HIGHEST, (player, event) -> player.isDead);
         // register("riptide", Priority.HIGHEST, (player, event) -> player.isAutoSpinAttack());
         // TODO 睡觉站着睡，爬梯子躺着爬
@@ -38,6 +46,9 @@ public class AnimationRegister {
         register("ladder_up", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == 1);
         register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == 0);
         register("ladder_down", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == -1);
+    }
+
+    private static void registerRidingFlyingStates() {
         register("ride_pig", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityPig);
         register("ride", Priority.HIGH, (player, event) -> player.isRiding() && !(player.ridingEntity instanceof EntityBoat));
         register("boat", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityBoat);
@@ -45,19 +56,32 @@ public class AnimationRegister {
         register("fly", Priority.HIGH, (player, event) -> isPlayerFlying(player));
         register("elytra_fly", Priority.HIGH, (player, event) -> EtfuturumCompat.isFallFlying(player));
         register("swim_stand", Priority.NORMAL, (player, event) -> player.isInWater());
+    }
+
+    private static void registerDamageJumpSneakStates() {
         register("attacked", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.NORMAL, (player, event) -> player.hurtTime > 0);
         register("jump", Priority.NORMAL, (player, event) -> !isPlayerOnGround(player) && !player.isInWater() && motionYState(player, 0.0D) != 0);
         register("sneak", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
         register("sneaking", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking());
+    }
+
+    private static void registerMovementStates() {
         register("run", Priority.LOW, (player, event) -> isPlayerOnGround(player) && player.isSprinting());
         register("walk", Priority.LOW, (player, event) -> isPlayerOnGround(player) && event.getLimbSwingAmount() > MIN_SPEED);
+    }
+
+    private static void registerIdleFallback() {
         register("idle", Priority.LOWEST, (player, event) -> true);
     }
 
     @SuppressWarnings("deprecation")
     public static void registerVariables() {
         MolangParser parser = GeckoLibCache.getInstance().parser;
+        registerQueryVariables(parser);
+        registerYsmVariables(parser);
+    }
 
+    private static void registerQueryVariables(MolangParser parser) {
         parser.register(new LazyVariable("query.actor_count", 0));
         parser.register(new LazyVariable("query.anim_time", 0));
 
@@ -107,7 +131,9 @@ public class AnimationRegister {
         parser.register(new LazyVariable("query.vertical_speed", 0));
         parser.register(new LazyVariable("query.walk_distance", 0));
         parser.register(new LazyVariable("query.yaw_speed", 0));
+    }
 
+    private static void registerYsmVariables(MolangParser parser) {
         parser.register(new LazyVariable("ysm.head_yaw", 0));
         parser.register(new LazyVariable("ysm.head_pitch", 0));
         parser.register(new LazyVariable("ysm.has_helmet", MolangUtils.FALSE));
@@ -141,6 +167,15 @@ public class AnimationRegister {
         if (mc.theWorld == null) {
             return;
         }
+        setEntityQueryValues(animationEvent, parser, data, player, mc);
+        setStateQueryValues(parser, player, mc);
+        setItemUseQueryValues(parser, player);
+        setWorldQueryValues(parser, player, mc);
+        setYsmValues(animationEvent, parser, data, player);
+    }
+
+    private static void setEntityQueryValues(AnimationEvent<CustomPlayerEntity> animationEvent, MolangParser parser,
+        EntityModelData data, EntityPlayer player, Minecraft mc) {
         parser.setValue("query.actor_count", () -> mc.theWorld.loadedEntityList.size());
         parser.setValue("query.body_x_rotation", player.rotationPitch);
         parser.setValue("query.body_y_rotation", () -> MathHelper.wrapAngleTo180_float(player.rotationYaw));
@@ -156,13 +191,19 @@ public class AnimationRegister {
         parser.setValue("query.head_y_rotation", () -> data.headPitch);
         parser.setValue("query.health", player::getHealth);
         parser.setValue("query.hurt_time", () -> player.hurtTime);
+        parser.setValue("query.modified_distance_moved", () -> player.distanceWalkedModified);
+        parser.setValue("query.vertical_speed", () -> getVerticalSpeed(player));
+        parser.setValue("query.walk_distance", () -> player.distanceWalkedOnStepModified);
+        parser.setValue("query.yaw_speed", () -> getYawSpeed(animationEvent, player));
+    }
+
+    private static void setStateQueryValues(MolangParser parser, EntityPlayer player, Minecraft mc) {
         parser.setValue("query.is_eating", () -> MolangUtils.booleanToFloat(player.getItemInUse() != null && player.getItemInUse().getItemUseAction() == EnumAction.eat));
         parser.setValue("query.is_first_person", () -> MolangUtils.booleanToFloat(mc.gameSettings.thirdPersonView == 0));
         parser.setValue("query.is_in_water", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_in_water_or_rain", () -> MolangUtils.booleanToFloat(player.isWet()));
         parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!isPlayerFlying(player) && !player.isRiding() && !isPlayerOnGround(player) && motionYState(player, 0.0D) != 0 && !player.isInWater()));
         parser.setValue("query.is_on_fire", () -> MolangUtils.booleanToFloat(player.isBurning()));
-        parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
         parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
         parser.setValue("query.is_playing_dead", () -> MolangUtils.booleanToFloat(player.isDead));
         parser.setValue("query.is_riding", () -> MolangUtils.booleanToFloat(player.isRiding()));
@@ -172,19 +213,25 @@ public class AnimationRegister {
         parser.setValue("query.is_sprinting", () -> MolangUtils.booleanToFloat(player.isSprinting()));
         parser.setValue("query.is_swimming", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_using_item", () -> MolangUtils.booleanToFloat(player.isUsingItem()));
+    }
+
+    private static void setItemUseQueryValues(MolangParser parser, EntityPlayer player) {
         // In 1.7.10, item use ticks count down. Modern versions count up. The logic is inverted.
         parser.setValue("query.item_in_use_duration", () -> (getMaxUseDuration(player) - player.getItemInUseCount()) / 20.0);
         parser.setValue("query.item_max_use_duration", () -> getMaxUseDuration(player) / 20.0);
         parser.setValue("query.item_remaining_use_duration", () -> player.getItemInUseCount() / 20.0);
+    }
+
+    private static void setWorldQueryValues(MolangParser parser, EntityPlayer player, Minecraft mc) {
         parser.setValue("query.max_health", player::getMaxHealth);
-        parser.setValue("query.modified_distance_moved", () -> player.distanceWalkedModified);
         parser.setValue("query.moon_phase", () -> mc.theWorld.getMoonPhase());
         parser.setValue("query.player_level", () -> player.experienceLevel);
         parser.setValue("query.time_of_day", () -> MolangUtils.normalizeTime(mc.theWorld.getWorldTime()));
         parser.setValue("query.time_stamp", () -> mc.theWorld.getWorldTime());
-        parser.setValue("query.vertical_speed", () -> getVerticalSpeed(player));
-        parser.setValue("query.walk_distance", () -> player.distanceWalkedOnStepModified);
-        parser.setValue("query.yaw_speed", () -> getYawSpeed(animationEvent, player));
+    }
+
+    private static void setYsmValues(AnimationEvent<CustomPlayerEntity> animationEvent, MolangParser parser,
+        EntityModelData data, EntityPlayer player) {
         parser.setValue("ysm.head_yaw", () -> data.netHeadYaw);
         parser.setValue("ysm.head_pitch", () -> data.headPitch);
         parser.setValue("ysm.has_helmet", () -> getSlotValue(player, 4));

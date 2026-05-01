@@ -60,7 +60,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 
 ## 兼容层
 
-- Backhand 相关逻辑必须通过 `compat/BackhandCompat`，不要在业务代码里直接依赖 Backhand API。
+- Backhand 相关行为逻辑必须通过 `compat/BackhandCompat`，不要在业务代码里直接调用 Backhand API。`CustomPlayerItemInHandLayer` 上的 `IOffhandRenderOptOut` 是 Backhand 的可选渲染标记接口，用 `@Optional.Interface` 声明，属于避免重复渲染的类声明边界，不承载业务调用。
 - Et Futurum Requiem 相关逻辑必须通过 `compat/EtfuturumCompat`，包括鞘翅飞行、旁观者和鞘翅旋转。
 - `compat/Utils.j2l` 用于 JOML `Quaternionf` 到 LWJGL `Quaternion` 的转换，渲染旋转代码已有依赖。
 
@@ -74,8 +74,8 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 ## 已知风险和待核查点
 
 - README 中列出若干未修问题：多人 onGround/飞行状态、默认模型、GUI 光照、TextureScreen 预览、多人原地跳跃动画重复、玩家名牌不显示。
-- 授权模型逻辑目前看起来尚未严格生效：`ModelData.isAuth()` 返回 `false`，`ServerModelInfo` 构造器忽略 `needAuth` 参数，`ExtendedAuthModels.containModel()` 返回 `true`。改授权功能前先修正并补测服务端校验。
-- `CommonEventHandler.updateData()` 使用同一个 `oldData` 计算两个 bit，若同 tick 同时改变 onGround 和 flying，需要确认不会互相覆盖。
+- 授权模型逻辑当前按 `config/ysmu/auth` 生效：`ModelData.isAuth()` 和 `ServerModelInfo.needAuth` 会保留授权标记，`ExtendedAuthModels.containModel()` 检查玩家持有集合，`SetModelAndTexture` 会把未授权选择重置到默认模型。改授权授予/撤销流程时要补测服务端校验和客户端 `SyncAuthModels` 同步。
+- `CommonEventHandler.updateData()` 已改为先计算完整 motion byte 再对 `DataWatcher` id `28` 更新一次，避免同 tick 同时改变 `ON_GROUND` 和 `IS_FLYING` 时互相覆盖。改这里仍必须保持客户端/服务端 id 和 bit 定义一致。
 - `ThreadTools.THREAD_POOL` 是全局 0-10 线程池，当前用于网络文件发送、等待世界/密码、延迟加载。新增后台任务要避免无限等待和直接触碰客户端渲染状态。
 - `SendModelFile` 用 `message.data.length == 48` 判断密码包，依赖 `EncryptTools.PASSWORD_SIZE` 加密后的长度假设。调整密码格式或加密方式时必须同步改协议。
 - 二进制模型包有 `EncryptTools.HEAD` 和 `VERSION`。任何格式变更都应 bump version，并保留旧缓存兼容或明确清理策略。

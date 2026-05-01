@@ -60,13 +60,33 @@ public class ClientModelManager {
     public static byte[] PASSWORD;
 
     public static void registerAll(ModelData data) {
-        ResourceLocation modelId = new ResourceLocation(ysmu.MODID, data.getModelId());
+        ResourceLocation modelId = getModelId(data);
+        recordAuthState(data);
+        registerGeometry(modelId, data);
+        registerModelAnimations(modelId, data);
+        registerModelTextures(modelId, data);
+    }
+
+    private static ResourceLocation getModelId(ModelData data) {
+        return new ResourceLocation(ysmu.MODID, data.getModelId());
+    }
+
+    private static void recordAuthState(ModelData data) {
         if (data.isAuth()) {
             AUTH_MODELS.add(data.getModelId());
         }
-        ClientModelManager.registerGeo(modelId, data.getModel());
-        ClientModelManager.registerAnimations(ModelIdUtil.getMainId(modelId), data.getAnimation());
-        ClientModelManager.registerTexture(modelId, data.getTexture());
+    }
+
+    private static void registerGeometry(ResourceLocation modelId, ModelData data) {
+        registerGeo(modelId, data.getModel());
+    }
+
+    private static void registerModelAnimations(ResourceLocation modelId, ModelData data) {
+        registerAnimations(ModelIdUtil.getMainId(modelId), data.getAnimation());
+    }
+
+    private static void registerModelTextures(ResourceLocation modelId, ModelData data) {
+        registerTexture(modelId, data.getTexture());
     }
 
     public static void registerGeo(ResourceLocation id, Map<String, byte[]> mapData) {
@@ -100,6 +120,7 @@ public class ClientModelManager {
                 geoModels.put(id, geoModel);
             }
         } catch (Exception e) {
+            ysmu.LOG.warn("Failed to register geometry " + id, e);
             e.printStackTrace();
         }
     }
@@ -154,6 +175,7 @@ public class ClientModelManager {
                         .deserializeJsonToAnimation(JsonAnimationUtils.getAnimation(jsonObject, animationName), parser);
                     animationFile.putAnimation(animationName, animation);
                 } catch (GeckoJsonException e) {
+                    ysmu.LOG.warn("Failed to register animation " + animationName, e);
                     e.printStackTrace();
                 }
             }
@@ -176,6 +198,7 @@ public class ClientModelManager {
                 });
             ClientModelManager.registerAll(data);
         } catch (IOException e) {
+            ysmu.LOG.warn("Failed to load default model", e);
             e.printStackTrace();
         }
     }

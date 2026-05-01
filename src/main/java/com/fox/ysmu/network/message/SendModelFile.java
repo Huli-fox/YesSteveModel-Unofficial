@@ -41,6 +41,7 @@ public class SendModelFile implements IMessage {
 
         @Override
         public IMessage onMessage(SendModelFile message, MessageContext ctx) {
+            // Encrypted password packets are currently distinguished by EncryptTools.PASSWORD_SIZE after encryption.
             if (message.data.length == 48) {
                 ClientModelManager.PASSWORD = message.data;
             } else {

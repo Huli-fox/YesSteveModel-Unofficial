@@ -30,6 +30,7 @@ import xonin.backhand.compat.IOffhandRenderOptOut;
 import java.util.List;
 import java.util.Objects;
 
+// This optional marker tells Backhand not to render this layer twice; behavior calls stay behind BackhandCompat.
 @Optional.Interface(iface = "xonin.backhand.compat.IOffhandRenderOptOut", modid = "backhand")
 public class CustomPlayerItemInHandLayer<T extends EntityLivingBase & IAnimatable> extends GeoLayerRenderer<T>
     implements IOffhandRenderOptOut {
