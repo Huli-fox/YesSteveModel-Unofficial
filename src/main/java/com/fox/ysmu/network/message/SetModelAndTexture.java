@@ -3,10 +3,7 @@ package com.fox.ysmu.network.message;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
 
-import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
-import com.fox.ysmu.model.ServerModelManager;
-import com.fox.ysmu.ysmu;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -51,29 +48,12 @@ public class SetModelAndTexture implements IMessage {
 
         private void handleEEP(SetModelAndTexture message, EntityPlayerMP sender) {
             ExtendedModelInfo modelInfo = ExtendedModelInfo.get(sender);
-            ExtendedAuthModels ownModelsEEP = ExtendedAuthModels.get(sender);
-            if (modelInfo != null && ownModelsEEP != null) {
+            if (modelInfo != null) {
                 ResourceLocation modelLoc = message.modelId.isEmpty() ? null : new ResourceLocation(message.modelId);
                 ResourceLocation textureLoc = message.selectTexture.isEmpty() ? null
                     : new ResourceLocation(message.selectTexture);
-
-                if (canUseModel(modelLoc, ownModelsEEP)) {
-                    modelInfo.setModelAndTexture(modelLoc, textureLoc);
-                } else {
-                    resetToDefaultModel(modelInfo);
-                }
+                modelInfo.setModelAndTexture(modelLoc, textureLoc);
             }
-        }
-
-        private boolean canUseModel(ResourceLocation modelLoc, ExtendedAuthModels ownModelsEEP) {
-            return modelLoc == null || !ServerModelManager.AUTH_MODELS.contains(modelLoc.getResourcePath())
-                || ownModelsEEP.containModel(modelLoc);
-        }
-
-        private void resetToDefaultModel(ExtendedModelInfo modelInfo) {
-            ResourceLocation defaultModelId = new ResourceLocation(ysmu.MODID, "default");
-            ResourceLocation defaultTextureId = new ResourceLocation(ysmu.MODID, "default/default.png");
-            modelInfo.setModelAndTexture(defaultModelId, defaultTextureId);
         }
     }
 }

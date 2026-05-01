@@ -4,7 +4,7 @@
 
 ## ExecPlans
 
-When writing complex features or significant refactors, use an ExecPlan (as described in PLANS.md) from design to implementation.
+When writing complex features or significant refactors, use an ExecPlan (as described in .agent/PLANS.md) from design to implementation.
 
 ## 项目概况
 
@@ -30,12 +30,12 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 - `CommonEventHandler`：通过 GTNHLib `@EventBusSubscriber` 自动订阅公共事件，注册玩家 EEP、登录同步、追踪同步和服务端 tick 同步。
 - `ClientEventHandler`：客户端事件入口。取消原版 `RenderPlayerEvent.Pre` 后调用自定义渲染器；处理第一人称手臂、HUD 小人、贴图 stitch 后的默认模型加载。
 - `network/NetworkHandler`：使用 1.7.10 的 `SimpleNetworkWrapper`，通道名 `ysmu_network`。新增消息时必须给唯一 packet id，并明确 `Side.CLIENT` 或 `Side.SERVER`。
-- `model/ServerModelManager`：管理 `config/ysmu/custom`、`auth`、`export`、`cache/server`、`cache/client` 和 `PASSWORD`。
+- `model/ServerModelManager`：管理 `config/ysmu/custom`、`export`、`cache/server`、`cache/client` 和 `PASSWORD`。
 - `client/ClientModelManager`：客户端把同步来的模型注册到 `GeckoLibCache`，并维护 `MODELS`、`SCALE_INFO`、`EXTRA_INFO`、`EXTRA_ANIMATION_NAME` 等运行时缓存。
 
 ## 模型和同步流程
 
-1. `ServerModelManager.reloadPacks()` 创建目录，复制内置模型，初始化/读取 `PASSWORD`，扫描 `custom` 和 `auth`。
+1. `ServerModelManager.reloadPacks()` 创建目录，复制内置模型，初始化/读取 `PASSWORD`，扫描 `custom`。
 2. `FolderFormat` 支持文件夹模型，至少需要 `main.json`、`arm.json` 和一个 `.png`。缺失 `main.animation.json`、`arm.animation.json`、`extra.animation.json` 时会回退到默认模型动画。
 3. `YsmFormat` 支持 `.ysm` 文件，要求内部包含 `main.json`、`arm.json` 和至少一个 `.png`。
 4. 服务端把模型打包为 `ModelData`，经 `EncryptTools.assembleEncryptModels()` 压缩、AES 加密并按 MD5 写入 `cache/server`。
@@ -56,7 +56,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 
 - 公共代码不要直接引用 `Minecraft.getMinecraft()`、`RenderManager`、`GL11`、`TextureManager` 等客户端类。客户端逻辑放在 `client` 包、`ClientProxy` 或 `@SideOnly(Side.CLIENT)` 方法里。
 - 网络 handler 里不要在后台线程直接改渲染资源、GUI 或世界对象。需要改客户端状态时，尽量切回主线程，当前项目已用 `Minecraft.func_152344_a` 处理模型注册。
-- EEP 使用 1.7.10 的 `IExtendedEntityProperties`，不是高版本 Capability。新增玩家持久状态时按 `ExtendedModelInfo`、`ExtendedAuthModels`、`ExtendedStarModels` 的注册和 NBT 模式做。
+- EEP 使用 1.7.10 的 `IExtendedEntityProperties`，不是高版本 Capability。新增玩家持久状态时按 `ExtendedModelInfo`、`ExtendedStarModels` 的注册和 NBT 模式做。
 - Forge 1.7.10 没有高版本的一些 API，常见替代是 `DataWatcher`、`SimpleNetworkWrapper`、`NBTTagCompound`、`ResourceLocation`、`Tessellator.instance`、`GL11`。
 
 ## 兼容层
@@ -75,7 +75,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 ## 已知风险和待核查点
 
 - README 中列出若干未修问题：多人 onGround/飞行状态、默认模型、GUI 光照、TextureScreen 预览、多人原地跳跃动画重复、玩家名牌不显示。
-- 授权模型逻辑当前按 `config/ysmu/auth` 生效：`ModelData.isAuth()` 和 `ServerModelInfo.needAuth` 会保留授权标记，`ExtendedAuthModels.containModel()` 检查玩家持有集合，`SetModelAndTexture` 会把未授权选择重置到默认模型。改授权授予/撤销流程时要补测服务端校验和客户端 `SyncAuthModels` 同步。
+- 受限模型功能已移除。运行时只扫描 `config/ysmu/custom`，不要恢复旧的独立受限目录、玩家持有集合、客户端同步包、模型包标记或 GUI 锁定状态；旧受限目录中的模型需要手动移到 `config/ysmu/custom` 才会加载。
 - `CommonEventHandler.syncDirtyMotionState()` 会先计算完整 motion byte，只在状态变化时发送 `SyncPlayerMotionState`，`onStartTracking` 会给新追踪者补发当前状态。改这里必须保持 `PlayerMotionState` 的 bit 定义与客户端 `RemotePlayerMotionStates` 读取一致。
 - `ThreadTools.THREAD_POOL` 是全局 0-10 线程池，当前用于网络文件发送、等待世界/密码、延迟加载。新增后台任务要避免无限等待和直接触碰客户端渲染状态。
 - `SendModelFile` 用 `message.data.length == 48` 判断密码包，依赖 `EncryptTools.PASSWORD_SIZE` 加密后的长度假设。调整密码格式或加密方式时必须同步改协议。

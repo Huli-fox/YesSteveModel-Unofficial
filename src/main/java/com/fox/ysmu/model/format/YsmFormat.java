@@ -46,17 +46,9 @@ public final class YsmFormat {
                     continue;
                 }
 
-                if (rootPath.equals(AUTH)) {
-                    ServerModelInfo info = cacheModel(data, modelId, true);
-                    if (info != null) {
-                        CACHE_NAME_INFO.put(modelId, info);
-                        AUTH_MODELS.add(modelId);
-                    }
-                } else {
-                    ServerModelInfo info = cacheModel(data, modelId, false);
-                    if (info != null) {
-                        CACHE_NAME_INFO.put(modelId, info);
-                    }
+                ServerModelInfo info = cacheModel(data, modelId);
+                if (info != null) {
+                    CACHE_NAME_INFO.put(modelId, info);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -64,9 +56,9 @@ public final class YsmFormat {
         }
     }
 
-    private static ServerModelInfo cacheModel(Map<String, byte[]> input, String modelId, boolean isAuth) {
+    private static ServerModelInfo cacheModel(Map<String, byte[]> input, String modelId) {
         try {
-            ModelData data = getModelData(input, modelId, isAuth);
+            ModelData data = getModelData(input, modelId);
             return ModelCacheWriter.write(data);
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,7 +67,7 @@ public final class YsmFormat {
     }
 
     @NotNull
-    private static ModelData getModelData(Map<String, byte[]> data, String modelId, boolean isAuth) throws IOException {
+    private static ModelData getModelData(Map<String, byte[]> data, String modelId) throws IOException {
         Map<String, byte[]> model = Maps.newHashMap();
         model.put("main", getBytes(data, MAIN_MODEL_FILE_NAME));
         model.put("arm", getBytes(data, ARM_MODEL_FILE_NAME));
@@ -92,7 +84,7 @@ public final class YsmFormat {
         animation.put("arm", getBytes(data, ARM_ANIMATION_FILE_NAME));
         animation.put("extra", getBytes(data, EXTRA_ANIMATION_FILE_NAME));
 
-        return new ModelData(modelId, isAuth, Type.YSM, model, texture, animation);
+        return new ModelData(modelId, Type.YSM, model, texture, animation);
     }
 
     private static byte[] getBytes(Map<String, byte[]> data, String fileName) throws IOException {

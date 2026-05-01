@@ -3,7 +3,6 @@ package com.fox.ysmu;
 import com.fox.ysmu.command.YsmCommand;
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.network.message.SyncAuthModels;
 import com.fox.ysmu.network.message.SyncPlayerMotionState;
 import com.fox.ysmu.network.message.SyncStarModels;
 
@@ -34,8 +33,6 @@ public class CommonProxy {
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new YsmCommand());
     }
-
-    public void handleAuthModels(SyncAuthModels message) {}
 
     public void handleStarModels(SyncStarModels message) {}
 

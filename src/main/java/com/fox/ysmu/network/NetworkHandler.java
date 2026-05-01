@@ -24,7 +24,6 @@ public final class NetworkHandler {
     private static final int CLIENTBOUND_REQUEST_SYNC_MODEL = 2;
     private static final int CLIENTBOUND_REQUEST_LOAD_MODEL = 3;
     private static final int CLIENTBOUND_SYNC_MODEL_INFO = 4;
-    private static final int CLIENTBOUND_SYNC_AUTH_MODELS = 6;
     private static final int CLIENTBOUND_SYNC_STAR_MODELS = 8;
     private static final int CLIENTBOUND_REQUEST_SERVER_MODEL_INFO = 10;
     private static final int CLIENTBOUND_SYNC_PLAYER_MOTION_STATE = 11;
@@ -84,11 +83,6 @@ public final class NetworkHandler {
             SyncModelInfo.Handler.class,
             SyncModelInfo.class,
             CLIENTBOUND_SYNC_MODEL_INFO,
-            Side.CLIENT);
-        CHANNEL.registerMessage(
-            SyncAuthModels.Handler.class,
-            SyncAuthModels.class,
-            CLIENTBOUND_SYNC_AUTH_MODELS,
             Side.CLIENT);
         CHANNEL.registerMessage(
             SyncStarModels.Handler.class,

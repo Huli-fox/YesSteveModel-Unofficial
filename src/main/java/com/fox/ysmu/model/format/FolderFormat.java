@@ -63,24 +63,16 @@ public final class FolderFormat {
             if (noTextureFile) {
                 continue;
             }
-            if (rootPath.equals(AUTH)) {
-                ServerModelInfo info = cacheModel(AUTH, dirName, true);
-                if (info != null) {
-                    CACHE_NAME_INFO.put(dirName, info);
-                    AUTH_MODELS.add(dirName);
-                }
-            } else {
-                ServerModelInfo info = cacheModel(CUSTOM, dirName, false);
-                if (info != null) {
-                    CACHE_NAME_INFO.put(dirName, info);
-                }
+            ServerModelInfo info = cacheModel(rootPath, dirName);
+            if (info != null) {
+                CACHE_NAME_INFO.put(dirName, info);
             }
         }
     }
 
-    private static ServerModelInfo cacheModel(Path rootPath, String modelId, boolean isAuth) {
+    private static ServerModelInfo cacheModel(Path rootPath, String modelId) {
         try {
-            ModelData data = getModelData(rootPath, modelId, isAuth);
+            ModelData data = getModelData(rootPath, modelId);
             return ModelCacheWriter.write(data);
         } catch (Exception e) {
             e.printStackTrace();
@@ -89,7 +81,7 @@ public final class FolderFormat {
     }
 
     @NotNull
-    public static ModelData getModelData(Path rootPath, String modelId, boolean isAuth) throws IOException {
+    public static ModelData getModelData(Path rootPath, String modelId) throws IOException {
         Path modelPath = rootPath.resolve(modelId);
 
         Map<String, byte[]> model = Maps.newHashMap();
@@ -108,7 +100,7 @@ public final class FolderFormat {
         animation.put("arm", getBytes(modelPath, ARM_ANIMATION_FILE_NAME));
         animation.put("extra", getBytes(modelPath, EXTRA_ANIMATION_FILE_NAME));
 
-        return new ModelData(modelId, isAuth, Type.FOLDER, model, texture, animation);
+        return new ModelData(modelId, Type.FOLDER, model, texture, animation);
     }
 
     private static byte[] getBytes(Path root, String fileName) throws IOException {
