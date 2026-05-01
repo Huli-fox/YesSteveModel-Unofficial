@@ -129,13 +129,13 @@ public class ClientEventHandler {
         PlayerPreviousRotationSnapshot snapshot = PlayerPreviousRotationSnapshot.capture(player);
         try {
             syncPreviousRotationsToPreview(player);
-            renderer.doRender(
+            RenderUtil.withGuiEntityLighting(() -> renderer.doRender(
                 player,
                 0,
                 0 - player.yOffset,
                 0,
                 player.rotationYaw,
-                1.0F);
+                1.0F));
         } finally {
             snapshot.restore(player);
         }

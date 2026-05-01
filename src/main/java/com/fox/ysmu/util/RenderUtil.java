@@ -34,6 +34,76 @@ import software.bernie.geckolib3.model.AnimatedGeoModel;
 @SuppressWarnings("all")
 public final class RenderUtil {
 
+    private static final float GUI_LIGHTMAP_BRIGHTNESS = 240.0F;
+
+    public static void withGuiEntityLighting(Runnable renderAction) {
+        GuiEntityLightingState state = GuiEntityLightingState.capture();
+        try {
+            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+            GL11.glEnable(GL11.GL_COLOR_MATERIAL);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            setLightmapTextureEnabled(true);
+            OpenGlHelper.setLightmapTextureCoords(
+                OpenGlHelper.lightmapTexUnit,
+                GUI_LIGHTMAP_BRIGHTNESS,
+                GUI_LIGHTMAP_BRIGHTNESS);
+            renderAction.run();
+        } finally {
+            OpenGlHelper.setLightmapTextureCoords(
+                OpenGlHelper.lightmapTexUnit,
+                state.brightnessX,
+                state.brightnessY);
+            setLightmapTextureEnabled(state.lightmapTextureEnabled);
+            setEnabled(GL12.GL_RESCALE_NORMAL, state.rescaleNormalEnabled);
+            setEnabled(GL11.GL_COLOR_MATERIAL, state.colorMaterialEnabled);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        }
+    }
+
+    private static void setLightmapTextureEnabled(boolean enabled) {
+        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        setEnabled(GL11.GL_TEXTURE_2D, enabled);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+    }
+
+    private static void setEnabled(int capability, boolean enabled) {
+        if (enabled) {
+            GL11.glEnable(capability);
+        } else {
+            GL11.glDisable(capability);
+        }
+    }
+
+    private static final class GuiEntityLightingState {
+
+        private final float brightnessX;
+        private final float brightnessY;
+        private final boolean lightmapTextureEnabled;
+        private final boolean rescaleNormalEnabled;
+        private final boolean colorMaterialEnabled;
+
+        private GuiEntityLightingState(float brightnessX, float brightnessY, boolean lightmapTextureEnabled,
+            boolean rescaleNormalEnabled, boolean colorMaterialEnabled) {
+            this.brightnessX = brightnessX;
+            this.brightnessY = brightnessY;
+            this.lightmapTextureEnabled = lightmapTextureEnabled;
+            this.rescaleNormalEnabled = rescaleNormalEnabled;
+            this.colorMaterialEnabled = colorMaterialEnabled;
+        }
+
+        private static GuiEntityLightingState capture() {
+            OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+            boolean lightmapTextureEnabled = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            return new GuiEntityLightingState(
+                OpenGlHelper.lastBrightnessX,
+                OpenGlHelper.lastBrightnessY,
+                lightmapTextureEnabled,
+                GL11.glIsEnabled(GL12.GL_RESCALE_NORMAL),
+                GL11.glIsEnabled(GL11.GL_COLOR_MATERIAL));
+        }
+    }
+
     public static void renderTextureScreenEntity(float pPosX, float pPosY, float pScale, float pitch, float yaw,
         EntityPlayer player, ResourceLocation modelId, ResourceLocation textureId, boolean showGround,
         Consumer<CustomPlayerEntity> consumer) {
@@ -41,7 +111,6 @@ public final class RenderUtil {
             return;
         }
         try {
-            CustomPlayerRenderer renderer = ClientProxy.getInstance();
             IAnimatable animatable = AnimatableCacheUtil.TEXTURE_GUI_CACHE.get(modelId, CustomPlayerEntity::new);
             if (animatable instanceof CustomPlayerEntity entity) {
                 consumer.accept(entity);
@@ -78,64 +147,70 @@ public final class RenderUtil {
                 player.rotationYawHead = player.rotationYaw;
                 player.prevRotationYawHead = player.rotationYaw;
 
-                RenderHelper.enableGUIStandardItemLighting();
-                RenderManager dispatcher = RenderManager.instance;
-
-                xp.conjugate();
-                //dispatcher.overrideCameraOrientation(xp);
-                //dispatcher.setRenderShadow(false);
-
-                GlStateManager.pushMatrix();
-                if (entity.hasPreviewAnimation("sleep")) {
-                    GlStateManager.rotate(j2l(Axis.YP.rotationDegrees(yaw - 90)));
-                    GlStateManager.translate(0.5, 0.5625, 0);
-                    // TODO sleep和sneak要处理下
-                    // player.setPose(Pose.SLEEPING);
-                }
-                if (entity.hasPreviewAnimation("swim") || entity.hasPreviewAnimation("swim_stand")) {
-                    // player.setPose(Pose.SWIMMING);
-                }
-                if (entity.hasPreviewAnimation("sneak") || entity.hasPreviewAnimation("sneaking")) {
-                    // player.setPose(Pose.CROUCHING);
-                }
-                if (entity.hasPreviewAnimation("sit")) {
-                    GlStateManager.translate(0, -0.5, 0);
-                }
-                if (entity.hasPreviewAnimation("ride")) {
-                    GlStateManager.translate(0, 0.85, 0);
-                }
-                if (entity.hasPreviewAnimation("ride_pig")) {
-                    GlStateManager.translate(0, 0.3125, 0);
-                }
-                if (entity.hasPreviewAnimation("boat")) {
-                    GlStateManager.translate(0, -0.45, 0);
-                }
-                // renderer.doRender();
                 try {
-                    renderExtraEntity(yaw, player, entity, dispatcher);
-                } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
-                GlStateManager.popMatrix(); // 弹出动画位移矩阵
-                if (showGround) {
-                    if (entity.hasPreviewAnimation("sleep")) {
-                        renderBed(pScale, pitch, yaw);
-                    }
-                    renderGround(pScale, pitch, yaw);
-                }
+                    RenderHelper.enableGUIStandardItemLighting();
+                    RenderManager dispatcher = RenderManager.instance;
 
-                // 恢复玩家状态
-                player.renderYawOffset = yBodyRot;
-                player.rotationYaw = yRot;
-                player.rotationPitch = xRot;
-                player.prevRotationYawHead = yHeadRotO;
-                player.rotationYawHead = yHeadRot;
-                // player.setPose(pose);
+                    xp.conjugate();
+                    //dispatcher.overrideCameraOrientation(xp);
+                    //dispatcher.setRenderShadow(false);
 
-                GlStateManager.popMatrix(); // 弹出模型变换矩阵
-                GlStateManager.popMatrix(); // 弹出视图变换矩阵
-                // 替换 Lighting.setupFor3DItems();
-                RenderHelper.enableStandardItemLighting();
+                    withGuiEntityLighting(() -> {
+                        GlStateManager.pushMatrix();
+                        try {
+                            if (entity.hasPreviewAnimation("sleep")) {
+                                GlStateManager.rotate(j2l(Axis.YP.rotationDegrees(yaw - 90)));
+                                GlStateManager.translate(0.5, 0.5625, 0);
+                                // TODO sleep和sneak要处理下
+                                // player.setPose(Pose.SLEEPING);
+                            }
+                            if (entity.hasPreviewAnimation("swim") || entity.hasPreviewAnimation("swim_stand")) {
+                                // player.setPose(Pose.SWIMMING);
+                            }
+                            if (entity.hasPreviewAnimation("sneak") || entity.hasPreviewAnimation("sneaking")) {
+                                // player.setPose(Pose.CROUCHING);
+                            }
+                            if (entity.hasPreviewAnimation("sit")) {
+                                GlStateManager.translate(0, -0.5, 0);
+                            }
+                            if (entity.hasPreviewAnimation("ride")) {
+                                GlStateManager.translate(0, 0.85, 0);
+                            }
+                            if (entity.hasPreviewAnimation("ride_pig")) {
+                                GlStateManager.translate(0, 0.3125, 0);
+                            }
+                            if (entity.hasPreviewAnimation("boat")) {
+                                GlStateManager.translate(0, -0.45, 0);
+                            }
+                            // renderer.doRender();
+                            try {
+                                renderExtraEntity(yaw, player, entity, dispatcher);
+                            } catch (ExecutionException e) {
+                                throw new RuntimeException(e);
+                            }
+                        } finally {
+                            GlStateManager.popMatrix(); // 弹出动画位移矩阵
+                        }
+                        if (showGround) {
+                            if (entity.hasPreviewAnimation("sleep")) {
+                                renderBed(pScale, pitch, yaw);
+                            }
+                            renderGround(pScale, pitch, yaw);
+                        }
+                    });
+                } finally {
+                    // 恢复玩家状态
+                    player.renderYawOffset = yBodyRot;
+                    player.rotationYaw = yRot;
+                    player.rotationPitch = xRot;
+                    player.prevRotationYawHead = yHeadRotO;
+                    player.rotationYawHead = yHeadRot;
+                    // player.setPose(pose);
+
+                    GlStateManager.popMatrix(); // 弹出模型变换矩阵
+                    GlStateManager.popMatrix(); // 弹出视图变换矩阵
+                    RenderHelper.disableStandardItemLighting();
+                }
             }
         } catch (ExecutionException e) {
             e.printStackTrace();
@@ -298,57 +373,66 @@ public final class RenderUtil {
         player.rotationYawHead = player.rotationYaw;
         player.prevRotationYawHead = player.rotationYaw;
 
+        GL11.glRotatef(135.0F, 0.0F, 1.0F, 0.0F);
         RenderHelper.enableStandardItemLighting();
-        AnimatedGeoModel provider = renderer.getGeoModelProvider();
-        ResourceLocation modelLocation = provider.getModelLocation(entity);
-        GeoModel model = provider.getModel(modelLocation);
-        AnimationEvent<CustomPlayerEntity> predicate = new AnimationEvent<>(entity, 0, 0, 0, false, Collections.emptyList());
-        if (renderer.getGeoModelProvider() instanceof IAnimatableModel) {
-            ((IAnimatableModel<CustomPlayerEntity>) renderer.getGeoModelProvider()).setLivingAnimations(entity, entity.hashCode(), predicate);
+        GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
+        try {
+            withGuiEntityLighting(() -> {
+                AnimatedGeoModel provider = renderer.getGeoModelProvider();
+                ResourceLocation modelLocation = provider.getModelLocation(entity);
+                GeoModel model = provider.getModel(modelLocation);
+                AnimationEvent<CustomPlayerEntity> predicate = new AnimationEvent<>(entity, 0, 0, 0, false, Collections.emptyList());
+                if (renderer.getGeoModelProvider() instanceof IAnimatableModel) {
+                    ((IAnimatableModel<CustomPlayerEntity>) renderer.getGeoModelProvider()).setLivingAnimations(entity, entity.hashCode(), predicate);
+                }
+                Minecraft.getMinecraft().getTextureManager().bindTexture(provider.getTextureLocation(entity));
+                renderer.render(model, entity, 0, 1.0f, 1.0f, 1.0f, 1.0f);
+            });
+        } finally {
+            RenderHelper.disableStandardItemLighting();
+            GL11.glPopMatrix();
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+
+            // 恢复状态
+            player.renderYawOffset = yBodyRot;
+            player.rotationYaw = yRot;
+            player.rotationPitch = xRot;
+            player.prevRotationYawHead = yHeadRotO;
+            player.rotationYawHead = yHeadRot;
+
+            player.inventory.armorInventory[3] = itemStacks[0];
+            player.inventory.armorInventory[2] = itemStacks[1];
+            player.inventory.armorInventory[1] = itemStacks[2];
+            player.inventory.armorInventory[0] = itemStacks[3];
+            player.inventory.mainInventory[player.inventory.currentItem] = itemStacks[4];
+            BackhandCompat.setOffhandItem(player, itemStacks[5]);
         }
-        Minecraft.getMinecraft().getTextureManager().bindTexture(provider.getTextureLocation(entity));
-        renderer.render(model, entity, 0, 1.0f, 1.0f, 1.0f, 1.0f);
-        RenderHelper.disableStandardItemLighting();
-        GL11.glPopMatrix();
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-
-        // 恢复状态
-        player.renderYawOffset = yBodyRot;
-        player.rotationYaw = yRot;
-        player.rotationPitch = xRot;
-        player.prevRotationYawHead = yHeadRotO;
-        player.rotationYawHead = yHeadRot;
-
-        player.inventory.armorInventory[3] = itemStacks[0];
-        player.inventory.armorInventory[2] = itemStacks[1];
-        player.inventory.armorInventory[1] = itemStacks[2];
-        player.inventory.armorInventory[0] = itemStacks[3];
-        player.inventory.mainInventory[player.inventory.currentItem] = itemStacks[4];
-        BackhandCompat.setOffhandItem(player, itemStacks[5]);
     }
 
     public static void renderPlayerEntity(EntityPlayer player, double posX, double posY, float scale, float yawOffset, double z) {
         if (player != Minecraft.getMinecraft().thePlayer) return;  // 不知道为什么如果不加这句，额外玩家会渲染串了
         GL11.glEnable(GL11.GL_COLOR_MATERIAL);
         GL11.glPushMatrix();
-        GL11.glTranslatef((float) (posX + scale * 0.5), (float) (posY + scale * 2), (float) z);
-        GL11.glScalef(-scale, scale, scale);
-        GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
-        GL11.glRotatef(player.rotationYaw + yawOffset, 0.0F, 1.0F, 0.0F);
+        try {
+            GL11.glTranslatef((float) (posX + scale * 0.5), (float) (posY + scale * 2), (float) z);
+            GL11.glScalef(-scale, scale, scale);
+            GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
+            GL11.glRotatef(player.rotationYaw + yawOffset, 0.0F, 1.0F, 0.0F);
 
-        GL11.glRotatef(135.0F, 0.0F, 1.0F, 0.0F);
-        RenderHelper.enableStandardItemLighting();
-        GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
+            GL11.glRotatef(135.0F, 0.0F, 1.0F, 0.0F);
+            RenderHelper.enableStandardItemLighting();
+            GL11.glRotatef(-135.0F, 0.0F, 1.0F, 0.0F);
 
-        GL11.glTranslatef(0.0F, player.yOffset, 0.0F);
-        RenderManager.instance.renderEntityWithPosYaw(player, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F);
-
-        GL11.glPopMatrix();
-        RenderHelper.disableStandardItemLighting();
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+            GL11.glTranslatef(0.0F, player.yOffset, 0.0F);
+            withGuiEntityLighting(() -> RenderManager.instance.renderEntityWithPosYaw(player, 0.0D, 0.0D, 0.0D, 0.0F, 1.0F));
+        } finally {
+            GL11.glPopMatrix();
+            RenderHelper.disableStandardItemLighting();
+            GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        }
     }
 
     private static Quaternion j2l(Quaternionf jomlQuat) {
