@@ -1,5 +1,7 @@
 package com.fox.ysmu.client;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
@@ -44,6 +46,7 @@ import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.InputEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
@@ -54,12 +57,29 @@ public class ClientEventHandler {
 
     private static final String RIGHT_ARM = "RightArm";
     private static boolean EXTRA_PLAYER = false;
+    private static boolean pendingModelLoad;
 
     @SubscribeEvent
     public static void onTextureStitchEventPost(TextureStitchEvent.Post event) {
         if (event.map.getTextureType() == 0) {
-            ClientModelManager.loadDefaultModel();
-            ClientModelManager.CACHE_MD5.forEach(RequestLoadModel::loadModel);
+            pendingModelLoad = true;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || !pendingModelLoad) {
+            return;
+        }
+        pendingModelLoad = false;
+
+        // TextureStitchEvent.Post fires while TextureManager is still reloading
+        // its texture map. Registering model textures there mutates the same
+        // map and can make GTNH disable all user resource packs after a CME.
+        ClientModelManager.loadDefaultModel();
+        List<String> cachedModels = new ArrayList<>(ClientModelManager.CACHE_MD5);
+        for (String md5 : cachedModels) {
+            RequestLoadModel.loadModel(md5);
         }
     }
 
