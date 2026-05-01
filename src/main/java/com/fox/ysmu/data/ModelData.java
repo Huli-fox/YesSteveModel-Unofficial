@@ -12,16 +12,14 @@ public final class ModelData {
     private final Map<String, byte[]> texture;
     private final Map<String, byte[]> animation;
     private final ServerModelInfo info;
-    private final boolean auth;
 
-    public ModelData(String modelId, boolean isAuth, Type type, Map<String, byte[]> geo, Map<String, byte[]> texture,
+    public ModelData(String modelId, Type type, Map<String, byte[]> geo, Map<String, byte[]> texture,
         Map<String, byte[]> animation) {
         this.modelId = modelId;
         this.model = geo;
         this.texture = texture;
         this.animation = animation;
-        this.auth = isAuth;
-        this.info = new ServerModelInfo(texture.keySet(), isAuth, type);
+        this.info = new ServerModelInfo(texture.keySet(), type);
     }
 
     public String getModelId() {
@@ -38,10 +36,6 @@ public final class ModelData {
 
     public Map<String, byte[]> getAnimation() {
         return animation;
-    }
-
-    public boolean isAuth() {
-        return auth;
     }
 
     public void setMd5(String md5) {

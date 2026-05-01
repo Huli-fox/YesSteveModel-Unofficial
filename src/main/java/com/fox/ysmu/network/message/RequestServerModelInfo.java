@@ -2,7 +2,6 @@ package com.fox.ysmu.network.message;
 
 
 import java.util.List;
-//import com.fox.ysmu.client.gui.ModelManageScreen;
 import com.fox.ysmu.model.format.Type;
 import com.google.common.collect.Lists;
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -11,18 +10,15 @@ import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
 import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
 
 public class RequestServerModelInfo implements IMessage {
 
     private List<Info> customModels;
-    private List<Info> authModels;
 
     public RequestServerModelInfo() {}
 
-    public RequestServerModelInfo(List<Info> customModels, List<Info> authModels) {
+    public RequestServerModelInfo(List<Info> customModels) {
         this.customModels = customModels;
-        this.authModels = authModels;
     }
 
     @Override
@@ -33,21 +29,12 @@ public class RequestServerModelInfo implements IMessage {
             this.customModels.add(bufferToInfo(buf));
         }
 
-        int authModelsSize = buf.readInt();
-        this.authModels = Lists.newArrayList();
-        for (int i = 0; i < authModelsSize; i++) {
-            this.authModels.add(bufferToInfo(buf));
-        }
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(this.customModels.size());
         for (Info info : this.customModels) {
-            infoToBuffer(buf, info);
-        }
-        buf.writeInt(this.authModels.size());
-        for (Info info : this.authModels) {
             infoToBuffer(buf, info);
         }
     }
@@ -57,7 +44,7 @@ public class RequestServerModelInfo implements IMessage {
         @Override
         public IMessage onMessage(RequestServerModelInfo message, MessageContext ctx) {
             if (ctx.side == Side.CLIENT) {
-                //Minecraft.getMinecraft().displayGuiScreen(new ModelManageScreen(message.customModels, message.authModels));
+                // Model management GUI is not currently wired on 1.7.10.
             }
             return null;
         }

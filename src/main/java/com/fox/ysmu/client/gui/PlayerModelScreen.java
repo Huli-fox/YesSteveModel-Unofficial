@@ -2,7 +2,6 @@ package com.fox.ysmu.client.gui;
 
 import com.fox.ysmu.Tags;
 import com.fox.ysmu.compat.YsmConverter;
-import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
 import com.fox.ysmu.client.ClientModelManager;
@@ -58,16 +57,6 @@ public class PlayerModelScreen extends GuiScreen {
         models = Maps.newHashMap();
         if (this.category == Category.ALL) {
             this.models.putAll(ClientModelManager.MODELS);
-        }
-        if (this.category == Category.AUTH) {
-            ExtendedAuthModels eep = ExtendedAuthModels.get(this.player);
-            if (eep != null) {
-                for (ResourceLocation modelId : ClientModelManager.MODELS.keySet()) {
-                    if (eep.containModel(modelId) || !ClientModelManager.AUTH_MODELS.contains(modelId.getResourcePath())) {
-                        this.models.put(modelId, ClientModelManager.MODELS.get(modelId));
-                    }
-                }
-            }
         }
         if (this.category == Category.STAR) {
             ExtendedStarModels eep = ExtendedStarModels.get(this.player);
@@ -134,11 +123,7 @@ public class PlayerModelScreen extends GuiScreen {
             ResourceLocation id = modelOrderList.get(modelIndex);
             int xStart = x + 143 + 55 * (i % 5);
             int yStart = y + 28 + 93 * (i / 5);
-            ExtendedAuthModels eep = ExtendedAuthModels.get(player);
-            if (eep != null) {
-                boolean needAuth = ClientModelManager.AUTH_MODELS.contains(id.getResourcePath()) && !eep.containModel(id);
-                this.buttonList.add(new ModelButton(buttonId++, xStart, yStart, needAuth, Pair.of(id, models.get(id)), ClientModelManager.EXTRA_INFO.get(ModelIdUtil.getMainId(id)), player));
-            }
+            this.buttonList.add(new ModelButton(buttonId++, xStart, yStart, Pair.of(id, models.get(id)), ClientModelManager.EXTRA_INFO.get(ModelIdUtil.getMainId(id)), player));
         }
     }
 
@@ -165,13 +150,6 @@ public class PlayerModelScreen extends GuiScreen {
             case 3:
                 if (this.category != Category.ALL) {
                     this.category = Category.ALL;
-                    this.page = 0;
-                    this.initGui();
-                }
-                break;
-            case 4:
-                if (this.category != Category.AUTH) {
-                    this.category = Category.AUTH;
                     this.page = 0;
                     this.initGui();
                 }
@@ -345,7 +323,7 @@ public class PlayerModelScreen extends GuiScreen {
         /**
          * 不同页面类别
          */
-        ALL, AUTH, STAR
+        ALL, STAR
     }
 
     private void fix() {

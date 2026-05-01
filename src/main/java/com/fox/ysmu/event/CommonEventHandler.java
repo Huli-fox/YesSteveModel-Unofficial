@@ -8,21 +8,17 @@ import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import com.fox.ysmu.data.PlayerMotionState;
-import com.fox.ysmu.eep.ExtendedAuthModels;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.eep.ExtendedStarModels;
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.network.message.SyncAuthModels;
 import com.fox.ysmu.network.message.SyncModelInfo;
 import com.fox.ysmu.network.message.SyncPlayerMotionState;
 import com.fox.ysmu.network.message.SyncStarModels;
-import com.fox.ysmu.ysmu;
 import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -88,9 +84,6 @@ public class CommonEventHandler {
     }
 
     private static void registerPlayerProperties(EntityPlayer player) {
-        if (ExtendedAuthModels.get(player) == null) {
-            ExtendedAuthModels.register(player);
-        }
         if (ExtendedModelInfo.get(player) == null) {
             ExtendedModelInfo.register(player);
         }
@@ -108,12 +101,6 @@ public class CommonEventHandler {
     }
 
     private static void copyPlayerProperties(EntityPlayer oldPlayer, EntityPlayer newPlayer) {
-        ExtendedAuthModels oldAuthProps = ExtendedAuthModels.get(oldPlayer);
-        ExtendedAuthModels newAuthProps = ExtendedAuthModels.get(newPlayer);
-        if (oldAuthProps != null && newAuthProps != null) {
-            newAuthProps.copyFrom(oldAuthProps);
-        }
-
         ExtendedModelInfo oldModelProps = ExtendedModelInfo.get(oldPlayer);
         ExtendedModelInfo newModelProps = ExtendedModelInfo.get(newPlayer);
         if (oldModelProps != null && newModelProps != null) {
@@ -139,35 +126,12 @@ public class CommonEventHandler {
         ExtendedModelInfo modelInfo = ExtendedModelInfo.get(player);
         if (modelInfo != null) {
             if (player instanceof EntityPlayerMP serverPlayer) {
-                syncAuthModelsAndValidateSelection(serverPlayer, modelInfo);
                 NetworkHandler.sendToClientPlayer(new SyncModelInfo(serverPlayer.getEntityId(), modelInfo), serverPlayer);
             } else {
                 modelInfo.markDirty();
             }
         }
         syncStarModels(player);
-    }
-
-    private static void syncAuthModelsAndValidateSelection(EntityPlayerMP player, ExtendedModelInfo modelInfo) {
-        ExtendedAuthModels authModels = ExtendedAuthModels.get(player);
-        if (authModels != null) {
-            NetworkHandler.sendToClientPlayer(new SyncAuthModels(authModels.getAuthModels()), player);
-            if (needsAuthReset(modelInfo, authModels)) {
-                resetToDefaultModel(modelInfo);
-            }
-        }
-    }
-
-    private static boolean needsAuthReset(ExtendedModelInfo modelInfo, ExtendedAuthModels authModels) {
-        ResourceLocation modelId = modelInfo.getModelId();
-        return modelId != null && ServerModelManager.AUTH_MODELS.contains(modelId.getResourcePath())
-            && !authModels.containModel(modelId);
-    }
-
-    private static void resetToDefaultModel(ExtendedModelInfo modelInfo) {
-        ResourceLocation defaultModelId = new ResourceLocation(ysmu.MODID, "default");
-        ResourceLocation defaultTextureId = new ResourceLocation(ysmu.MODID, "default/default.png");
-        modelInfo.setModelAndTexture(defaultModelId, defaultTextureId);
     }
 
     private static void syncStarModels(EntityPlayer player) {

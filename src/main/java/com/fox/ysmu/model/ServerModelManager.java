@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import net.minecraft.entity.player.EntityPlayer;
 
@@ -22,7 +21,6 @@ import com.fox.ysmu.network.message.RequestSyncModel;
 import com.fox.ysmu.util.GetJarResources;
 import com.fox.ysmu.ysmu;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 public final class ServerModelManager {
 
@@ -35,7 +33,6 @@ public final class ServerModelManager {
      * 自定义模型所放置的文件夹
      */
     public static final Path CUSTOM = FOLDER.resolve("custom");
-    public static final Path AUTH = FOLDER.resolve("auth");
     public static final Path EXPORT = FOLDER.resolve("export");
 
     /**
@@ -55,11 +52,6 @@ public final class ServerModelManager {
      * 还可以获取其他服务端模型信息
      */
     public static final Map<String, ServerModelInfo> CACHE_NAME_INFO = Maps.newHashMap();
-
-    /**
-     * 放置授权模型名称
-     */
-    public static final Set<String> AUTH_MODELS = Sets.newHashSet();
 
     /**
      * 特定文件名
@@ -94,13 +86,11 @@ public final class ServerModelManager {
 
     private static void clearModelCaches() {
         CACHE_NAME_INFO.clear();
-        AUTH_MODELS.clear();
     }
 
     private static void createConfigDirectories() {
         createFolder(FOLDER);
         createFolder(CUSTOM);
-        createFolder(AUTH);
         createFolder(EXPORT);
 
         createFolder(CACHE);
@@ -117,7 +107,6 @@ public final class ServerModelManager {
 
     private static void rebuildModelCaches() {
         cacheAllModels(CUSTOM);
-        cacheAllModels(AUTH);
     }
 
     private static void copyDefaultModel() {
@@ -219,7 +208,10 @@ public final class ServerModelManager {
             EncryptTools.createRandomPassword();
             File passwordFile = PASSWORD_FILE.toFile();
             if (passwordFile.isFile()) {
-                EncryptTools.readPassword(FileUtils.readFileToByteArray(passwordFile));
+                boolean validPassword = EncryptTools.readPassword(FileUtils.readFileToByteArray(passwordFile));
+                if (!validPassword) {
+                    FileUtils.writeByteArrayToFile(passwordFile, EncryptTools.writePassword());
+                }
             } else {
                 FileUtils.writeByteArrayToFile(passwordFile, EncryptTools.writePassword());
             }

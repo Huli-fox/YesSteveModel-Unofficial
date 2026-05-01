@@ -10,10 +10,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 import net.minecraft.command.*;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.ResourceLocation;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -21,10 +19,7 @@ import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
-import com.fox.ysmu.eep.ExtendedAuthModels;
-import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.model.ServerModelManager;
-import com.fox.ysmu.ysmu;
 
 public class YsmCommand extends CommandBase {
 
@@ -55,7 +50,6 @@ public class YsmCommand extends CommandBase {
         StopWatch watch = new StopWatch();
         watch.start();
         checkModelFiles(sender, CUSTOM);
-        checkModelFiles(sender, AUTH);
         ServerModelManager.reloadPacks();
 
         // TODO 需要根据加载环境判断是客户端还是服务端
@@ -65,20 +59,6 @@ public class YsmCommand extends CommandBase {
             ServerModelManager.sendRequestSyncModelMessage();
         }
 
-        List<EntityPlayerMP> players = MinecraftServer.getServer().getConfigurationManager().playerEntityList;
-        for (EntityPlayerMP player : players) {
-            ExtendedAuthModels ownModelsEEP = ExtendedAuthModels.get(player);
-            if (ownModelsEEP != null) {
-                ExtendedModelInfo modelIdEEP = ExtendedModelInfo.get(player);
-                if (modelIdEEP != null) {
-                    if (ServerModelManager.AUTH_MODELS.contains(modelIdEEP.getModelId().getResourcePath()) && !ownModelsEEP.containModel(modelIdEEP.getModelId())) {
-                        ResourceLocation defaultModelId = new ResourceLocation(ysmu.MODID, "default");
-                        ResourceLocation defaultTextureId = new ResourceLocation(ysmu.MODID, "default/default.png");
-                        modelIdEEP.setModelAndTexture(defaultModelId, defaultTextureId);
-                    }
-                }
-            }
-        }
         watch.stop();
         sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.reload.info", watch.getTime()));
     }

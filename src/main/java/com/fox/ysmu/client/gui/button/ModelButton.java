@@ -23,26 +23,21 @@ import java.util.List;
 public class ModelButton extends GuiButton {
     private final static ResourceLocation ICON = new ResourceLocation(ysmu.MODID, "texture/icon.png");
     private final Pair<ResourceLocation, List<ResourceLocation>> modelInfo;
-    private final boolean needAuth;
     private final int color;
     public final List<IChatComponent> tooltips;
     private final EntityPlayer player;
 
-    public ModelButton(int id, int pX, int pY, boolean needAuth, Pair<ResourceLocation, List<ResourceLocation>> modelInfo,
+    public ModelButton(int id, int pX, int pY, Pair<ResourceLocation, List<ResourceLocation>> modelInfo,
                        List<IChatComponent> tooltips, EntityPlayer player) {
         super(id, pX, pY, 52, 90, "");
         this.modelInfo = modelInfo;
-        this.needAuth = needAuth;
-        this.color = needAuth ? 0x7F_000000 : 0xFF_434242;
+        this.color = 0xFF_434242;
         this.tooltips = tooltips;
         this.player = player;
         this.displayString = modelInfo.getLeft().getResourcePath();
     }
 
     public void doPress() {
-        if (this.needAuth) {
-            return;
-        }
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
         if (eep != null) {
             eep.setModelAndTexture(modelInfo.getLeft(), modelInfo.getRight().get(0));
@@ -87,7 +82,7 @@ public class ModelButton extends GuiButton {
             this.drawCenteredString(font, this.displayString, this.xPosition + this.width / 2, this.yPosition + this.height - 15, 0xF3EFE0);
         }
         // 悬停时的高亮边框
-        if (!this.needAuth && this.field_146123_n) {
+        if (this.field_146123_n) {
             this.drawGradientRect(this.xPosition, this.yPosition + 1, this.xPosition + 1, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
             this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + 1, 0xff_F3EFE0, 0xff_F3EFE0);
             this.drawGradientRect(this.xPosition + this.width - 1, this.yPosition + 1, this.xPosition + this.width, this.yPosition + this.height - 1, 0xff_F3EFE0, 0xff_F3EFE0);
@@ -100,9 +95,6 @@ public class ModelButton extends GuiButton {
             mc.getTextureManager().bindTexture(ICON);
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             this.drawTexturedModalRect(this.xPosition + this.width - 14, this.yPosition, 16, 0, 16, 16);
-        }
-        if (needAuth) {
-            this.drawGradientRect(this.xPosition, this.yPosition, this.xPosition + this.width, this.yPosition + this.height, 0x9F222222, 0x9F222222);
         }
     }
 }

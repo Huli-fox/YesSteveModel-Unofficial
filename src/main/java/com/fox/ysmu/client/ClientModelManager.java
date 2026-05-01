@@ -56,12 +56,10 @@ public class ClientModelManager {
     public static Map<ResourceLocation, String[]> EXTRA_ANIMATION_NAME = Maps.newHashMap();
     public static AnimationFile DEFAULT_ANIMATION_FILE = new AnimationFile();
     public static List<String> CACHE_MD5 = Lists.newArrayList();
-    public static List<String> AUTH_MODELS = Lists.newArrayList();
     public static byte[] PASSWORD;
 
     public static void registerAll(ModelData data) {
         ResourceLocation modelId = getModelId(data);
-        recordAuthState(data);
         registerGeometry(modelId, data);
         registerModelAnimations(modelId, data);
         registerModelTextures(modelId, data);
@@ -69,12 +67,6 @@ public class ClientModelManager {
 
     private static ResourceLocation getModelId(ModelData data) {
         return new ResourceLocation(ysmu.MODID, data.getModelId());
-    }
-
-    private static void recordAuthState(ModelData data) {
-        if (data.isAuth()) {
-            AUTH_MODELS.add(data.getModelId());
-        }
     }
 
     private static void registerGeometry(ResourceLocation modelId, ModelData data) {
@@ -190,7 +182,7 @@ public class ClientModelManager {
 
     public static void loadDefaultModel() {
         try {
-            ModelData data = FolderFormat.getModelData(ServerModelManager.CUSTOM, "default", false);
+            ModelData data = FolderFormat.getModelData(ServerModelManager.CUSTOM, "default");
             data.getAnimation()
                 .forEach((name, bytes) -> {
                     AnimationFile animationFile = getAnimationFile(new String(bytes, StandardCharsets.UTF_8));
@@ -206,7 +198,6 @@ public class ClientModelManager {
     public static void sendSyncModelMessage() {
         MODELS.clear();
         CACHE_MD5.clear();
-        AUTH_MODELS.clear();
         SCALE_INFO.clear();
         EXTRA_INFO.clear();
         EXTRA_ANIMATION_NAME.clear();

@@ -33,7 +33,7 @@ public final class EncryptTools {
     /**
      * 二进制文件的版本号
      */
-    public static final int VERSION = 0x00_00_00_01;
+    public static final int VERSION = 0x00_00_00_02;
 
     /**
      * 加密方法
@@ -60,22 +60,23 @@ public final class EncryptTools {
         IV = AESUtil.generateIv();
     }
 
-    public static void readPassword(byte[] fileBytes) {
+    public static boolean readPassword(byte[] fileBytes) {
         if (fileBytes.length != PASSWORD_SIZE) {
-            return;
+            return false;
         }
         int head = ByteInteger.bytes2Int(fileBytes, 0);
         int version = ByteInteger.bytes2Int(fileBytes, 4);
         if (head != HEAD) {
-            return;
+            return false;
         }
         if (version != VERSION) {
-            return;
+            return false;
         }
         byte[] password = ByteArrays.copy(fileBytes, 8, 16);
         byte[] iv = ByteArrays.copy(fileBytes, 24, 16);
         SECRET_KEY = new SecretKeySpec(password, ENCRYPTION_METHOD);
         IV = new IvParameterSpec(iv);
+        return true;
     }
 
     public static byte[] writePassword() throws IOException {
@@ -133,7 +134,6 @@ public final class EncryptTools {
             ByteArrayOutputStream tmp = new ByteArrayOutputStream();
 
             writeString(tmp, data.getModelId());
-            writeBoolean(tmp, data.isAuth());
 
             writeMapDataInfo(tmp, data.getModel());
             writeMapDataInfo(tmp, data.getTexture());
@@ -156,10 +156,6 @@ public final class EncryptTools {
         byte[] stringBytes = string.getBytes(StandardCharsets.UTF_8);
         stream.write(ByteInteger.int2Bytes(stringBytes.length));
         stream.write(stringBytes);
-    }
-
-    private static void writeBoolean(ByteArrayOutputStream stream, boolean value) throws IOException {
-        stream.write(ByteInteger.int2Bytes(value ? 1 : 0));
     }
 
     private static void writeFileInfo(ByteArrayOutputStream stream, String name, byte[] input) throws IOException {
@@ -237,7 +233,6 @@ public final class EncryptTools {
             ByteArrayInputStream tmp = new ByteArrayInputStream(modelData);
 
             String modelId = readString(tmp);
-            boolean isAuth = readBoolean(tmp);
             Map<String, Integer> modelMapDataInfo = readMapDataInfo(tmp);
             Map<String, Integer> textureMapDataInfo = readMapDataInfo(tmp);
             Map<String, Integer> animationMapDataInfo = readMapDataInfo(tmp);
@@ -246,7 +241,7 @@ public final class EncryptTools {
             Map<String, byte[]> textureMapData = readMapData(tmp, textureMapDataInfo);
             Map<String, byte[]> animationMapData = readMapData(tmp, animationMapDataInfo);
 
-            return new ModelData(modelId, isAuth, Type.UNKNOWN, modelMapData, textureMapData, animationMapData);
+            return new ModelData(modelId, Type.UNKNOWN, modelMapData, textureMapData, animationMapData);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -283,10 +278,6 @@ public final class EncryptTools {
         byte[] stringBytes = new byte[size];
         stream.read(stringBytes);
         return new String(stringBytes);
-    }
-
-    private static boolean readBoolean(ByteArrayInputStream stream) throws IOException {
-        return readInt(stream) != 0;
     }
 
     @SuppressWarnings("all")
