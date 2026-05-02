@@ -1,45 +1,80 @@
 package software.bernie.geckolib3.geo;
 
-import net.minecraft.client.model.ModelBase;
-import net.minecraft.client.renderer.entity.RendererLivingEntity;
-import net.minecraft.entity.Entity;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.ResourceLocation;
+
+import org.lwjgl.opengl.GL11;
+
+import software.bernie.geckolib3.geo.render.built.GeoBone;
+import software.bernie.geckolib3.geo.render.built.GeoModel;
 
 /**
- * This class is a hack to access protected setBrightness() and
- * unsetBrightness() methods in order to apply red tint on the models upon
- * entities getting hurt
+ * Applies the vanilla 1.7.10 hurt/death red overlay to Geo models.
  */
-public class RenderHurtColor extends RendererLivingEntity {
+public final class RenderHurtColor {
 
-    /**
-     * Private instance
-     */
-    private static RenderHurtColor instance;
-
-    public static RenderHurtColor getInstance() {
-        if (instance == null) {
-            instance = new RenderHurtColor(null, 0);
-        }
-
-        return instance;
-    }
+    private RenderHurtColor() {}
 
     public static boolean set(EntityLivingBase entity, float partialTicks) {
-        return true;// getInstance().setBrightness(entity, partialTicks, true); // TODO
+        if (!shouldRender(entity)) {
+            return false;
+        }
+
+        float brightness = entity.getBrightness(partialTicks);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glDepthFunc(GL11.GL_EQUAL);
+        GL11.glColor4f(brightness, 0.0F, 0.0F, 0.4F);
+        return true;
     }
 
     public static void unset() {
-        // getInstance().unsetBrightness();
+        GL11.glDepthFunc(GL11.GL_LEQUAL);
+        GL11.glDisable(GL11.GL_BLEND);
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
-    public RenderHurtColor(ModelBase modelBaseIn, float shadowSizeIn) {
-        super(modelBaseIn, shadowSizeIn);
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public static boolean render(IGeoRenderer renderer, GeoModel model, Object animatable,
+        EntityLivingBase entity, float partialTicks) {
+        if (!set(entity, partialTicks)) {
+            return false;
+        }
+
+        float brightness = entity.getBrightness(partialTicks);
+        try {
+            renderer.renderEarly(model, animatable, partialTicks, brightness, 0.0F, 0.0F, 0.4F);
+            try {
+                renderer.renderLate(model, animatable, partialTicks, brightness, 0.0F, 0.0F, 0.4F);
+                Tessellator tessellator = Tessellator.instance;
+                tessellator.startDrawing(GL11.GL_QUADS);
+                for (GeoBone group : model.topLevelBones) {
+                    renderer.renderRecursively(tessellator, animatable, group, brightness, 0.0F, 0.0F, 0.4F);
+                }
+                tessellator.draw();
+            } finally {
+                renderer.renderAfter(model, animatable, partialTicks, brightness, 0.0F, 0.0F, 0.4F);
+            }
+        } finally {
+            unset();
+        }
+
+        return true;
     }
 
-    @Override
-    protected ResourceLocation getEntityTexture(Entity entity) {
-        return null;
+    public static boolean shouldRender(EntityLivingBase entity) {
+        return entity.hurtTime > 0 || entity.deathTime > 0;
     }
+
 }

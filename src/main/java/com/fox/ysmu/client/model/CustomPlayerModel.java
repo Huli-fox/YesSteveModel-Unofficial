@@ -11,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
 import com.fox.ysmu.client.animation.AnimationRegister;
+import com.fox.ysmu.client.animation.RemotePlayerAnimationQueries;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.ysmu;
@@ -87,7 +88,9 @@ public class CustomPlayerModel extends AnimatedGeoModel {
         FIRST_PERSON_HEAD_POS = 24;
         if (head != null) {
             float headPitch = (float) Math.toRadians(data.headPitch);
-            float headYaw = (float) Math.toRadians(data.netHeadYaw);
+            float headYaw = (float) Math.toRadians(
+                RemotePlayerAnimationQueries.get(animationEvent, player, data.netHeadYaw)
+                    .headYaw());
             head.setRotationX(head.getRotationX() + headPitch);
             head.setRotationY(head.getRotationY() + headYaw);
             headPoseOffsets.put(head, new HeadPoseOffset(headPitch, headYaw));

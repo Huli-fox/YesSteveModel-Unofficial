@@ -1,6 +1,5 @@
 package com.fox.ysmu.client.renderer;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.scoreboard.Score;
@@ -106,26 +105,22 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     // }
     // }
 
-//    @Override
-//    @SuppressWarnings("all")
-//    protected void func_147906_a(Entity entity, String p_147906_2_, double p_147906_3_, double p_147906_5_,
-//        double p_147906_7_, int p_147906_9_) {
-//        if (entity instanceof EntityPlayer player) {
-//            double distance = player.getDistanceSqToEntity(this.renderManager.livingPlayer);
-//            if (distance < 100) {
-//                Scoreboard scoreboard = player.getWorldScoreboard();
-//                ScoreObjective objective = scoreboard.func_96539_a(2);
-//                if (objective != null) {
-//                    Score score = scoreboard.func_96529_a(player.getCommandSenderName(), objective);
-//                    String scoreText = Integer.toString(score.getScorePoints())
-//                        .concat(" ")
-//                        .concat(objective.getDisplayName());
-//                    super.func_147906_a(player, scoreText, p_147906_3_, p_147906_5_ + 0.26D, p_147906_7_, 100);
-//                }
-//            }
-//            super.func_147906_a(entity, p_147906_2_, p_147906_3_, p_147906_5_, p_147906_7_, p_147906_9_);
-//        }
-//    }
+    @Override
+    protected void func_96449_a(EntityLivingBase entity, double x, double y, double z, String displayName,
+        float scale, double distanceSq) {
+        if (entity instanceof EntityPlayer player && distanceSq < 100.0D) {
+            Scoreboard scoreboard = player.getWorldScoreboard();
+            ScoreObjective objective = scoreboard.func_96539_a(2);
+            if (objective != null) {
+                Score score = scoreboard.func_96529_a(player.getCommandSenderName(), objective);
+                String scoreText = score.getScorePoints() + " " + objective.getDisplayName();
+                double scoreY = player.isPlayerSleeping() ? y - 1.5D : y;
+                this.func_147906_a(player, scoreText, x, scoreY, z, 64);
+                y += this.getFontRendererFromRenderManager().FONT_HEIGHT * 1.15F * scale;
+            }
+        }
+        super.func_96449_a(entity, x, y, z, displayName, scale, distanceSq);
+    }
 
     @Override
     public float getWidthScale(Object animatable) {

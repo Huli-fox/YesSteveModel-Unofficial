@@ -5,7 +5,7 @@
 			"description": {
 				"identifier": "geometry.steve",
 				"texture_width": 64,
-				"texture_height": 64,
+				"texture_height": 32,
 				"visible_bounds_width": 3,
 				"visible_bounds_height": 3,
 				"visible_bounds_offset": [0, 1.5, 0]
@@ -18,13 +18,14 @@
 						{
 							"origin": [0, 22.75, -2],
 							"size": [4, 6, 4],
+							"mirror": true,
 							"uv": {
-								"north": {"uv": [36, 52], "uv_size": [4, 6]},
-								"east": {"uv": [32, 52], "uv_size": [4, 6]},
-								"south": {"uv": [44, 52], "uv_size": [4, 6]},
-								"west": {"uv": [40, 52], "uv_size": [4, 6]},
-								"up": {"uv": [36, 48], "uv_size": [4, 4]},
-								"down": {"uv": [40, 52], "uv_size": [4, -4]}
+								"north": {"uv": [44, 20], "uv_size": [4, 6]},
+								"east": {"uv": [40, 20], "uv_size": [4, 6]},
+								"south": {"uv": [52, 20], "uv_size": [4, 6]},
+								"west": {"uv": [48, 20], "uv_size": [4, 6]},
+								"up": {"uv": [44, 16], "uv_size": [4, 4]},
+								"down": {"uv": [48, 20], "uv_size": [4, -4]}
 							}
 						},
 						{
@@ -32,13 +33,14 @@
 							"size": [3.875, 2.65, 2.475],
 							"pivot": [2, 24.825, 0.2],
 							"rotation": [-45, 0, 0],
+							"mirror": true,
 							"uv": {
-								"north": {"uv": [36, 56], "uv_size": [4, 3]},
-								"east": {"uv": [32, 56], "uv_size": [4, 3]},
-								"south": {"uv": [44, 56], "uv_size": [4, 3]},
-								"west": {"uv": [40, 56], "uv_size": [4, 3]},
-								"up": {"uv": [40, 59], "uv_size": [-4, -3]},
-								"down": {"uv": [43.925, 59], "uv_size": [-4, -3]}
+								"north": {"uv": [44, 24], "uv_size": [4, 3]},
+								"east": {"uv": [40, 24], "uv_size": [4, 3]},
+								"south": {"uv": [52, 24], "uv_size": [4, 3]},
+								"west": {"uv": [48, 24], "uv_size": [4, 3]},
+								"up": {"uv": [48, 27], "uv_size": [-4, -3]},
+								"down": {"uv": [51.925, 27], "uv_size": [-4, -3]}
 							}
 						}
 					]
@@ -47,21 +49,7 @@
 					"name": "LeftSleeve",
 					"parent": "LeftArm",
 					"pivot": [1, 26.75, 0],
-					"cubes": [
-						{
-							"origin": [0, 22.75, -2],
-							"size": [4, 6, 4],
-							"inflate": 0.25,
-							"uv": {
-								"north": {"uv": [52, 52], "uv_size": [4, 6]},
-								"east": {"uv": [48, 52], "uv_size": [4, 6]},
-								"south": {"uv": [60, 52], "uv_size": [4, 6]},
-								"west": {"uv": [56, 52], "uv_size": [4, 6]},
-								"up": {"uv": [52, 48], "uv_size": [4, 4]},
-								"down": {"uv": [60, 52], "uv_size": [4, -4]}
-							}
-						}
-					]
+					"cubes": []
 				},
 				{
 					"name": "LeftForeArm",
@@ -71,13 +59,14 @@
 						{
 							"origin": [0, 16.75, -2],
 							"size": [4, 6, 4],
+							"mirror": true,
 							"uv": {
-								"north": {"uv": [36, 58], "uv_size": [4, 6]},
-								"east": {"uv": [32, 58], "uv_size": [4, 6]},
-								"south": {"uv": [44, 58], "uv_size": [4, 6]},
-								"west": {"uv": [40, 58], "uv_size": [4, 6]},
-								"up": {"uv": [40, 48], "uv_size": [4, 4]},
-								"down": {"uv": [40, 52], "uv_size": [4, -4]}
+								"north": {"uv": [44, 26], "uv_size": [4, 6]},
+								"east": {"uv": [40, 26], "uv_size": [4, 6]},
+								"south": {"uv": [52, 26], "uv_size": [4, 6]},
+								"west": {"uv": [48, 26], "uv_size": [4, 6]},
+								"up": {"uv": [48, 16], "uv_size": [4, 4]},
+								"down": {"uv": [48, 20], "uv_size": [4, -4]}
 							}
 						}
 					]
@@ -111,21 +100,7 @@
 					"name": "LeftForeSleeve",
 					"parent": "LeftForeArm",
 					"pivot": [1, 20.25, 0],
-					"cubes": [
-						{
-							"origin": [0, 16.25, -2],
-							"size": [4, 6, 4],
-							"inflate": 0.25,
-							"uv": {
-								"north": {"uv": [52, 58], "uv_size": [4, 6]},
-								"east": {"uv": [48, 58], "uv_size": [4, 6]},
-								"south": {"uv": [60, 58], "uv_size": [4, 6]},
-								"west": {"uv": [56, 58], "uv_size": [4, 6]},
-								"up": {"uv": [48, 48], "uv_size": [4, 4]},
-								"down": {"uv": [56, 52], "uv_size": [4, -4]}
-							}
-						}
-					]
+					"cubes": []
 				},
 				{
 					"name": "LeftItem",
@@ -168,21 +143,7 @@
 					"name": "RightSleeve",
 					"parent": "RightArm",
 					"pivot": [-1, 26.75, 0],
-					"cubes": [
-						{
-							"origin": [-4, 22.75, -2],
-							"size": [4, 6, 4],
-							"inflate": 0.25,
-							"uv": {
-								"north": {"uv": [44, 36], "uv_size": [4, 6]},
-								"east": {"uv": [40, 36], "uv_size": [4, 6]},
-								"south": {"uv": [52, 36], "uv_size": [4, 6]},
-								"west": {"uv": [48, 36], "uv_size": [4, 6]},
-								"up": {"uv": [44, 32], "uv_size": [4, 4]},
-								"down": {"uv": [52, 36], "uv_size": [4, -4]}
-							}
-						}
-					]
+					"cubes": []
 				},
 				{
 					"name": "RightForeArm",
@@ -207,21 +168,7 @@
 					"name": "rightForeSleeve",
 					"parent": "RightForeArm",
 					"pivot": [-1, 20.25, 0],
-					"cubes": [
-						{
-							"origin": [-4, 16.25, -2],
-							"size": [4, 6, 4],
-							"inflate": 0.25,
-							"uv": {
-								"north": {"uv": [44, 42], "uv_size": [4, 6]},
-								"east": {"uv": [40, 42], "uv_size": [4, 6]},
-								"south": {"uv": [52, 42], "uv_size": [4, 6]},
-								"west": {"uv": [48, 42], "uv_size": [4, 6]},
-								"up": {"uv": [40, 32], "uv_size": [4, 4]},
-								"down": {"uv": [48, 36], "uv_size": [4, -4]}
-							}
-						}
-					]
+					"cubes": []
 				},
 				{
 					"name": "RightHand",
