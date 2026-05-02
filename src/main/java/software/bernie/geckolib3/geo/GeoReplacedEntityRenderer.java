@@ -199,7 +199,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
             GlStateManager.popMatrix();
         }
 
-        // super.doRender(entity, x, y, z, entityYaw, partialTicks);
+        this.passSpecialRender(entity, x, y, z);
     }
 
     protected void preRenderCallback(EntityLivingBase entitylivingbaseIn, float partialTickTime) {}
