@@ -1,7 +1,13 @@
 package com.fox.ysmu.client.renderer;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
+import com.fox.ysmu.client.ClientProxy;
+import com.fox.ysmu.eep.ExtendedModelInfo;
+import com.fox.ysmu.event.api.SpecialPlayerRenderEvent;
+import com.fox.ysmu.util.AnimatableCacheUtil;
+import com.fox.ysmu.util.ModelIdUtil;
 import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -11,8 +17,10 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.common.MinecraftForge;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -22,11 +30,13 @@ import com.fox.ysmu.Config;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.compat.BackhandCompat;
 
+import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.geo.render.built.GeoBone;
 import software.bernie.geckolib3.geo.render.built.GeoCube;
 import software.bernie.geckolib3.geo.render.built.GeoModel;
 import software.bernie.geckolib3.geo.render.built.GeoQuad;
 import software.bernie.geckolib3.geo.render.built.GeoVertex;
+import software.bernie.geckolib3.resource.GeckoLibCache;
 
 public final class FirstPersonHandRenderer {
 
@@ -65,6 +75,38 @@ public final class FirstPersonHandRenderer {
         return findRightArmBone(geoModel).isPresent();
     }
 
+    public static boolean tryRender(RenderHandEvent event, Minecraft mc, EntityPlayer player,
+        ItemRenderer itemRenderer) {
+        CustomHandRenderContext context = getCustomHandRenderContext(mc, player, itemRenderer);
+        if (context == null) {
+            return false;
+        }
+
+        event.setCanceled(true);
+        render(event, mc, player, itemRenderer, context.renderer, context.geoModel, context.customPlayer);
+        return true;
+    }
+
+    public static boolean tryRenderInActiveFirstPersonPass(Minecraft mc, ItemRenderer itemRenderer, float partialTicks,
+        boolean renderOffhand) {
+        EntityPlayer player = mc == null ? null : mc.thePlayer;
+        CustomHandRenderContext context = getCustomHandRenderContext(mc, player, itemRenderer);
+        if (context == null) {
+            return false;
+        }
+
+        renderFirstPersonItems(
+            mc,
+            player,
+            itemRenderer,
+            context.renderer,
+            context.geoModel,
+            context.customPlayer,
+            partialTicks,
+            renderOffhand);
+        return true;
+    }
+
     public static void render(RenderHandEvent event, Minecraft mc, EntityPlayer player, ItemRenderer itemRenderer,
         CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer) {
         float partialTicks = event.partialTicks;
@@ -82,7 +124,7 @@ public final class FirstPersonHandRenderer {
 
             entityRenderer.enableLightmap((double) partialTicks);
             try {
-                renderFirstPersonItems(mc, player, itemRenderer, renderer, geoModel, customPlayer, partialTicks);
+                renderFirstPersonItems(mc, player, itemRenderer, renderer, geoModel, customPlayer, partialTicks, true);
             } finally {
                 entityRenderer.disableLightmap((double) partialTicks);
             }
@@ -129,7 +171,8 @@ public final class FirstPersonHandRenderer {
     }
 
     private static void renderFirstPersonItems(Minecraft mc, EntityPlayer player, ItemRenderer itemRenderer,
-        CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer, float partialTicks) {
+        CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer, float partialTicks,
+        boolean renderOffhand) {
         applyVanillaHandLighting(player, partialTicks);
         applyVanillaArmViewSmoothing(player, partialTicks);
         setupLightmap(mc, player);
@@ -137,7 +180,9 @@ public final class FirstPersonHandRenderer {
 
         try {
             renderCustomEmptyMainHand(mc, player, itemRenderer, renderer, geoModel, customPlayer, partialTicks);
-            BackhandCompat.renderOffhand(partialTicks);
+            if (renderOffhand) {
+                BackhandCompat.renderOffhand(partialTicks);
+            }
         } finally {
             GL11.glDisable(GL12.GL_RESCALE_NORMAL);
             RenderHelper.disableStandardItemLighting();
@@ -336,6 +381,74 @@ public final class FirstPersonHandRenderer {
 
         private boolean hasValues() {
             return this.minX != Float.POSITIVE_INFINITY;
+        }
+    }
+
+    private static CustomHandRenderContext getCustomHandRenderContext(Minecraft mc, EntityPlayer player,
+        ItemRenderer itemRenderer) {
+        if (!shouldRenderCustomHand(mc, player, itemRenderer)) {
+            return null;
+        }
+
+        ExtendedModelInfo eep = ExtendedModelInfo.get(player);
+        if (eep == null) {
+            return null;
+        }
+        ResourceLocation modelId = eep.getModelId();
+        if (modelId == null) {
+            return null;
+        }
+        GeoModel geoModel = GeckoLibCache.getInstance()
+            .getGeoModels()
+            .get(ModelIdUtil.getArmId(modelId));
+        if (!hasRenderableRightArm(geoModel)) {
+            return null;
+        }
+        CustomPlayerRenderer renderer = ClientProxy.getInstance();
+        if (renderer == null) {
+            return null;
+        }
+        CustomPlayerEntity customPlayer = getCustomHandPlayer(modelId, eep, player);
+        if (customPlayer == null) {
+            return null;
+        }
+        if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) {
+            return null;
+        }
+        return new CustomHandRenderContext(renderer, geoModel, customPlayer);
+    }
+
+    private static CustomPlayerEntity getCustomHandPlayer(ResourceLocation modelId, ExtendedModelInfo eep,
+        EntityPlayer player) {
+        IAnimatable animatable;
+        try {
+            animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, () -> {
+                CustomPlayerEntity entity = new CustomPlayerEntity();
+                entity.setTexture(eep.getSelectTexture());
+                return entity;
+            });
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        if (animatable instanceof CustomPlayerEntity customPlayer) {
+            customPlayer.setPlayer(player);
+            customPlayer.setMainModel(ModelIdUtil.getMainId(modelId));
+            customPlayer.setTexture(eep.getSelectTexture());
+            return customPlayer;
+        }
+        return null;
+    }
+
+    private static final class CustomHandRenderContext {
+        private final CustomPlayerRenderer renderer;
+        private final GeoModel geoModel;
+        private final CustomPlayerEntity customPlayer;
+
+        private CustomHandRenderContext(CustomPlayerRenderer renderer, GeoModel geoModel,
+            CustomPlayerEntity customPlayer) {
+            this.renderer = renderer;
+            this.geoModel = geoModel;
+            this.customPlayer = customPlayer;
         }
     }
 }

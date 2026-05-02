@@ -36,6 +36,7 @@
 dependencies {
     runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
     runtimeOnlyNonPublishable("curse.maven:Nashorn-374413:2924946")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:Angelica:2.1.19:dev")
     compileOnly("org.jetbrains:annotations:26.0.2")
     devOnlyNonPublishable("com.github.GTNewHorizons:Backhand:1.8.0:dev")
     compileOnly(rfg.deobf("maven.modrinth:etfuturum:2.6.2")) {transitive = false}
