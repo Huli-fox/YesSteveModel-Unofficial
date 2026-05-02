@@ -10,14 +10,12 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import com.fox.ysmu.compat.Utils;
 import com.fox.ysmu.data.ModelData;
+import com.fox.ysmu.util.ModelIdUtil;
 import com.google.common.collect.Maps;
 
 import software.bernie.geckolib3.geo.raw.pojo.Converter;
@@ -27,19 +25,17 @@ public final class FolderFormat {
 
     public static void cacheAllModels(Path rootPath) {
         File root = rootPath.toFile();
-        Collection<File> dirs = FileUtils.listFilesAndDirs(root, DirectoryFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
-        dirs.remove(root);
+        File[] dirs = root.listFiles(file -> file.isDirectory());
+        if (dirs == null) {
+            return;
+        }
         for (File dir : dirs) {
             String dirName = dir.getName();
-            if (!Utils.isValidResourceLocation(dirName)) {
-                continue;
-            }
             boolean noMainModelFile = true;
             boolean noArmModelFile = true;
             boolean noTextureFile = true;
             Collection<File> files = FileUtils.listFiles(
-                rootPath.resolve(dirName)
-                    .toFile(),
+                dir,
                 FileFileFilter.FILE,
                 null);
             for (File file : files) {
@@ -63,16 +59,17 @@ public final class FolderFormat {
             if (noTextureFile) {
                 continue;
             }
-            ServerModelInfo info = cacheModel(rootPath, dirName);
+            String modelId = ModelIdUtil.getInternalModelId(dirName);
+            ServerModelInfo info = cacheModel(dir.toPath(), modelId);
             if (info != null) {
-                CACHE_NAME_INFO.put(dirName, info);
+                CACHE_NAME_INFO.put(modelId, info);
             }
         }
     }
 
-    private static ServerModelInfo cacheModel(Path rootPath, String modelId) {
+    private static ServerModelInfo cacheModel(Path modelPath, String modelId) {
         try {
-            ModelData data = getModelData(rootPath, modelId);
+            ModelData data = getModelDataFromPath(modelPath, modelId);
             return ModelCacheWriter.write(data);
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,9 +78,12 @@ public final class FolderFormat {
     }
 
     @NotNull
-    public static ModelData getModelData(Path rootPath, String modelId) throws IOException {
-        Path modelPath = rootPath.resolve(modelId);
+    public static ModelData getModelData(Path rootPath, String modelName) throws IOException {
+        return getModelDataFromPath(rootPath.resolve(modelName), ModelIdUtil.getInternalModelId(modelName));
+    }
 
+    @NotNull
+    private static ModelData getModelDataFromPath(Path modelPath, String modelId) throws IOException {
         Map<String, byte[]> model = Maps.newHashMap();
         model.put("main", getBytes(modelPath, MAIN_MODEL_FILE_NAME));
         model.put("arm", getBytes(modelPath, ARM_MODEL_FILE_NAME));

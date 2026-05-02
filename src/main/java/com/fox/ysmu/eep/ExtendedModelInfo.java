@@ -10,6 +10,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.IExtendedEntityProperties;
 
 import com.fox.ysmu.Config;
+import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.ysmu;
 
 public class ExtendedModelInfo implements IExtendedEntityProperties {
@@ -21,8 +22,10 @@ public class ExtendedModelInfo implements IExtendedEntityProperties {
     private final EntityPlayer player;
 
     // 2. 将原 ModelInfoCapability 的字段和方法直接移到这里
-    private ResourceLocation modelId = new ResourceLocation(ysmu.MODID, Config.DEFAULT_MODEL_ID);
-    private ResourceLocation selectTexture = new ResourceLocation(ysmu.MODID, Config.DEFAULT_MODEL_ID + "/" + Config.DEFAULT_MODEL_TEXTURE);
+    private ResourceLocation modelId = new ResourceLocation(
+        ysmu.MODID,
+        ModelIdUtil.getInternalModelId(Config.DEFAULT_MODEL_ID));
+    private ResourceLocation selectTexture = ModelIdUtil.getSubModelId(modelId, Config.DEFAULT_MODEL_TEXTURE);
     private String animation = "idle";
     private boolean playAnimation = false;
     private boolean dirty; // dirty 标志可以保留，用于客户端渲染逻辑判断是否需要更新
