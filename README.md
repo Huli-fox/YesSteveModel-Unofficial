@@ -13,18 +13,9 @@
 ├── extra.animation.json
 └── *.png
 ```
-或者这样：
-```
-<模型名或你喜欢的名字>
-├── animations
-├── avatars
-├── models
-├── textures
-└── ysm.json
-```
 
 ## 鸣谢
 - [酒石酸菌](https://github.com/TartaricAcid)以及YSM开发团队 开发了YSM并[将旧版开源](https://github.com/YesSteveModel/LgeacyYSM)
 - [Geckolib-Unofficial-1.7.10](https://github.com/Goodbird-git/Geckolib-Unofficial-1.7.10) 提供了1.7.10的Geckolib
-- [kaixiten](https://github.com/kaixiten) 测试&协助本项目开发
 - [ExampleMod1.7.10](https://github.com/GTNewHorizons/ExampleMod1.7.10) MOD模板
+- 测试&协助本项目开发的各位
