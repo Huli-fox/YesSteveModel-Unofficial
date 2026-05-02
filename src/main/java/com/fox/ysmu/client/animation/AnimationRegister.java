@@ -58,7 +58,7 @@ public class AnimationRegister {
 
     private static void registerDamageJumpSneakStates() {
         register("attacked", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.NORMAL, (player, event) -> player.hurtTime > 0);
-        register("jump", Priority.NORMAL, (player, event) -> !isPlayerOnGround(player) && !player.isInWater() && motionYState(player, 0.0D) != 0);
+        register("jump", Priority.NORMAL, (player, event) -> isPlayerJumping(player));
         register("sneak", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
         register("sneaking", Priority.NORMAL, (player, event) -> isPlayerOnGround(player) && player.isSneaking());
     }
@@ -200,7 +200,7 @@ public class AnimationRegister {
         parser.setValue("query.is_first_person", () -> MolangUtils.booleanToFloat(mc.gameSettings.thirdPersonView == 0));
         parser.setValue("query.is_in_water", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_in_water_or_rain", () -> MolangUtils.booleanToFloat(player.isWet()));
-        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(!isPlayerFlying(player) && !player.isRiding() && !isPlayerOnGround(player) && motionYState(player, 0.0D) != 0 && !player.isInWater()));
+        parser.setValue("query.is_jumping", () -> MolangUtils.booleanToFloat(isPlayerJumping(player)));
         parser.setValue("query.is_on_fire", () -> MolangUtils.booleanToFloat(player.isBurning()));
         parser.setValue("query.is_on_ground", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player)));
         parser.setValue("query.is_playing_dead", () -> MolangUtils.booleanToFloat(player.isDead));
@@ -339,6 +339,16 @@ public class AnimationRegister {
         } else {
             return RemotePlayerMotionStates.isFlying(player);
         }
+    }
+
+    private static boolean isPlayerJumping(EntityPlayer player) {
+        if (isPlayerFlying(player) || player.isRiding() || isPlayerOnGround(player) || player.isInWater()) {
+            return false;
+        }
+        if (player == Minecraft.getMinecraft().thePlayer) {
+            return motionYState(player, 0.0D) != 0;
+        }
+        return true;
     }
 
     /**
