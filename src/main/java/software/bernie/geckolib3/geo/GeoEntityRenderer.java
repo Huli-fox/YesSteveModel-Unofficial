@@ -123,8 +123,6 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
                 Minecraft.getMinecraft().renderEngine.bindTexture(getEntityTexture(entity));
                 Color renderColor = getRenderColor((T) entity, partialTicks);
 
-                boolean flag = this.setDoRenderBrightness((T) entity, partialTicks);
-
                 if (!entity.isInvisibleToPlayer(Minecraft.getMinecraft().thePlayer)) render(
                     model,
                     (T) entity,
@@ -153,10 +151,7 @@ public abstract class GeoEntityRenderer<T extends EntityLivingBase & IAnimatable
                         this.renderLeash((EntityLiving) entity, x, y, z, entityYaw, partialTicks);
                     }
                 }
-
-                if (flag) {
-                    RenderHurtColor.unset();
-                }
+                RenderHurtColor.render(this, model, entity, entity, partialTicks);
 
             } catch (Exception e) {
                 if (ConfigHandler.debugPrintStacktraces) {

@@ -183,6 +183,7 @@ public abstract class GeoReplacedEntityRenderer<T extends IAnimatable> extends R
                         this.renderLeash((EntityLiving) entity, x, y, z, entityYaw, partialTicks);
                     }
                 }
+                RenderHurtColor.render(this, model, entity, entity, partialTicks);
             } catch (Exception e) {
                 if (ConfigHandler.debugPrintStacktraces) {
                     e.printStackTrace();
