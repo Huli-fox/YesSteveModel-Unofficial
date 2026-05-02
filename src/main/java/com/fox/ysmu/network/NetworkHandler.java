@@ -28,6 +28,7 @@ public final class NetworkHandler {
     private static final int CLIENTBOUND_REQUEST_SERVER_MODEL_INFO = 10;
     private static final int CLIENTBOUND_SYNC_PLAYER_MOTION_STATE = 11;
     private static final int CLIENTBOUND_COMPLETE_FEEDBACK = 12;
+    private static final int CLIENTBOUND_SEND_MODEL_PASSWORD = 13;
 
     public static final int OPEN_NPC_MODEL_GUI = 93;
     public static final int SET_NPC_MODEL_ID = 94;
@@ -103,6 +104,11 @@ public final class NetworkHandler {
             CompleteFeedback.Handler.class,
             CompleteFeedback.class,
             CLIENTBOUND_COMPLETE_FEEDBACK,
+            Side.CLIENT);
+        CHANNEL.registerMessage(
+            SendModelPassword.Handler.class,
+            SendModelPassword.class,
+            CLIENTBOUND_SEND_MODEL_PASSWORD,
             Side.CLIENT);
     }
 

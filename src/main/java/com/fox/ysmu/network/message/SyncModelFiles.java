@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -17,6 +18,7 @@ import com.fox.ysmu.model.format.ServerModelInfo;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.util.ThreadTools;
 import com.fox.ysmu.util.UuidUtils;
+import com.fox.ysmu.ysmu;
 import com.google.common.collect.Lists;
 
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -86,7 +88,7 @@ public class SyncModelFiles implements IMessage {
                     ThreadTools.THREAD_POOL
                         .submit(() -> NetworkHandler.sendToClientPlayer(new SendModelFile(modelBytes), sender));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    ysmu.LOG.warn("Failed to read YSM server model cache file " + md5, e);
                 }
             }
         }
@@ -94,13 +96,14 @@ public class SyncModelFiles implements IMessage {
         private void sendPassword(EntityPlayerMP sender) {
             try {
                 byte[] password = FileUtils.readFileToByteArray(PASSWORD_FILE.toFile());
-                byte[] uuid = UuidUtils.asBytes(sender.getUniqueID());
+                UUID playerId = sender.getUniqueID();
+                byte[] uuid = UuidUtils.asBytes(playerId);
                 byte[] output = EncryptTools.encryptPassword(uuid, password);
                 // The client must receive the password blob before RequestLoadModel can decrypt cached files.
                 ThreadTools.THREAD_POOL
-                    .submit(() -> NetworkHandler.sendToClientPlayer(new SendModelFile(output), sender));
+                    .submit(() -> NetworkHandler.sendToClientPlayer(new SendModelPassword(playerId, output), sender));
             } catch (Exception e) {
-                e.printStackTrace();
+                ysmu.LOG.warn("Failed to send YSM model sync password to " + sender.getCommandSenderName(), e);
             }
         }
     }

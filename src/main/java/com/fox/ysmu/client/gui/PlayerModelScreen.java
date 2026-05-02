@@ -35,6 +35,8 @@ public class PlayerModelScreen extends GuiScreen {
     private int page;
     private int x;
     private int y;
+    private int lastClientModelCount = -1;
+    private boolean requestedModelSync;
 
     public PlayerModelScreen() {
         this.category = Category.ALL;
@@ -78,7 +80,12 @@ public class PlayerModelScreen extends GuiScreen {
     public void initGui() {
         // clearWidgets() -> buttonList.clear()
         this.buttonList.clear();
+        if (ClientModelManager.MODELS.isEmpty() && !this.requestedModelSync) {
+            this.requestedModelSync = true;
+            ClientModelManager.sendSyncModelMessage();
+        }
         this.calculateModelList();
+        this.lastClientModelCount = ClientModelManager.MODELS.size();
 
         this.x = (width - 420) / 2;
         this.y = (height - 235) / 2;
@@ -249,6 +256,10 @@ public class PlayerModelScreen extends GuiScreen {
     @Override
     public void updateScreen() {
         this.textField.updateCursorCounter();
+        int currentModelCount = ClientModelManager.MODELS.size();
+        if (currentModelCount != this.lastClientModelCount) {
+            this.initGui();
+        }
     }
 
     @Override
