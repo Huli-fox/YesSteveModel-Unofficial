@@ -1,9 +1,8 @@
 package com.fox.ysmu.client;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-
 import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
+import com.fox.ysmu.client.compat.AngelicaCompat;
 import com.fox.ysmu.client.renderer.FirstPersonHandRenderer;
 import com.fox.ysmu.util.RenderUtil;
 import net.minecraft.client.Minecraft;
@@ -15,7 +14,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 
 import com.fox.ysmu.Config;
@@ -29,7 +27,6 @@ import com.fox.ysmu.event.api.SpecialPlayerRenderEvent;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.RequestLoadModel;
 import com.fox.ysmu.network.message.SetPlayAnimation;
-import com.fox.ysmu.util.AnimatableCacheUtil;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
 
@@ -38,9 +35,6 @@ import cpw.mods.fml.common.gameevent.InputEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.relauncher.Side;
-import software.bernie.geckolib3.core.IAnimatable;
-import software.bernie.geckolib3.geo.render.built.GeoModel;
-import software.bernie.geckolib3.resource.GeckoLibCache;
 
 @EventBusSubscriber(side = Side.CLIENT)
 public class ClientEventHandler {
@@ -151,50 +145,10 @@ public class ClientEventHandler {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
         ItemRenderer itemRenderer = mc.entityRenderer.itemRenderer;
-        if (!FirstPersonHandRenderer.shouldRenderCustomHand(mc, player, itemRenderer)) return;
-
-        ExtendedModelInfo eep = ExtendedModelInfo.get(player);
-        if (eep == null) return;
-        ResourceLocation modelId = eep.getModelId();
-        if (modelId == null) return;
-        GeoModel geoModel = getArmGeoModel(modelId);
-        if (geoModel == null) return;
-        if (!FirstPersonHandRenderer.hasRenderableRightArm(geoModel)) return;
-        CustomPlayerRenderer renderer = ClientProxy.getInstance();
-        if (renderer == null) return;
-        CustomPlayerEntity customPlayer = getCustomHandPlayer(modelId, eep, player);
-        if (customPlayer == null) return;
-        if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) return;
-
-        event.setCanceled(true);
-        FirstPersonHandRenderer.render(event, mc, player, itemRenderer, renderer, geoModel, customPlayer);
-    }
-
-    private static GeoModel getArmGeoModel(ResourceLocation modelId) {
-        return GeckoLibCache.getInstance()
-            .getGeoModels()
-            .get(ModelIdUtil.getArmId(modelId));
-    }
-
-    private static CustomPlayerEntity getCustomHandPlayer(ResourceLocation modelId, ExtendedModelInfo eep,
-        EntityPlayer player) {
-        IAnimatable animatable;
-        try {
-            animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, () -> {
-                CustomPlayerEntity entity = new CustomPlayerEntity();
-                entity.setTexture(eep.getSelectTexture());
-                return entity;
-            });
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+        if (AngelicaCompat.usesShaderHandRenderer()) {
+            return;
         }
-        if (animatable instanceof CustomPlayerEntity customPlayer) {
-            customPlayer.setPlayer(player);
-            customPlayer.setMainModel(ModelIdUtil.getMainId(modelId));
-            customPlayer.setTexture(eep.getSelectTexture());
-            return customPlayer;
-        }
-        return null;
+        FirstPersonHandRenderer.tryRender(event, mc, player, itemRenderer);
     }
 
     @SubscribeEvent
