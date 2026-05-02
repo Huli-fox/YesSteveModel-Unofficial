@@ -11,7 +11,6 @@ import net.minecraft.entity.player.EntityPlayer;
 
 import org.apache.commons.io.FileUtils;
 
-import com.fox.ysmu.client.ClientModelManager;
 import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.model.format.FolderFormat;
 import com.fox.ysmu.model.format.ServerModelInfo;
@@ -67,10 +66,6 @@ public final class ServerModelManager {
         for (EntityPlayer player : playerList) {
             NetworkHandler.sendToClientPlayer(new RequestSyncModel(), player);
         }
-    }
-
-    public static void sendRequestSyncModelMessage() {
-        ClientModelManager.sendSyncModelMessage();
     }
 
     public static void sendRequestSyncModelMessage(EntityPlayer player) {

@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.annotation.Nullable;
 
@@ -55,8 +58,9 @@ public class ClientModelManager {
     public static Map<ResourceLocation, List<IChatComponent>> EXTRA_INFO = Maps.newHashMap();
     public static Map<ResourceLocation, String[]> EXTRA_ANIMATION_NAME = Maps.newHashMap();
     public static AnimationFile DEFAULT_ANIMATION_FILE = new AnimationFile();
-    public static List<String> CACHE_MD5 = Lists.newArrayList();
-    public static byte[] PASSWORD;
+    public static List<String> CACHE_MD5 = Collections.synchronizedList(Lists.newArrayList());
+    public static volatile byte[] PASSWORD;
+    public static volatile UUID PASSWORD_UUID;
 
     public static void registerAll(ModelData data) {
         ResourceLocation modelId = getModelId(data);
@@ -196,12 +200,11 @@ public class ClientModelManager {
     }
 
     public static void sendSyncModelMessage() {
-        MODELS.clear();
-        CACHE_MD5.clear();
-        SCALE_INFO.clear();
-        EXTRA_INFO.clear();
-        EXTRA_ANIMATION_NAME.clear();
-        ConditionManager.clear();
+        PASSWORD = null;
+        PASSWORD_UUID = null;
+        clearCachedModelMd5();
+        Minecraft.getMinecraft()
+            .func_152344_a(ClientModelManager::clearRuntimeModelCaches);
         String[] md5Info = getMd5Info();
         SyncModelFiles syncModelFiles = new SyncModelFiles(md5Info);
         ThreadTools.THREAD_POOL.submit(() -> {
@@ -217,8 +220,12 @@ public class ClientModelManager {
     }
 
     private static String[] getMd5Info() {
-        Collection<File> files = FileUtils
-            .listFiles(ServerModelManager.CACHE_CLIENT.toFile(), FileFileFilter.FILE, null);
+        File cacheDir = ServerModelManager.CACHE_CLIENT.toFile();
+        if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
+            ysmu.LOG.warn("Failed to create YSM client model cache directory: {}", cacheDir);
+            return new String[0];
+        }
+        Collection<File> files = FileUtils.listFiles(cacheDir, FileFileFilter.FILE, null);
         String[] output = new String[files.size()];
         int i = 0;
         for (File file : files) {
@@ -226,6 +233,40 @@ public class ClientModelManager {
             i++;
         }
         return output;
+    }
+
+    private static void clearRuntimeModelCaches() {
+        MODELS.clear();
+        SCALE_INFO.clear();
+        EXTRA_INFO.clear();
+        EXTRA_ANIMATION_NAME.clear();
+        ConditionManager.clear();
+    }
+
+    public static void rememberCachedModel(String md5) {
+        synchronized (CACHE_MD5) {
+            if (!CACHE_MD5.contains(md5)) {
+                CACHE_MD5.add(md5);
+            }
+        }
+    }
+
+    public static List<String> getCachedModelSnapshot() {
+        synchronized (CACHE_MD5) {
+            return new ArrayList<>(CACHE_MD5);
+        }
+    }
+
+    public static void clearConnectionState() {
+        PASSWORD = null;
+        PASSWORD_UUID = null;
+        clearCachedModelMd5();
+    }
+
+    private static void clearCachedModelMd5() {
+        synchronized (CACHE_MD5) {
+            CACHE_MD5.clear();
+        }
     }
 
     private static byte[] getBytes(Path root, String fileName) throws IOException {

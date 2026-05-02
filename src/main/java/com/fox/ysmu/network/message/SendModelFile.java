@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import com.fox.ysmu.client.ClientModelManager;
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.util.Md5Utils;
+import com.fox.ysmu.ysmu;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -41,7 +42,7 @@ public class SendModelFile implements IMessage {
 
         @Override
         public IMessage onMessage(SendModelFile message, MessageContext ctx) {
-            // Encrypted password packets are currently distinguished by EncryptTools.PASSWORD_SIZE after encryption.
+            // Legacy password packets used this length; current sync uses SendModelPassword.
             if (message.data.length == 48) {
                 ClientModelManager.PASSWORD = message.data;
             } else {
@@ -51,9 +52,10 @@ public class SendModelFile implements IMessage {
                     .toFile();
                 try {
                     FileUtils.writeByteArrayToFile(file, message.data);
+                    ClientModelManager.rememberCachedModel(fileName);
                     RequestLoadModel.loadModel(fileName);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    ysmu.LOG.warn("Failed to save YSM model cache file " + fileName, e);
                 }
             }
             return null;

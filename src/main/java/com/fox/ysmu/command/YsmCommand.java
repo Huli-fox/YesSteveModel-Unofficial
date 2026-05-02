@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 import net.minecraft.command.*;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentTranslation;
 
 import org.apache.commons.io.FileUtils;
@@ -52,12 +51,7 @@ public class YsmCommand extends CommandBase {
         checkModelFiles(sender, CUSTOM);
         ServerModelManager.reloadPacks();
 
-        // TODO 需要根据加载环境判断是客户端还是服务端
-        if (MinecraftServer.getServer().isDedicatedServer()) {
-            ServerModelManager.sendRequestSyncModelMessage(sender.getEntityWorld().playerEntities);
-        } else {
-            ServerModelManager.sendRequestSyncModelMessage();
-        }
+        ServerModelManager.sendRequestSyncModelMessage(sender.getEntityWorld().playerEntities);
 
         watch.stop();
         sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.reload.info", watch.getTime()));

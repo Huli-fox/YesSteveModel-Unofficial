@@ -1,6 +1,5 @@
 package com.fox.ysmu.client;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -21,6 +20,7 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 
 import org.joml.Quaternionf;
 import org.lwjgl.opengl.GL11;
@@ -77,10 +77,18 @@ public class ClientEventHandler {
         // its texture map. Registering model textures there mutates the same
         // map and can make GTNH disable all user resource packs after a CME.
         ClientModelManager.loadDefaultModel();
-        List<String> cachedModels = new ArrayList<>(ClientModelManager.CACHE_MD5);
+        List<String> cachedModels = ClientModelManager.getCachedModelSnapshot();
         for (String md5 : cachedModels) {
             RequestLoadModel.loadModel(md5);
         }
+    }
+
+    @SubscribeEvent
+    public static void onClientPlayerJoinWorld(EntityJoinWorldEvent event) {
+        if (!event.world.isRemote || !(event.entity instanceof EntityClientPlayerMP)) {
+            return;
+        }
+        ClientModelManager.sendSyncModelMessage();
     }
 
     @SubscribeEvent
@@ -339,6 +347,7 @@ public class ClientEventHandler {
 
     @SubscribeEvent
     public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
+        ClientModelManager.clearConnectionState();
         RemotePlayerMotionStates.clear();
         NPCData.clear();
     }
