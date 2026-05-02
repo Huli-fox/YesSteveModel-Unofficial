@@ -28,6 +28,7 @@ import org.lwjgl.util.glu.Project;
 import org.lwjgl.util.vector.Quaternion;
 
 import com.fox.ysmu.Config;
+import com.fox.ysmu.client.animation.RemotePlayerAnimationQueries;
 import com.fox.ysmu.client.animation.RemotePlayerMotionStates;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
@@ -88,6 +89,7 @@ public class ClientEventHandler {
         if (!event.world.isRemote || !(event.entity instanceof EntityClientPlayerMP)) {
             return;
         }
+        RemotePlayerAnimationQueries.clear();
         ClientModelManager.sendSyncModelMessage();
     }
 
@@ -348,6 +350,7 @@ public class ClientEventHandler {
     @SubscribeEvent
     public static void onPlayerLeave(PlayerEvent.PlayerLoggedOutEvent event) {
         ClientModelManager.clearConnectionState();
+        RemotePlayerAnimationQueries.clear();
         RemotePlayerMotionStates.clear();
         NPCData.clear();
     }

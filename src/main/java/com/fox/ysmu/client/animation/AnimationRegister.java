@@ -165,15 +165,17 @@ public class AnimationRegister {
         if (mc.theWorld == null) {
             return;
         }
-        setEntityQueryValues(animationEvent, parser, data, player, mc);
+        RemotePlayerAnimationQueries.QueryValues queryValues = RemotePlayerAnimationQueries
+            .get(animationEvent, player, data.netHeadYaw);
+        setEntityQueryValues(parser, data, player, mc, queryValues);
         setStateQueryValues(parser, player, mc);
         setItemUseQueryValues(parser, player);
         setWorldQueryValues(parser, player, mc);
-        setYsmValues(animationEvent, parser, data, player);
+        setYsmValues(animationEvent, parser, data, player, queryValues);
     }
 
-    private static void setEntityQueryValues(AnimationEvent<CustomPlayerEntity> animationEvent, MolangParser parser,
-        EntityModelData data, EntityPlayer player, Minecraft mc) {
+    private static void setEntityQueryValues(MolangParser parser, EntityModelData data, EntityPlayer player,
+        Minecraft mc, RemotePlayerAnimationQueries.QueryValues queryValues) {
         parser.setValue("query.actor_count", () -> mc.theWorld.loadedEntityList.size());
         parser.setValue("query.body_x_rotation", player.rotationPitch);
         parser.setValue("query.body_y_rotation", () -> MathHelper.wrapAngleTo180_float(player.rotationYaw));
@@ -182,17 +184,17 @@ public class AnimationRegister {
         parser.setValue("query.equipment_count", () -> getEquipmentCount(player));
         parser.setValue("query.eye_target_x_rotation", () -> player.rotationPitch);
         parser.setValue("query.eye_target_y_rotation", () -> player.rotationYaw);
-        parser.setValue("query.ground_speed", () -> getGroundSpeed(player));
+        parser.setValue("query.ground_speed", queryValues.groundSpeed());
         parser.setValue("query.has_cape", () -> MolangUtils.booleanToFloat(hasCape(player)));
         parser.setValue("query.has_rider", () -> MolangUtils.booleanToFloat(player.riddenByEntity != null));
-        parser.setValue("query.head_x_rotation", () -> data.netHeadYaw);
+        parser.setValue("query.head_x_rotation", queryValues.headYaw());
         parser.setValue("query.head_y_rotation", () -> data.headPitch);
         parser.setValue("query.health", player::getHealth);
         parser.setValue("query.hurt_time", () -> player.hurtTime);
         parser.setValue("query.modified_distance_moved", () -> player.distanceWalkedModified);
         parser.setValue("query.vertical_speed", () -> getVerticalSpeed(player));
         parser.setValue("query.walk_distance", () -> player.distanceWalkedOnStepModified);
-        parser.setValue("query.yaw_speed", () -> getYawSpeed(animationEvent, player));
+        parser.setValue("query.yaw_speed", queryValues.yawSpeed());
     }
 
     private static void setStateQueryValues(MolangParser parser, EntityPlayer player, Minecraft mc) {
@@ -229,8 +231,8 @@ public class AnimationRegister {
     }
 
     private static void setYsmValues(AnimationEvent<CustomPlayerEntity> animationEvent, MolangParser parser,
-        EntityModelData data, EntityPlayer player) {
-        parser.setValue("ysm.head_yaw", () -> data.netHeadYaw);
+        EntityModelData data, EntityPlayer player, RemotePlayerAnimationQueries.QueryValues queryValues) {
+        parser.setValue("ysm.head_yaw", queryValues.headYaw());
         parser.setValue("ysm.head_pitch", () -> data.headPitch);
         parser.setValue("ysm.has_helmet", () -> getSlotValue(player, 4));
         parser.setValue("ysm.has_chest_plate", () -> getSlotValue(player, 3));
@@ -279,16 +281,6 @@ public class AnimationRegister {
         } else {
             return useItem.getMaxItemUseDuration();
         }
-    }
-
-    private static float getYawSpeed(AnimationEvent<CustomPlayerEntity> animationEvent, EntityPlayer player) {
-        return player.rotationYaw - player.prevRotationYaw;
-    }
-
-    private static float getGroundSpeed(EntityPlayer player) {
-        double dx = player.motionX;
-        double dz = player.motionZ;
-        return (float) (MathHelper.sqrt_double(dx * dx + dz * dz) * 20.0);
     }
 
     private static float getVerticalSpeed(EntityPlayer player) {
