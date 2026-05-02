@@ -46,7 +46,8 @@ public final class ServerModelManager {
     public static final Path PASSWORD_FILE = CACHE_SERVER.resolve("PASSWORD");
     public static final Path CACHE_CLIENT = CACHE.resolve("client");
     /**
-     * 模型名称 -> 模型额外信息缓存
+     * 模型内部 ID -> 模型额外信息缓存
+     * 非安全磁盘名称会先编码为内部 ID，再写入此缓存。
      * 可以方便的通过此缓存，来判断客户端发来的 MD5 在不在服务端
      * 从而将服务器文件发送给玩家
      * 还可以获取其他服务端模型信息

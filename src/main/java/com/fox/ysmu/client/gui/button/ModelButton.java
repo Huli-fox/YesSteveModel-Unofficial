@@ -7,6 +7,7 @@ import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.OpenModelGuiMessage;
 import com.fox.ysmu.network.message.SetModelAndTexture;
 import com.fox.ysmu.network.message.SetNpcModelAndTexture;
+import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.util.RenderUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -34,7 +35,7 @@ public class ModelButton extends GuiButton {
         this.color = 0xFF_434242;
         this.tooltips = tooltips;
         this.player = player;
-        this.displayString = modelInfo.getLeft().getResourcePath();
+        this.displayString = ModelIdUtil.getModelDisplayName(modelInfo.getLeft());
     }
 
     public void doPress() {

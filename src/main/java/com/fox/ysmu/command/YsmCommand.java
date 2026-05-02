@@ -67,9 +67,6 @@ public class YsmCommand extends CommandBase {
         Collection<File> dirs = FileUtils.listFiles(rootPath.toFile(), DirectoryFileFilter.INSTANCE, null);
         for (File dir : dirs) {
             String dirName = dir.getName();
-            if (!isValidResourceLocation(dirName)) {
-                sender.addChatMessage(new ChatComponentTranslation("message.yes_steve_model.model.reload.error.dir_name", dirName));
-            }
             boolean noMainModelFile = true;
             boolean noArmModelFile = true;
             boolean noTextureFile = true;

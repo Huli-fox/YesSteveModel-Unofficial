@@ -17,7 +17,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.jetbrains.annotations.NotNull;
 
-import com.fox.ysmu.compat.Utils;
 import com.fox.ysmu.model.ServerModelManager;
 import com.google.common.collect.Maps;
 
@@ -46,10 +45,6 @@ public final class YesModelUtils {
     private static final String ENCRYPTION_METHOD = "AES";
 
     public static Map<String, byte[]> input(File ysmFile) throws IOException {
-        String fileName = removeExtension(ysmFile.getName());
-        if (!Utils.isValidResourceLocation(fileName)) {
-            return Collections.emptyMap();
-        }
         byte[] data = FileUtils.readFileToByteArray(ysmFile);
         int head = ByteInteger.bytes2Int(data, 0);
         int version = ByteInteger.bytes2Int(data, 4);
@@ -134,9 +129,6 @@ public final class YesModelUtils {
 
     public static void export(File dir) throws IOException {
         String dirName = dir.getName();
-        if (!Utils.isValidResourceLocation(dirName)) {
-            return;
-        }
         boolean noMainModelFile = true;
         boolean noArmModelFile = true;
         boolean noTextureFile = true;
@@ -294,11 +286,4 @@ public final class YesModelUtils {
         return ByteInteger.bytes2Int(sizeBytes, 0);
     }
 
-    private static String removeExtension(String fileName) {
-        int lastIndex = fileName.lastIndexOf('.');
-        if (lastIndex != -1) {
-            fileName = fileName.substring(0, lastIndex);
-        }
-        return fileName;
-    }
 }

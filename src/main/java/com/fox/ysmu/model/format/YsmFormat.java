@@ -12,8 +12,8 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
-import com.fox.ysmu.compat.Utils;
 import com.fox.ysmu.data.ModelData;
+import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.util.YesModelUtils;
 import com.google.common.collect.Maps;
 
@@ -25,10 +25,7 @@ public final class YsmFormat {
     public static void cacheAllModels(Path rootPath) {
         Collection<File> ysmFiles = FileUtils.listFiles(rootPath.toFile(), new String[] { "ysm" }, false);
         for (File ysmFile : ysmFiles) {
-            String modelId = removeExtension(ysmFile.getName());
-            if (!Utils.isValidResourceLocation(modelId)) {
-                continue;
-            }
+            String modelId = ModelIdUtil.getInternalModelId(removeExtension(ysmFile.getName()));
             try {
                 Map<String, byte[]> data = YesModelUtils.input(ysmFile);
                 if (data.isEmpty()) {
