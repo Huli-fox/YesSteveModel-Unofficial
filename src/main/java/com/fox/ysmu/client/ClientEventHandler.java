@@ -4,36 +4,25 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.fox.ysmu.client.gui.ExtraPlayerConfigScreen;
-import com.fox.ysmu.compat.BackhandCompat;
+import com.fox.ysmu.client.renderer.FirstPersonHandRenderer;
 import com.fox.ysmu.util.RenderUtil;
-import net.geckominecraft.client.renderer.GlStateManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import net.minecraft.client.renderer.ItemRenderer;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-
-import org.joml.Quaternionf;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.Project;
-import org.lwjgl.util.vector.Quaternion;
 
 import com.fox.ysmu.Config;
 import com.fox.ysmu.client.animation.RemotePlayerAnimationQueries;
 import com.fox.ysmu.client.animation.RemotePlayerMotionStates;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.client.renderer.CustomPlayerRenderer;
-import com.fox.ysmu.compat.Axis;
-import com.fox.ysmu.compat.Utils;
 import com.fox.ysmu.data.NPCData;
 import com.fox.ysmu.eep.ExtendedModelInfo;
 import com.fox.ysmu.event.api.SpecialPlayerRenderEvent;
@@ -56,7 +45,6 @@ import software.bernie.geckolib3.resource.GeckoLibCache;
 @EventBusSubscriber(side = Side.CLIENT)
 public class ClientEventHandler {
 
-    private static final String RIGHT_ARM = "RightArm";
     private static boolean EXTRA_PLAYER = false;
     private static boolean pendingModelLoad;
 
@@ -163,27 +151,23 @@ public class ClientEventHandler {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayer player = mc.thePlayer;
         ItemRenderer itemRenderer = mc.entityRenderer.itemRenderer;
-        if (!shouldRenderCustomHand(mc, player, itemRenderer)) return;
-        event.setCanceled(true);
+        if (!FirstPersonHandRenderer.shouldRenderCustomHand(mc, player, itemRenderer)) return;
 
         ExtendedModelInfo eep = ExtendedModelInfo.get(player);
         if (eep == null) return;
         ResourceLocation modelId = eep.getModelId();
+        if (modelId == null) return;
         GeoModel geoModel = getArmGeoModel(modelId);
         if (geoModel == null) return;
+        if (!FirstPersonHandRenderer.hasRenderableRightArm(geoModel)) return;
         CustomPlayerRenderer renderer = ClientProxy.getInstance();
         if (renderer == null) return;
-        CustomPlayerEntity customPlayer = getCustomHandPlayer(modelId, eep);
+        CustomPlayerEntity customPlayer = getCustomHandPlayer(modelId, eep, player);
         if (customPlayer == null) return;
         if (MinecraftForge.EVENT_BUS.post(new SpecialPlayerRenderEvent(player, customPlayer, modelId))) return;
 
-        renderCustomHand(event, mc, player, itemRenderer, renderer, geoModel, customPlayer);
-    }
-
-    private static boolean shouldRenderCustomHand(Minecraft mc, EntityPlayer player, ItemRenderer itemRenderer) {
-        return !Config.DISABLE_SELF_MODEL && !Config.DISABLE_SELF_HANDS && player != null && !mc.gameSettings.hideGUI
-            && mc.gameSettings.thirdPersonView == 0 && !BackhandCompat.isRenderingOffhand(player)
-            && itemRenderer.itemToRender == null;
+        event.setCanceled(true);
+        FirstPersonHandRenderer.render(event, mc, player, itemRenderer, renderer, geoModel, customPlayer);
     }
 
     private static GeoModel getArmGeoModel(ResourceLocation modelId) {
@@ -192,7 +176,8 @@ public class ClientEventHandler {
             .get(ModelIdUtil.getArmId(modelId));
     }
 
-    private static CustomPlayerEntity getCustomHandPlayer(ResourceLocation modelId, ExtendedModelInfo eep) {
+    private static CustomPlayerEntity getCustomHandPlayer(ResourceLocation modelId, ExtendedModelInfo eep,
+        EntityPlayer player) {
         IAnimatable animatable;
         try {
             animatable = AnimatableCacheUtil.ANIMATABLE_CACHE.get(modelId, () -> {
@@ -204,119 +189,12 @@ public class ClientEventHandler {
             throw new RuntimeException(e);
         }
         if (animatable instanceof CustomPlayerEntity customPlayer) {
+            customPlayer.setPlayer(player);
+            customPlayer.setMainModel(ModelIdUtil.getMainId(modelId));
             customPlayer.setTexture(eep.getSelectTexture());
             return customPlayer;
         }
         return null;
-    }
-
-    private static void renderCustomHand(RenderHandEvent event, Minecraft mc, EntityPlayer player,
-        ItemRenderer itemRenderer, CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer) {
-        float partialTicks = event.partialTicks;
-        pushFirstPersonMatrices(mc);
-        if (mc.gameSettings.viewBobbing) {
-            bobView(partialTicks, player);
-        }
-        renderMainHandArm(mc, player, itemRenderer, partialTicks, renderer, geoModel, customPlayer);
-        BackhandCompat.renderOffhand(partialTicks);
-        popFirstPersonMatrices();
-    }
-
-    private static void pushFirstPersonMatrices(Minecraft mc) {
-        GlStateManager.pushMatrix();
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPushMatrix();
-        GL11.glLoadIdentity();
-        Project.gluPerspective(70.0F, (float)mc.displayWidth / (float)mc.displayHeight, 0.05F, 3000.0F);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GL11.glLoadIdentity();
-    }
-
-    private static void popFirstPersonMatrices() {
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        GlStateManager.popMatrix();
-    }
-
-    private static void renderMainHandArm(Minecraft mc, EntityPlayer player, ItemRenderer itemRenderer,
-        float partialTicks, CustomPlayerRenderer renderer, GeoModel geoModel, CustomPlayerEntity customPlayer) {
-        GL11.glPushMatrix(); // 隔离主手变换
-        applyEquipProgress(itemRenderer, partialTicks);
-        setupHandLighting(player, partialTicks);
-        prepareHandRenderState();
-        mc.getTextureManager().bindTexture(customPlayer.getTexture());
-        applySwingTransform(player, partialTicks);
-        applyRightArmPlacement();
-        renderRightArmBone(renderer, geoModel, customPlayer);
-        restoreHandRenderState();
-        GL11.glPopMatrix();
-    }
-
-    private static void applyEquipProgress(ItemRenderer itemRenderer, float partialTicks) {
-        float equippedProgress = itemRenderer.equippedProgress;
-        float prevEquippedProgress = itemRenderer.prevEquippedProgress;
-        float progress = prevEquippedProgress + (equippedProgress - prevEquippedProgress) * partialTicks;
-        if (progress < 1.0F) {
-            float transY = (1.0F - progress) * -0.6F;
-            GL11.glTranslatef(0.0F, transY, 0.0F);
-        }
-    }
-
-    private static void setupHandLighting(EntityPlayer player, float partialTicks) {
-        float interpolatedYaw = player.prevRotationYaw + (player.rotationYaw - player.prevRotationYaw) * partialTicks;
-        float interpolatedPitch = player.prevRotationPitch + (player.rotationPitch - player.prevRotationPitch) * partialTicks;
-        GlStateManager.pushMatrix();
-        GlStateManager.rotate(interpolatedPitch, -1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(interpolatedYaw, 0.0F, 1.0F, 0.0F);
-        RenderHelper.enableStandardItemLighting();
-        GlStateManager.popMatrix();
-    }
-
-    private static void prepareHandRenderState() {
-        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GlStateManager.disableCull();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-    }
-
-    private static void applySwingTransform(EntityPlayer player, float partialTicks) {
-        float swingProgress = player.getSwingProgress(partialTicks);
-        float f1 = MathHelper.sin(swingProgress * (float)Math.PI);
-        float f2 = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI);
-        GlStateManager.translate(
-            -f2 * 0.18F,
-            MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float)Math.PI * 2.0F) * 0.24F,
-            -f2 * 0.24F
-        );
-        GlStateManager.rotate(f2 * 27.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(f2 * 12.0F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.rotate(-f1 * 12.0F, 1.0F, 0.0F, 0.0F);
-    }
-
-    private static void applyRightArmPlacement() {
-        GlStateManager.translate(0.85F, 0.25F, -1.85F);
-        GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(-35.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(-30.0F, 1.0F, 0.0F, 0.0F);
-        GlStateManager.rotate(30.0F, 0.0F, 0.0F, 1.0F);
-        GlStateManager.rotate(100.0F, 0.0F, 1.0F, 0.0F);
-    }
-
-    private static void renderRightArmBone(CustomPlayerRenderer renderer, GeoModel geoModel,
-        CustomPlayerEntity customPlayer) {
-        Tessellator tess = Tessellator.instance;
-        tess.startDrawing(GL11.GL_QUADS);
-        geoModel.getTopLevelBone(RIGHT_ARM)
-            .ifPresent(bone -> renderer.renderRecursively(tess, customPlayer, bone, 1, 1, 1, 1));
-        tess.draw();
-    }
-
-    private static void restoreHandRenderState() {
-        GlStateManager.enableCull();
-        GlStateManager.disableBlend();
-        RenderHelper.disableStandardItemLighting();
     }
 
     @SubscribeEvent
@@ -384,18 +262,6 @@ public class ClientEventHandler {
         }
     }
 
-    private static void bobView(float pPartialTicks, EntityPlayer player) {
-        float walk = player.distanceWalkedModified - player.prevDistanceWalkedModified;
-        float walk2 = -(player.distanceWalkedModified + walk * pPartialTicks);
-        float lerp = player.prevCameraYaw + (player.cameraYaw - player.prevCameraYaw) * pPartialTicks;
-        GlStateManager.translate(
-            -MathHelper.sin(walk2 * (float) Math.PI) * lerp * 0.5F,
-            -Math.abs(MathHelper.cos(walk2 * (float) Math.PI) * lerp),
-            0.0D);
-        GlStateManager.rotate(j2l(Axis.ZN.rotationDegrees(-MathHelper.sin(walk2 * (float) Math.PI) * lerp * 3.0F)));
-        GlStateManager.rotate(j2l(Axis.XN.rotationDegrees(Math.abs(MathHelper.cos(walk2 * (float) Math.PI - 0.2F) * lerp) * 5.0F)));
-    }
-
     private static boolean isMoveKey() {
         KeyBinding[] keyBindings = Minecraft.getMinecraft().gameSettings.keyBindings;
         for (KeyBinding keyBinding : keyBindings) {
@@ -409,9 +275,5 @@ public class ClientEventHandler {
             }
         }
         return false;
-    }
-
-    private static Quaternion j2l(Quaternionf jomlQuat) {
-        return Utils.j2l(jomlQuat);
     }
 }
