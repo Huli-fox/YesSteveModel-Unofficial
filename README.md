@@ -13,6 +13,7 @@
 ├── extra.animation.json
 └── *.png
 ```
+> 解压出来的模型文件夹结构不是这样？[看我](https://github.com/Huli-fox/YesSteveModel-Unofficial/blob/master/tools/convert.md)
 
 ## 鸣谢
 - [酒石酸菌](https://github.com/TartaricAcid)以及YSM开发团队 开发了YSM并[将旧版开源](https://github.com/YesSteveModel/LgeacyYSM)
