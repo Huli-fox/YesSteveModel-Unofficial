@@ -1,3 +1,5 @@
+## 注意：主分支将不再维护，移植工作重心将转移到[OpenYSM](https://github.com/OpenYSM/OpenYSM)
+
 ## 如何使用
 1.前置Mod：[unimixins](https://github.com/LegacyModdingMC/UniMixins/releases/download/0.1.23/+unimixins-all-1.7.10-0.1.23.jar)、[gtnhlib](https://github.com/GTNewHorizons/GTNHLib/releases/download/0.6.40/gtnhlib-0.6.40.jar)
 
