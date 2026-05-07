@@ -1,4 +1,4 @@
-## 注意：主分支（基于[1.1.5版本](https://github.com/YesSteveModel/LgeacyYSM)的移植）将不再维护，移植工作重心转移到将[OpenYSM](https://github.com/OpenYSM/OpenYSM)移植回1.7.10
+## 注意：主分支（基于[1.1.5版本](https://github.com/YesSteveModel/LgeacyYSM)的移植）将不再维护，工作重心转移到将[OpenYSM](https://github.com/OpenYSM/OpenYSM)移植回1.7.10
 
 ## 如何使用
 1.前置Mod：[unimixins](https://github.com/LegacyModdingMC/UniMixins/releases/download/0.1.23/+unimixins-all-1.7.10-0.1.23.jar)、[gtnhlib](https://github.com/GTNewHorizons/GTNHLib/releases/download/0.6.40/gtnhlib-0.6.40.jar)
