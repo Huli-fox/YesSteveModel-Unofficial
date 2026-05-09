@@ -5,6 +5,8 @@ import static com.fox.ysmu.model.ServerModelManager.CUSTOM;
 import static com.fox.ysmu.model.ServerModelManager.EXTRA_ANIMATION_FILE_NAME;
 import static com.fox.ysmu.model.ServerModelManager.MAIN_ANIMATION_FILE_NAME;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -13,6 +15,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -29,6 +33,7 @@ import com.google.gson.JsonPrimitive;
 public final class RawYsmModelAdapter {
 
     private static final byte[] EMPTY_ANIMATION = "{\"animations\":{}}".getBytes(StandardCharsets.UTF_8);
+    private static final int RGBA_FORMAT = -1;
     private static final int PNG_FORMAT = 2;
     private static final int EXTRA_ANIMATION_SLOT_COUNT = 8;
     private static final String[] LOCALE_PREFERENCE = new String[] { "en_us", "en_US", "zh_cn", "zh_CN" };
@@ -46,7 +51,7 @@ public final class RawYsmModelAdapter {
             return false;
         }
         for (RawYsmModel.RawTexture texture : raw.mainEntity.textures.values()) {
-            if (texture.imageFormat == PNG_FORMAT && texture.data != null) {
+            if (hasLegacyTextureData(texture)) {
                 return true;
             }
         }
@@ -67,9 +72,10 @@ public final class RawYsmModelAdapter {
             if (texture.data == null) {
                 continue;
             }
-            if (texture.imageFormat != PNG_FORMAT) {
+            byte[] textureData = getLegacyTextureData(texture);
+            if (textureData == null) {
                 ysmu.LOG.warn(
-                    "Skipping non-PNG OpenYSM texture {} (format {}) in model {}",
+                    "Skipping unsupported OpenYSM texture {} (format {}) in model {}",
                     textureName(texture),
                     texture.imageFormat,
                     modelId);
@@ -79,10 +85,10 @@ public final class RawYsmModelAdapter {
             if (StringUtils.isBlank(fileName)) {
                 fileName = texture.name.endsWith(".png") ? texture.name : texture.name + ".png";
             }
-            textures.put(fileName, texture.data);
+            textures.put(fileName, textureData);
         }
         if (textures.isEmpty()) {
-            throw new IOException("RawYsmModel has no PNG player textures for legacy bridge");
+            throw new IOException("RawYsmModel has no legacy-compatible player textures");
         }
 
         Map<String, byte[]> animations = new LinkedHashMap<>();
@@ -113,6 +119,52 @@ public final class RawYsmModelAdapter {
             }
         }
         return false;
+    }
+
+    private static boolean hasLegacyTextureData(RawYsmModel.RawTexture texture) {
+        if (texture == null || texture.data == null) {
+            return false;
+        }
+        if (texture.imageFormat == PNG_FORMAT) {
+            return true;
+        }
+        return texture.imageFormat == RGBA_FORMAT && canConvertRgba(texture);
+    }
+
+    private static byte[] getLegacyTextureData(RawYsmModel.RawTexture texture) {
+        if (texture.imageFormat == PNG_FORMAT) {
+            return texture.data;
+        }
+        if (texture.imageFormat == RGBA_FORMAT && canConvertRgba(texture)) {
+            return convertRgbaToPng(texture.data, texture.width, texture.height);
+        }
+        return null;
+    }
+
+    private static boolean canConvertRgba(RawYsmModel.RawTexture texture) {
+        long requiredBytes = (long) texture.width * texture.height * 4L;
+        return texture.width > 0 && texture.height > 0 && texture.data.length >= requiredBytes;
+    }
+
+    private static byte[] convertRgbaToPng(byte[] rgbaData, int width, int height) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        int[] pixels = new int[width * height];
+        for (int i = 0; i < pixels.length; i++) {
+            int r = rgbaData[i * 4] & 0xFF;
+            int g = rgbaData[i * 4 + 1] & 0xFF;
+            int b = rgbaData[i * 4 + 2] & 0xFF;
+            int a = rgbaData[i * 4 + 3] & 0xFF;
+            pixels[i] = (a << 24) | (r << 16) | (g << 8) | b;
+        }
+        image.setRGB(0, 0, width, height, pixels, 0, width);
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (ImageIO.write(image, "PNG", output)) {
+                return output.toByteArray();
+            }
+        } catch (IOException e) {
+            ysmu.LOG.warn("Failed to convert OpenYSM RGBA texture to PNG", e);
+        }
+        return null;
     }
 
     private static byte[] toGeometryJson(RawYsmModel raw, RawYsmModel.RawGeometry geometry, boolean includeModelInfo)

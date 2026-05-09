@@ -13,6 +13,8 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import io.netty.buffer.Unpooled;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -189,6 +191,32 @@ class YsmResourceFormatTest {
         assertTrue(decoded.mainEntity.textures.containsKey("default"));
     }
 
+    @Test
+    void binaryDeserializerReadsFormat15AndBridgeConvertsRgbaTexture() throws Exception {
+        byte[] rgbaRedPixel = new byte[] { (byte) 0xFF, 0, 0, (byte) 0xFF };
+
+        RawYsmModel decoded;
+        try (YSMBinaryDeserializer deserializer = new YSMBinaryDeserializer(format15Binary(rgbaRedPixel))) {
+            decoded = deserializer.deserialize();
+        }
+
+        assertEquals(15, decoded.formatVersion);
+        assertEquals("Legacy Binary", decoded.metadata.name);
+        assertTrue(RawYsmModelAdapter.isBridgeable(decoded));
+
+        ModelData data = RawYsmModelAdapter.toLegacyModelData(decoded, "_name_e58aa8e58a9be88782");
+        byte[] texture = data.getTexture().get("texture.png");
+        assertNotNull(texture);
+        assertEquals((byte) 0x89, texture[0]);
+        assertEquals((byte) 0x50, texture[1]);
+        assertEquals((byte) 0x4E, texture[2]);
+        assertEquals((byte) 0x47, texture[3]);
+        assertEquals("Legacy Binary", getDescription(data.getModel().get("main"))
+            .getAsJsonObject("ysm_extra_info")
+            .get("name")
+            .getAsString());
+    }
+
     private static RawYsmModel.RawGeometry geometry(int type, String identifier) {
         RawYsmModel.RawGeometry geometry = new RawYsmModel.RawGeometry();
         geometry.modelType = type;
@@ -198,6 +226,115 @@ class YsmResourceFormatTest {
         geometry.textureHeight = 64f;
         geometry.visibleBoundsOffset = new float[] { 0f, 1.5f, 0f };
         return geometry;
+    }
+
+    private static byte[] format15Binary(byte[] rgbaTexture) {
+        try (YSMByteBuf buf = new YSMByteBuf(Unpooled.buffer())) {
+            buf.writeDword(15);
+            buf.writeVarInt(0);
+
+            buf.writeVarInt(2);
+            writeFormat15GeometryEntry(buf, 1, "geometry.legacy.main");
+            writeFormat15GeometryEntry(buf, 2, "geometry.legacy.arm");
+
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+
+            buf.writeVarInt(1);
+            buf.writeString("texture");
+            buf.writeByteArray(rgbaTexture);
+            buf.writeVarInt(1);
+            buf.writeVarInt(1);
+            buf.writeVarInt(0);
+
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+
+            buf.writeString("format15-sha");
+            buf.writeVarInt(1);
+            buf.writeVarInt(0);
+            buf.writeString("Legacy Binary");
+            buf.writeString("Format 15 sample");
+            buf.writeString("CC0");
+            buf.writeString("");
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeFloat(0.8f);
+            buf.writeFloat(0.9f);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeString("texture");
+            buf.writeString("");
+            buf.writeVarInt(1);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+            buf.writeVarInt(0);
+
+            return buf.toArray();
+        }
+    }
+
+    private static void writeFormat15GeometryEntry(YSMByteBuf buf, int modelType, String identifier) {
+        buf.writeVarInt(modelType);
+        buf.writeVarInt(1);
+        writeFormat15Geometry(buf, identifier);
+    }
+
+    private static void writeFormat15Geometry(YSMByteBuf buf, String identifier) {
+        buf.writeVarInt(1);
+        buf.writeString("");
+        buf.writeVarInt(1);
+        buf.writeVarInt(1);
+        writeVector(buf, 0f, 0f, -1f);
+        writeVertex(buf, -0.5f, 0f, 0f, 0f, 0f);
+        writeVertex(buf, 0.5f, 0f, 0f, 1f, 0f);
+        writeVertex(buf, 0.5f, 1f, 0f, 1f, 1f);
+        writeVertex(buf, -0.5f, 1f, 0f, 0f, 1f);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeString("root");
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        writeVector(buf, 0f, 0f, 0f);
+        writeVector(buf, 0f, 0f, 0f);
+
+        buf.writeString(identifier);
+        buf.writeFloat(64f);
+        buf.writeFloat(64f);
+        buf.writeFloat(3f);
+        buf.writeFloat(2f);
+        buf.writeVarInt(3);
+        buf.writeFloat(0f);
+        buf.writeFloat(1.5f);
+        buf.writeFloat(0f);
+        buf.writeFloat(0f);
+        buf.writeFloat(0f);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+        buf.writeVarInt(0);
+    }
+
+    private static void writeVertex(YSMByteBuf buf, float x, float y, float z, float u, float v) {
+        writeVector(buf, x, y, z);
+        buf.writeFloat(u);
+        buf.writeFloat(v);
+    }
+
+    private static void writeVector(YSMByteBuf buf, float x, float y, float z) {
+        buf.writeFloat(x);
+        buf.writeFloat(y);
+        buf.writeFloat(z);
     }
 
     private static RawYsmModel.RawGeometry geometryWithFlatCube(int type, String identifier) {

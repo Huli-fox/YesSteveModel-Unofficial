@@ -31,10 +31,15 @@ public class YSMBinaryDeserializer implements AutoCloseable {
 
 
     private RawYsmModel deserializeInternal(boolean closeOnExit) {
-        if (format != 32) {
-            throw new UnsupportedOperationException("Only OpenYSM binary format 32 is supported in this phase: " + format);
+        if (format < 4) {
+            deserializeLegacyV1();
+        } else if (format <= 15) {
+            deserializeLegacyV15();
+        } else if (format <= 32) {
+            deserializeModern();
+        } else {
+            throw new UnsupportedOperationException("Unsupported OpenYSM binary format: " + format);
         }
-        deserializeModern();
         if (closeOnExit) {
             this.reader.close();
         }

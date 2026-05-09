@@ -98,7 +98,7 @@ public final class OpenYsmFormat {
                 raw.modelId = modelId;
                 RAW_MODEL_INFO.put(modelId, raw);
                 if (!RawYsmModelAdapter.isBridgeable(raw)) {
-                    ysmu.LOG.info("OpenYSM binary model {} parsed; legacy bridge is deferred until Phase 3", file);
+                    ysmu.LOG.info("OpenYSM binary model {} parsed but cannot be bridged to legacy ModelData", file);
                     return;
                 }
                 ModelData data = RawYsmModelAdapter.toLegacyModelData(raw, modelId);
