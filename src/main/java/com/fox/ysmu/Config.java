@@ -5,6 +5,8 @@ import java.io.File;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
+import com.fox.ysmu.util.ThreadTools;
+
 public class Config {
     private static Configuration configuration;
 
@@ -16,6 +18,11 @@ public class Config {
     public static boolean DISABLE_SELF_HANDS = false;
     public static String DEFAULT_MODEL_ID = "default";
     public static String DEFAULT_MODEL_TEXTURE = "default.png";
+    public static int THREAD_COUNT = 10;
+    public static int BANDWIDTH_LIMIT = 5;
+    public static int PLAYER_SYNC_TIMEOUT = 60;
+    public static boolean LOW_BANDWIDTH_USAGE = false;
+    public static int ACCEPT_SOUND_FX = 0;
 
     // Extra Player Screen Config
     public static boolean DISABLE_PLAYER_RENDER = false;
@@ -59,6 +66,12 @@ public class Config {
         DISABLE_SELF_HANDS = syncBoolean("DisableSelfHands", Configuration.CATEGORY_GENERAL, DISABLE_SELF_HANDS, "Prevents rendering of self player's hand", load);
         DEFAULT_MODEL_ID = syncString("DefaultModelId", Configuration.CATEGORY_GENERAL, DEFAULT_MODEL_ID, "The default model ID when a player first enters the game", load);
         DEFAULT_MODEL_TEXTURE = syncString("DefaultModelTexture", Configuration.CATEGORY_GENERAL, DEFAULT_MODEL_TEXTURE, "The default model texture when a player first enters the game", load);
+        THREAD_COUNT = syncInt("ThreadCount", "server_model_sync", THREAD_COUNT, "Maximum worker threads for model sync tasks", 1, 64, load);
+        BANDWIDTH_LIMIT = syncInt("BandwidthLimit", "server_model_sync", BANDWIDTH_LIMIT, "Approximate per-player model sync bandwidth limit in MB/s", 1, 999, load);
+        PLAYER_SYNC_TIMEOUT = syncInt("PlayerSyncTimeout", "server_model_sync", PLAYER_SYNC_TIMEOUT, "Seconds before an in-progress model sync is considered stale", 5, 600, load);
+        LOW_BANDWIDTH_USAGE = syncBoolean("LowBandwidthUsage", "server_model_sync", LOW_BANDWIDTH_USAGE, "Use slower chunk pacing for low bandwidth servers", load);
+        ACCEPT_SOUND_FX = syncInt("AcceptSoundFX", "server_model_sync", ACCEPT_SOUND_FX, "Reserved for later OpenYSM sound effect sync support", 0, 2, load);
+        ThreadTools.configureThreadCount(THREAD_COUNT);
 
         // Extra player render config values
         DISABLE_PLAYER_RENDER = syncBoolean("DisablePlayerRender", "extra_player_render", DISABLE_PLAYER_RENDER, "Whether to display player", load);

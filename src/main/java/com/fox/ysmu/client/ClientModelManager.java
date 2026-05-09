@@ -272,6 +272,13 @@ public class ClientModelManager {
         });
     }
 
+    public static void startOpenYsmSync17() {
+        ysmu.LOG.info("YSM client starting OpenYSM sync17");
+        PASSWORD = null;
+        PASSWORD_UUID = null;
+        clearCachedModelMd5();
+    }
+
     private static String[] getMd5Info() {
         File cacheDir = ServerModelManager.CACHE_CLIENT.toFile();
         if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {

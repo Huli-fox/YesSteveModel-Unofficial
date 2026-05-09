@@ -20,8 +20,7 @@ import com.fox.ysmu.model.format.OpenYsmFormat;
 import com.fox.ysmu.model.format.ServerModelInfo;
 import com.fox.ysmu.model.format.YsmFormat;
 import com.fox.ysmu.model.resource.pojo.RawYsmModel;
-import com.fox.ysmu.network.NetworkHandler;
-import com.fox.ysmu.network.message.RequestSyncModel;
+import com.fox.ysmu.network.sync.ModelSyncServer17;
 import com.fox.ysmu.util.GetJarResources;
 import com.fox.ysmu.ysmu;
 import com.google.common.collect.Maps;
@@ -76,12 +75,12 @@ public final class ServerModelManager {
 
     public static void sendRequestSyncModelMessage(List<EntityPlayer> playerList) {
         for (EntityPlayer player : playerList) {
-            NetworkHandler.sendToClientPlayer(new RequestSyncModel(), player);
+            ModelSyncServer17.requestSync(player);
         }
     }
 
     public static void sendRequestSyncModelMessage(EntityPlayer player) {
-        NetworkHandler.sendToClientPlayer(new RequestSyncModel(), player);
+        ModelSyncServer17.requestSync(player);
     }
 
     public static void reloadPacks() {
@@ -98,6 +97,7 @@ public final class ServerModelManager {
     private static void clearModelCaches() {
         CACHE_NAME_INFO.clear();
         RAW_MODEL_INFO.clear();
+        ModelSyncServer17.clearModelCaches();
     }
 
     private static void createConfigDirectories() {

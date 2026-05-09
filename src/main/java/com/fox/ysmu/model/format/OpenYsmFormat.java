@@ -19,6 +19,7 @@ import com.fox.ysmu.model.resource.RawYsmModelAdapter;
 import com.fox.ysmu.model.resource.YSMBinaryDeserializer;
 import com.fox.ysmu.model.resource.YSMFolderDeserializer;
 import com.fox.ysmu.model.resource.pojo.RawYsmModel;
+import com.fox.ysmu.network.sync.ModelSyncServer17;
 import com.fox.ysmu.util.ModelIdUtil;
 import com.fox.ysmu.ysmu;
 
@@ -79,6 +80,7 @@ public final class OpenYsmFormat {
             if (info != null) {
                 CACHE_NAME_INFO.put(modelId, info);
             }
+            ModelSyncServer17.cacheRawModel(modelId, raw, data);
         } catch (Exception e) {
             ysmu.LOG.warn("Failed to load OpenYSM folder model {}", dir, e);
         }
@@ -106,6 +108,7 @@ public final class OpenYsmFormat {
                 if (info != null) {
                     CACHE_NAME_INFO.put(modelId, info);
                 }
+                ModelSyncServer17.cacheRawModel(modelId, raw, data);
             }
         } catch (UnsupportedOperationException e) {
             ysmu.LOG.warn("Unsupported OpenYSM binary model {}", file, e);

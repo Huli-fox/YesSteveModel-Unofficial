@@ -4,6 +4,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.fox.ysmu.network.message.*;
+import com.fox.ysmu.network.message.sync17.*;
 
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -29,6 +30,11 @@ public final class NetworkHandler {
     private static final int CLIENTBOUND_SYNC_PLAYER_MOTION_STATE = 11;
     private static final int CLIENTBOUND_COMPLETE_FEEDBACK = 12;
     private static final int CLIENTBOUND_SEND_MODEL_PASSWORD = 13;
+    private static final int CLIENTBOUND_SYNC17_VERSION_CHECK = 14;
+    private static final int SERVERBOUND_SYNC17_VERSION_CHECK = 15;
+    private static final int CLIENTBOUND_SYNC17_MODEL_PAYLOAD = 16;
+    private static final int SERVERBOUND_SYNC17_MODEL_PAYLOAD = 17;
+    private static final int SERVERBOUND_SYNC17_COMPLETE_FEEDBACK = 18;
 
     public static final int OPEN_NPC_MODEL_GUI = 93;
     public static final int SET_NPC_MODEL_ID = 94;
@@ -61,6 +67,21 @@ public final class NetworkHandler {
             SetStarModel.Handler.class,
             SetStarModel.class,
             SERVERBOUND_SET_STAR_MODEL,
+            Side.SERVER);
+        CHANNEL.registerMessage(
+            C2SVersionCheck17.Handler.class,
+            C2SVersionCheck17.class,
+            SERVERBOUND_SYNC17_VERSION_CHECK,
+            Side.SERVER);
+        CHANNEL.registerMessage(
+            C2SModelSyncPayload17.Handler.class,
+            C2SModelSyncPayload17.class,
+            SERVERBOUND_SYNC17_MODEL_PAYLOAD,
+            Side.SERVER);
+        CHANNEL.registerMessage(
+            C2SCompleteFeedback17.Handler.class,
+            C2SCompleteFeedback17.class,
+            SERVERBOUND_SYNC17_COMPLETE_FEEDBACK,
             Side.SERVER);
     }
 
@@ -109,6 +130,16 @@ public final class NetworkHandler {
             SendModelPassword.Handler.class,
             SendModelPassword.class,
             CLIENTBOUND_SEND_MODEL_PASSWORD,
+            Side.CLIENT);
+        CHANNEL.registerMessage(
+            S2CVersionCheck17.Handler.class,
+            S2CVersionCheck17.class,
+            CLIENTBOUND_SYNC17_VERSION_CHECK,
+            Side.CLIENT);
+        CHANNEL.registerMessage(
+            S2CModelSyncPayload17.Handler.class,
+            S2CModelSyncPayload17.class,
+            CLIENTBOUND_SYNC17_MODEL_PAYLOAD,
             Side.CLIENT);
     }
 
