@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -17,8 +18,6 @@ import com.fox.ysmu.util.ByteInteger;
 import com.fox.ysmu.util.DeflateUtil;
 import com.fox.ysmu.util.Md5Utils;
 import com.fox.ysmu.ysmu;
-import com.google.common.collect.Maps;
-
 import it.unimi.dsi.fastutil.bytes.ByteArrays;
 
 public final class EncryptTools {
@@ -251,18 +250,21 @@ public final class EncryptTools {
     @SuppressWarnings("all")
     private static Map<String, byte[]> readMapData(ByteArrayInputStream tmp, Map<String, Integer> modelMapDataInfo)
         throws IOException {
-        Map<String, byte[]> output = Maps.newHashMap();
+        Map<String, byte[]> output = new LinkedHashMap<>();
         for (String name : modelMapDataInfo.keySet()) {
             int size = modelMapDataInfo.get(name);
             byte[] sizeBytes = new byte[size];
-            tmp.read(sizeBytes);
+            int read = tmp.read(sizeBytes);
+            if (read != size) {
+                throw new IOException("Unexpected EOF while reading model resource " + name);
+            }
             output.put(name, sizeBytes);
         }
         return output;
     }
 
     private static Map<String, Integer> readMapDataInfo(ByteArrayInputStream tmp) throws IOException {
-        Map<String, Integer> mapDataInfo = Maps.newHashMap();
+        Map<String, Integer> mapDataInfo = new LinkedHashMap<>();
         int modelCount = readInt(tmp);
         for (int i = 0; i < modelCount; i++) {
             String name = readString(tmp);
@@ -276,14 +278,20 @@ public final class EncryptTools {
     private static String readString(ByteArrayInputStream stream) throws IOException {
         int size = readInt(stream);
         byte[] stringBytes = new byte[size];
-        stream.read(stringBytes);
-        return new String(stringBytes);
+        int read = stream.read(stringBytes);
+        if (read != size) {
+            throw new IOException("Unexpected EOF while reading model resource name");
+        }
+        return new String(stringBytes, StandardCharsets.UTF_8);
     }
 
     @SuppressWarnings("all")
     private static int readInt(ByteArrayInputStream stream) throws IOException {
         byte[] sizeBytes = new byte[4];
-        stream.read(sizeBytes);
+        int read = stream.read(sizeBytes);
+        if (read != sizeBytes.length) {
+            throw new IOException("Unexpected EOF while reading model resource size");
+        }
         return ByteInteger.bytes2Int(sizeBytes, 0);
     }
 }

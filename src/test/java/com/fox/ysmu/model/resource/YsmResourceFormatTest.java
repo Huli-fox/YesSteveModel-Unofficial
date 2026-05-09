@@ -2,6 +2,7 @@ package com.fox.ysmu.model.resource;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -9,12 +10,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.data.ModelData;
+import com.fox.ysmu.model.format.Type;
 import com.fox.ysmu.model.resource.pojo.RawYsmModel;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import rip.ysm.security.YSMByteBuf;
 
@@ -38,7 +45,10 @@ class YsmResourceFormatTest {
         Files.write(modelDir.resolve("models/arm.json"), geometryJson("geometry.test.arm").getBytes(StandardCharsets.UTF_8));
         Files.write(modelDir.resolve("textures/default.png"), PNG_1X1);
         Files.write(modelDir.resolve("animations/main.animation.json"), animationJson().getBytes(StandardCharsets.UTF_8));
-        Files.write(modelDir.resolve("lang/en_us.json"), "{\"model.ysm.test\":\"Test Model\"}".getBytes(StandardCharsets.UTF_8));
+        Files.write(
+            modelDir.resolve("lang/en_us.json"),
+            "{\"model.ysm.test\":\"Test Model\",\"properties.extra_animation.extra0\":\"Wave\"}"
+                .getBytes(StandardCharsets.UTF_8));
 
         RawYsmModel raw;
         try (YSMFolderDeserializer deserializer = new YSMFolderDeserializer(modelDir)) {
@@ -54,12 +64,91 @@ class YsmResourceFormatTest {
         assertTrue(raw.languageFiles.containsKey("en_us"));
         assertTrue(RawYsmModelAdapter.isBridgeable(raw));
 
+        RawYsmModel.RawTexture jpegTexture = new RawYsmModel.RawTexture();
+        jpegTexture.name = "preview";
+        jpegTexture.sourceFileName = "preview.jpg";
+        jpegTexture.imageFormat = 3;
+        jpegTexture.data = new byte[] { (byte) 0xFF, (byte) 0xD8, 0x00 };
+        raw.mainEntity.textures.put(jpegTexture.name, jpegTexture);
+
         ModelData data = RawYsmModelAdapter.toLegacyModelData(raw, "fancy_model");
-        assertArrayEquals(raw.mainEntity.mainModel.sourceJson, data.getModel().get("main"));
+        JsonObject description = getDescription(data.getModel().get("main"));
+        assertEquals(0.9d, description.get("ysm_height_scale").getAsDouble(), 0.0001d);
+        assertEquals(0.8d, description.get("ysm_width_scale").getAsDouble(), 0.0001d);
+        JsonObject extraInfo = description.getAsJsonObject("ysm_extra_info");
+        assertEquals("Sample", extraInfo.get("name").getAsString());
+        assertEquals("Bridge metadata", extraInfo.get("tips").getAsString());
+        assertEquals("CC0", extraInfo.get("license").getAsString());
+        assertEquals("Tester (author)", extraInfo.getAsJsonArray("authors").get(0).getAsString());
+        assertEquals("Wave", extraInfo.getAsJsonArray("extra_animation_names").get(0).getAsString());
         assertArrayEquals(PNG_1X1, data.getTexture().get("default.png"));
+        assertFalse(data.getTexture().containsKey("preview.jpg"));
         assertTrue(data.getAnimation().containsKey("main"));
         assertTrue(data.getAnimation().containsKey("arm"));
         assertTrue(data.getAnimation().containsKey("extra"));
+    }
+
+    @Test
+    void rawGeometryWithoutSourceJsonCanGenerateLegacyGeometryJson() throws Exception {
+        RawYsmModel source = new RawYsmModel();
+        source.metadata.name = "Generated";
+        source.properties.widthScale = 1.2f;
+        source.properties.heightScale = 1.1f;
+        source.mainEntity.mainModel = geometryWithFlatCube(1, "geometry.generated.main");
+        source.mainEntity.armModel = geometryWithFlatCube(2, "geometry.generated.arm");
+        RawYsmModel.RawTexture texture = new RawYsmModel.RawTexture();
+        texture.name = "default";
+        texture.sourceFileName = "default.png";
+        texture.imageFormat = 2;
+        texture.data = PNG_1X1;
+        source.mainEntity.textures.put(texture.name, texture);
+
+        assertTrue(RawYsmModelAdapter.isBridgeable(source));
+
+        ModelData data = RawYsmModelAdapter.toLegacyModelData(source, "generated_model");
+        JsonObject description = getDescription(data.getModel().get("main"));
+        assertEquals("geometry.generated.main", description.get("identifier").getAsString());
+        assertEquals(1.1d, description.get("ysm_height_scale").getAsDouble(), 0.0001d);
+        JsonObject geometry = new JsonParser().parse(new String(data.getModel().get("main"), StandardCharsets.UTF_8))
+            .getAsJsonObject()
+            .getAsJsonArray("minecraft:geometry")
+            .get(0)
+            .getAsJsonObject();
+        assertTrue(
+            geometry.getAsJsonArray("bones")
+                .get(0)
+                .getAsJsonObject()
+                .getAsJsonArray("cubes")
+                .size() > 0);
+    }
+
+    @Test
+    void legacyEncryptedModelPreservesMultiTextureByteOrder() throws Exception {
+        Map<String, byte[]> model = new LinkedHashMap<>();
+        model.put("main", geometryJson("geometry.test.main").getBytes(StandardCharsets.UTF_8));
+        model.put("arm", geometryJson("geometry.test.arm").getBytes(StandardCharsets.UTF_8));
+
+        byte[] defaultTexture = new byte[] { 0, 1, 2, 3, 4, 5, 6 };
+        byte[] blueTexture = new byte[] { 10, 11, 12 };
+        Map<String, byte[]> textures = new LinkedHashMap<>();
+        textures.put("default.png", defaultTexture);
+        textures.put("blue.png", blueTexture);
+
+        Map<String, byte[]> animations = new LinkedHashMap<>();
+        animations.put("main", animationJson().getBytes(StandardCharsets.UTF_8));
+
+        EncryptTools.createRandomPassword();
+        byte[] rawPassword = EncryptTools.writePassword();
+        byte[] playerKey = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+        byte[] encryptedPassword = EncryptTools.encryptPassword(playerKey, rawPassword);
+        byte[] encryptedModel = EncryptTools.assembleEncryptModels(
+            new ModelData("ordered_textures", Type.FOLDER, model, textures, animations));
+
+        ModelData decoded = EncryptTools.decryptModel(playerKey, encryptedPassword, encryptedModel);
+
+        assertNotNull(decoded);
+        assertArrayEquals(defaultTexture, decoded.getTexture().get("default.png"));
+        assertArrayEquals(blueTexture, decoded.getTexture().get("blue.png"));
     }
 
     @Test
@@ -111,10 +200,41 @@ class YsmResourceFormatTest {
         return geometry;
     }
 
+    private static RawYsmModel.RawGeometry geometryWithFlatCube(int type, String identifier) {
+        RawYsmModel.RawGeometry geometry = geometry(type, identifier);
+        RawYsmModel.RawBone bone = new RawYsmModel.RawBone();
+        bone.name = "root";
+        RawYsmModel.RawCube cube = new RawYsmModel.RawCube();
+        RawYsmModel.RawFace face = new RawYsmModel.RawFace();
+        face.normal = new float[] { 0f, 0f, -1f };
+        face.positions = new float[][] {
+            { -0.5f, 0f, 0f },
+            { 0.5f, 0f, 0f },
+            { 0.5f, 1f, 0f },
+            { -0.5f, 1f, 0f } };
+        face.u = new float[] { 0f, 1f, 1f, 0f };
+        face.v = new float[] { 0f, 0f, 1f, 1f };
+        cube.faces.add(face);
+        bone.cubes.add(cube);
+        geometry.bones.add(bone);
+        return geometry;
+    }
+
+    private static JsonObject getDescription(byte[] geometryJson) {
+        return new JsonParser().parse(new String(geometryJson, StandardCharsets.UTF_8))
+            .getAsJsonObject()
+            .getAsJsonArray("minecraft:geometry")
+            .get(0)
+            .getAsJsonObject()
+            .getAsJsonObject("description");
+    }
+
     private static String ysmJson() {
         return "{"
-            + "\"metadata\":{\"name\":\"Sample\",\"authors\":[{\"name\":\"Tester\",\"role\":\"author\"}]},"
-            + "\"properties\":{\"default_texture\":\"default\",\"width_scale\":0.8,\"height_scale\":0.9},"
+            + "\"metadata\":{\"name\":\"Sample\",\"tips\":\"Bridge metadata\",\"license\":{\"type\":\"CC0\"},"
+            + "\"authors\":[{\"name\":\"Tester\",\"role\":\"author\"}]},"
+            + "\"properties\":{\"default_texture\":\"default\",\"width_scale\":0.8,\"height_scale\":0.9,"
+            + "\"extra_animation\":{\"extra0\":\"\",\"extra1\":\"Spin\"}},"
             + "\"files\":{\"player\":{"
             + "\"model\":{\"main\":\"models/main.json\",\"arm\":\"models/arm.json\"},"
             + "\"texture\":[\"textures/default.png\"],"

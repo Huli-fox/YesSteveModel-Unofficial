@@ -64,9 +64,24 @@ public class ClientModelManager {
 
     public static void registerAll(ModelData data) {
         ResourceLocation modelId = getModelId(data);
+        ysmu.LOG.info(
+            "YSM client registering model {}: geometry={}, textures={}, animations={}",
+            modelId,
+            data.getModel().keySet(),
+            data.getTexture().keySet(),
+            data.getAnimation().keySet());
         registerGeometry(modelId, data);
-        registerModelAnimations(modelId, data);
         registerModelTextures(modelId, data);
+        try {
+            registerModelAnimations(modelId, data);
+        } catch (Exception e) {
+            ysmu.LOG.warn("Failed to register animations for model {}", modelId, e);
+        }
+        ysmu.LOG.info(
+            "YSM client registered model {}: totalModelEntries={}, textureCount={}",
+            modelId,
+            MODELS.size(),
+            MODELS.get(modelId) == null ? 0 : MODELS.get(modelId).size());
     }
 
     private static ResourceLocation getModelId(ModelData data) {
@@ -114,6 +129,15 @@ public class ClientModelManager {
                     EXTRA_ANIMATION_NAME.put(id, extraInfo.getExtraAnimationNames());
                 }
                 geoModels.put(id, geoModel);
+                ysmu.LOG.info(
+                    "YSM client registered geometry {}: heightScale={}, widthScale={}, hasExtraInfo={}, extraAnimationNames={}",
+                    id,
+                    rawGeometryTree.properties.getHeightScale(),
+                    rawGeometryTree.properties.getWidthScale(),
+                    extraInfo != null,
+                    extraInfo != null && extraInfo.getExtraAnimationNames() != null
+                        ? extraInfo.getExtraAnimationNames().length
+                        : 0);
             }
         } catch (Exception e) {
             ysmu.LOG.warn("Failed to register geometry " + id, e);
@@ -131,8 +155,13 @@ public class ClientModelManager {
         for (String name : mapData.keySet()) {
             byte[] data = mapData.get(name);
             ResourceLocation textureId = ModelIdUtil.getSubModelId(id, name);
-            registerTexture(textureId, data);
+            try {
+                registerTexture(textureId, data);
+            } catch (Exception e) {
+                ysmu.LOG.warn("Failed to register texture {} for model {}", textureId, id, e);
+            }
         }
+        ysmu.LOG.info("YSM client registered textures for {}: {}", id, textures);
     }
 
     private static void registerTexture(ResourceLocation id, byte[] data) {
@@ -145,17 +174,33 @@ public class ClientModelManager {
         Map<ResourceLocation, AnimationFile> animations = GeckoLibCache.getInstance()
             .getAnimations();
         AnimationFile main = new AnimationFile();
-        mapData.forEach((name, bytes) -> {
-            AnimationFile other = getAnimationFile(new String(bytes, StandardCharsets.UTF_8));
-            mergeAnimationFile(main, other);
-        });
+        for (Map.Entry<String, byte[]> entry : mapData.entrySet()) {
+            try {
+                AnimationFile other = getAnimationFile(new String(entry.getValue(), StandardCharsets.UTF_8));
+                mergeAnimationFile(main, other);
+            } catch (Exception e) {
+                ysmu.LOG.warn(
+                    "Failed to parse animation file {} for model {}: {}: {}",
+                    entry.getKey(),
+                    id,
+                    e.getClass().getSimpleName(),
+                    StringUtils.defaultString(e.getMessage()));
+            }
+        }
         DEFAULT_ANIMATION_FILE.animations.forEach((name, action) -> {
             if (!main.animations.containsKey(name)) {
                 main.putAnimation(name, action);
             }
         });
-        main.animations.forEach((name, animation) -> ConditionManager.addTest(id, name));
+        main.animations.forEach((name, animation) -> {
+            try {
+                ConditionManager.addTest(id, name);
+            } catch (Exception e) {
+                ysmu.LOG.warn("Failed to register animation condition {} for model {}", name, id, e);
+            }
+        });
         animations.put(id, main);
+        ysmu.LOG.info("YSM client registered animations for {}: count={}", id, main.animations.size());
     }
 
     private static AnimationFile getAnimationFile(String file) {
@@ -171,8 +216,11 @@ public class ClientModelManager {
                         .deserializeJsonToAnimation(JsonAnimationUtils.getAnimation(jsonObject, animationName), parser);
                     animationFile.putAnimation(animationName, animation);
                 } catch (GeckoJsonException e) {
-                    ysmu.LOG.warn("Failed to register animation " + animationName, e);
-                    e.printStackTrace();
+                    ysmu.LOG.warn(
+                        "Failed to register animation {}: {}: {}",
+                        animationName,
+                        e.getClass().getSimpleName(),
+                        StringUtils.defaultString(e.getMessage()));
                 }
             }
         }
@@ -200,12 +248,17 @@ public class ClientModelManager {
     }
 
     public static void sendSyncModelMessage() {
+        ysmu.LOG.info(
+            "YSM client starting model sync: currentModels={}, rememberedCachedModels={}",
+            MODELS.size(),
+            CACHE_MD5.size());
         PASSWORD = null;
         PASSWORD_UUID = null;
         clearCachedModelMd5();
         Minecraft.getMinecraft()
             .func_152344_a(ClientModelManager::clearRuntimeModelCaches);
         String[] md5Info = getMd5Info();
+        ysmu.LOG.info("YSM client sending model sync md5 list: count={}, values={}", md5Info.length, Lists.newArrayList(md5Info));
         SyncModelFiles syncModelFiles = new SyncModelFiles(md5Info);
         ThreadTools.THREAD_POOL.submit(() -> {
             while (Minecraft.getMinecraft().theWorld == null) {
@@ -236,6 +289,12 @@ public class ClientModelManager {
     }
 
     private static void clearRuntimeModelCaches() {
+        ysmu.LOG.info(
+            "YSM client clearing runtime model caches: models={}, scales={}, extraInfo={}, extraAnimations={}",
+            MODELS.size(),
+            SCALE_INFO.size(),
+            EXTRA_INFO.size(),
+            EXTRA_ANIMATION_NAME.size());
         MODELS.clear();
         SCALE_INFO.clear();
         EXTRA_INFO.clear();
