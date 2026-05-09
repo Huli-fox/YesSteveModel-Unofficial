@@ -85,6 +85,27 @@ def resolve_declared_file(model_root: Path, raw_path: Any, fallback: str, label:
     return resolved
 
 
+def resolve_optional_declared_file(
+    model_root: Path, raw_path: Any, fallback: str, label: str
+) -> Path | None:
+    if raw_path is None:
+        raw_path = fallback
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        return None
+
+    relative = Path(raw_path.replace("\\", "/"))
+    if relative.is_absolute():
+        raise ConvertError(f"{label} path must be relative: {raw_path}")
+
+    root = model_root.resolve()
+    resolved = (model_root / relative).resolve()
+    if not is_relative_to(resolved, root):
+        raise ConvertError(f"{label} path leaves the model folder: {raw_path}")
+    if not resolved.is_file():
+        return None
+    return resolved
+
+
 def discover_model_roots(input_dir: Path, recursive: bool) -> List[Path]:
     output_dir = (input_dir / OUTPUT_DIR_NAME).resolve()
 
@@ -262,19 +283,19 @@ def convert_one(model_root: Path, output_root: Path, output_name: str, overwrite
         "models/arm.json",
         "files.player.model.arm",
     )
-    animation_main = resolve_declared_file(
+    animation_main = resolve_optional_declared_file(
         model_root,
         nested(player_files, ("animation", "main")),
         "animations/main.animation.json",
         "files.player.animation.main",
     )
-    animation_arm = resolve_declared_file(
+    animation_arm = resolve_optional_declared_file(
         model_root,
         nested(player_files, ("animation", "arm")),
         "animations/arm.animation.json",
         "files.player.animation.arm",
     )
-    animation_extra = resolve_declared_file(
+    animation_extra = resolve_optional_declared_file(
         model_root,
         nested(player_files, ("animation", "extra")),
         "animations/extra.animation.json",
@@ -298,9 +319,12 @@ def convert_one(model_root: Path, output_root: Path, output_name: str, overwrite
         write_json(out_dir / MAIN_MODEL_NAME, legacy_main)
 
     copy_file(model_arm, out_dir / ARM_MODEL_NAME, dry_run)
-    copy_file(animation_main, out_dir / MAIN_ANIMATION_NAME, dry_run)
-    copy_file(animation_arm, out_dir / ARM_ANIMATION_NAME, dry_run)
-    copy_file(animation_extra, out_dir / EXTRA_ANIMATION_NAME, dry_run)
+    if animation_main is not None:
+        copy_file(animation_main, out_dir / MAIN_ANIMATION_NAME, dry_run)
+    if animation_arm is not None:
+        copy_file(animation_arm, out_dir / ARM_ANIMATION_NAME, dry_run)
+    if animation_extra is not None:
+        copy_file(animation_extra, out_dir / EXTRA_ANIMATION_NAME, dry_run)
 
     for texture in unique_textures.values():
         copy_file(texture, out_dir / texture.name, dry_run)

@@ -24,7 +24,7 @@ python convert_new_ysm.py 模型文件夹路径
 ```
 
 - 支持输入目录本身就是一个新版模型，也支持输入目录下有多个模型子目录。
-- 从 ysm.json.files.player 读取 main/arm 模型、main/arm/extra 动画和 player 贴图路径。
+- 从 ysm.json.files.player 读取 main/arm 模型、可选的 main/arm/extra 动画和 player 贴图路径；缺失的动画文件不会写入输出，运行时继续使用旧版默认动画回退。
 - 将 metadata.name、metadata.tips、metadata.license.type、metadata.authors[*].name 写入 main.json 的 description.ysm_extra_info。
 - 额外保留了新版 properties.height_scale / width_scale 到旧版 ysm_height_scale / ysm_width_scale。
 - 默认不覆盖已有输出；重复转换可加 --overwrite。
