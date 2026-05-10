@@ -522,6 +522,13 @@ public final class RawYsmModelAdapter {
         if (keyframes.isEmpty()) {
             return;
         }
+        if (keyframes.size() == 1) {
+            RawYsmModel.RawKeyframe keyframe = keyframes.get(0);
+            if (!keyframe.hasPreData && isZeroTime(keyframe.timestamp)) {
+                bone.add(channelName, molangArray(keyframe.postData));
+                return;
+            }
+        }
         JsonObject channel = new JsonObject();
         for (RawYsmModel.RawKeyframe keyframe : keyframes) {
             channel.add(timeKey(keyframe.timestamp), createKeyframeJson(keyframe));
@@ -537,7 +544,7 @@ public final class RawYsmModelAdapter {
                 return value;
             }
             JsonObject json = new JsonObject();
-            json.add("vector", value);
+            json.add("post", value);
             json.addProperty("lerp_mode", lerpMode);
             return json;
         }
@@ -628,6 +635,10 @@ public final class RawYsmModelAdapter {
 
     private static String timeKey(float seconds) {
         return isFinite(seconds) ? Float.toString(seconds) : "0.0";
+    }
+
+    private static boolean isZeroTime(float seconds) {
+        return isFinite(seconds) && Math.abs(seconds) < 0.000001f;
     }
 
     private static boolean isFinite(float value) {

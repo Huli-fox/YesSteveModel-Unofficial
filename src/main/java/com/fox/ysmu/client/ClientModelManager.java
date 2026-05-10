@@ -46,7 +46,6 @@ import it.unimi.dsi.fastutil.Pair;
 import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.core.molang.MolangParser;
 import software.bernie.geckolib3.file.AnimationFile;
-import software.bernie.geckolib3.file.GeckoJsonException;
 import software.bernie.geckolib3.geo.raw.pojo.Converter;
 import software.bernie.geckolib3.geo.raw.pojo.ExtraInfo;
 import software.bernie.geckolib3.geo.raw.pojo.FormatVersion;
@@ -245,7 +244,7 @@ public class ClientModelManager {
                     animation = JsonAnimationUtils
                         .deserializeJsonToAnimation(JsonAnimationUtils.getAnimation(jsonObject, animationName), parser);
                     animationFile.putAnimation(animationName, animation);
-                } catch (GeckoJsonException e) {
+                } catch (Exception e) {
                     ysmu.LOG.warn(
                         "Failed to register animation {}: {}: {}",
                         animationName,

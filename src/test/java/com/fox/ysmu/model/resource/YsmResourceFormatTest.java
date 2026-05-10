@@ -200,6 +200,66 @@ class YsmResourceFormatTest {
     }
 
     @Test
+    void binaryDeserializerKeepsOpenYsmExtensionAnimationTypesSeparate() throws Exception {
+        RawYsmModel source = new RawYsmModel();
+        source.formatVersion = 32;
+        source.properties.sha256 = "0123456789abcdef";
+        source.properties.defaultTexture = "default";
+        source.metadata.name = "Extension Animations";
+        source.mainEntity.mainModel = geometry(1, "geometry.main");
+        source.mainEntity.armModel = geometry(2, "geometry.arm");
+        RawYsmModel.RawTexture texture = new RawYsmModel.RawTexture();
+        texture.name = "default";
+        texture.sourceFileName = "default.png";
+        texture.hash = "texture-hash";
+        texture.width = 1;
+        texture.height = 1;
+        texture.imageFormat = 2;
+        texture.unknownFlag = 1;
+        texture.data = PNG_1X1;
+        source.mainEntity.textures.put(texture.name, texture);
+        source.mainEntity.animationFiles.put(
+            "slashblade",
+            animationFile(9, "slashblade-hash", "hold_mainhand:slashblade"));
+        source.mainEntity.animationFiles.put(
+            "tac",
+            animationFile(4, "tac-hash", "tac:aim$tacz:minigun"));
+
+        byte[] bytes;
+        try (YSMByteBuf serialized = YSMBinarySerializer.serialize(source, 32, false)) {
+            bytes = serialized.toArray();
+        }
+
+        RawYsmModel decoded;
+        try (YSMBinaryDeserializer deserializer = new YSMBinaryDeserializer(bytes, 32)) {
+            decoded = deserializer.deserialize();
+        }
+
+        assertEquals("slashblade", YSMFolderDeserializer.getAnimKeyFromType(9));
+        assertEquals("tac", YSMFolderDeserializer.getAnimKeyFromType(4));
+        assertEquals("carryon", YSMFolderDeserializer.getAnimKeyFromType(6));
+        assertEquals("parcool", YSMFolderDeserializer.getAnimKeyFromType(7));
+        assertEquals("tlm", YSMFolderDeserializer.getAnimKeyFromType(10));
+        assertEquals("immersive_melodies", YSMFolderDeserializer.getAnimKeyFromType(12));
+        assertEquals("irons_spell_books", YSMFolderDeserializer.getAnimKeyFromType(13));
+        assertEquals("unknown_99", YSMFolderDeserializer.getAnimKeyFromType(99));
+        assertEquals(9, YSMFolderDeserializer.getAnimTypeFromKey("slashblade"));
+        assertEquals(4, YSMFolderDeserializer.getAnimTypeFromKey("tac"));
+        assertEquals(6, YSMFolderDeserializer.getAnimTypeFromKey("carryon"));
+        assertEquals(7, YSMFolderDeserializer.getAnimTypeFromKey("parcool"));
+        assertEquals(10, YSMFolderDeserializer.getAnimTypeFromKey("tlm"));
+        assertEquals(12, YSMFolderDeserializer.getAnimTypeFromKey("immersive_melodies"));
+        assertEquals(13, YSMFolderDeserializer.getAnimTypeFromKey("irons_spell_books"));
+        assertTrue(decoded.mainEntity.animationFiles.containsKey("slashblade"));
+        assertTrue(decoded.mainEntity.animationFiles.containsKey("tac"));
+        assertFalse(decoded.mainEntity.animationFiles.containsKey("unknown"));
+        assertTrue(decoded.mainEntity.animationFiles.get("slashblade")
+            .animations
+            .containsKey("hold_mainhand:slashblade"));
+        assertTrue(decoded.mainEntity.animationFiles.get("tac").animations.containsKey("tac:aim$tacz:minigun"));
+    }
+
+    @Test
     void binaryAnimationsWithoutSourceJsonGenerateLegacyAnimationJson() throws Exception {
         RawYsmModel source = new RawYsmModel();
         source.formatVersion = 32;
@@ -231,6 +291,27 @@ class YsmResourceFormatTest {
         hiddenScale.postData = new Object[] { 0f, 0f, 0f };
         sceneBone.scale.add(hiddenScale);
         idle.boneAnimations.add(sceneBone);
+        RawYsmModel.RawBoneAnimation tailBone = new RawYsmModel.RawBoneAnimation();
+        tailBone.boneName = "Tail";
+        RawYsmModel.RawKeyframe tailStart = new RawYsmModel.RawKeyframe();
+        tailStart.timestamp = 0.0f;
+        tailStart.interpolationMode = 2;
+        tailStart.postData = new Object[] { 0f, "math.sin(query.anim_time*360)*30", 0f };
+        tailBone.rotation.add(tailStart);
+        idle.boneAnimations.add(tailBone);
+        RawYsmModel.RawBoneAnimation blendedBone = new RawYsmModel.RawBoneAnimation();
+        blendedBone.boneName = "Blended";
+        RawYsmModel.RawKeyframe blendStart = new RawYsmModel.RawKeyframe();
+        blendStart.timestamp = 0.0f;
+        blendStart.interpolationMode = 2;
+        blendStart.postData = new Object[] { 0f, 0f, 0f };
+        blendedBone.rotation.add(blendStart);
+        RawYsmModel.RawKeyframe blendEnd = new RawYsmModel.RawKeyframe();
+        blendEnd.timestamp = 0.5f;
+        blendEnd.interpolationMode = 2;
+        blendEnd.postData = new Object[] { 10f, 0f, 0f };
+        blendedBone.rotation.add(blendEnd);
+        idle.boneAnimations.add(blendedBone);
         animationFile.animations.put(idle.name, idle);
         source.mainEntity.animationFiles.put("main", animationFile);
 
@@ -253,11 +334,20 @@ class YsmResourceFormatTest {
         assertTrue(idleJson.get("loop").getAsBoolean());
         JsonArray scale = idleJson.getAsJsonObject("bones")
             .getAsJsonObject("SceneRoot")
-            .getAsJsonObject("scale")
-            .getAsJsonArray("0.0");
+            .getAsJsonArray("scale");
         assertEquals(0.0d, scale.get(0).getAsDouble(), 0.0001d);
         assertEquals(0.0d, scale.get(1).getAsDouble(), 0.0001d);
         assertEquals(0.0d, scale.get(2).getAsDouble(), 0.0001d);
+        JsonArray tailRotation = idleJson.getAsJsonObject("bones")
+            .getAsJsonObject("Tail")
+            .getAsJsonArray("rotation");
+        assertEquals("math.sin(query.anim_time*360)*30", tailRotation.get(1).getAsString());
+        JsonObject blendedRotation = idleJson.getAsJsonObject("bones")
+            .getAsJsonObject("Blended")
+            .getAsJsonObject("rotation");
+        assertFalse(blendedRotation.getAsJsonObject("0.0").has("vector"));
+        assertTrue(blendedRotation.getAsJsonObject("0.0").has("post"));
+        assertEquals("catmullrom", blendedRotation.getAsJsonObject("0.5").get("lerp_mode").getAsString());
     }
 
     @Test
@@ -459,6 +549,18 @@ class YsmResourceFormatTest {
         bone.cubes.add(cube);
         geometry.bones.add(bone);
         return geometry;
+    }
+
+    private static RawYsmModel.RawAnimationFile animationFile(int type, String hash, String animationName) {
+        RawYsmModel.RawAnimationFile animationFile = new RawYsmModel.RawAnimationFile();
+        animationFile.animType = type;
+        animationFile.fileHash = hash;
+        RawYsmModel.RawAnimation animation = new RawYsmModel.RawAnimation();
+        animation.name = animationName;
+        animation.length = 1.0f;
+        animation.loopMode = 1;
+        animationFile.animations.put(animation.name, animation);
+        return animationFile;
     }
 
     private static JsonObject getDescription(byte[] geometryJson) {

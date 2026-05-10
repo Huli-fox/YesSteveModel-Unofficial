@@ -756,11 +756,32 @@ public class YSMFolderDeserializer implements AutoCloseable {
         if ("extra".equals(key)) {
             return 3;
         }
+        if ("tac".equals(key)) {
+            return 4;
+        }
         if ("arrow".equals(key)) {
             return 5;
         }
+        if ("carryon".equals(key)) {
+            return 6;
+        }
+        if ("parcool".equals(key)) {
+            return 7;
+        }
+        if ("slashblade".equals(key)) {
+            return 9;
+        }
+        if ("tlm".equals(key)) {
+            return 10;
+        }
         if ("fp_arm".equals(key)) {
             return 11;
+        }
+        if ("immersive_melodies".equals(key)) {
+            return 12;
+        }
+        if ("irons_spell_books".equals(key) || "iss".equals(key)) {
+            return 13;
         }
         return 0;
     }
@@ -773,12 +794,26 @@ public class YSMFolderDeserializer implements AutoCloseable {
                 return "arm";
             case 3:
                 return "extra";
+            case 4:
+                return "tac";
             case 5:
                 return "arrow";
+            case 6:
+                return "carryon";
+            case 7:
+                return "parcool";
+            case 9:
+                return "slashblade";
+            case 10:
+                return "tlm";
             case 11:
                 return "fp_arm";
+            case 12:
+                return "immersive_melodies";
+            case 13:
+                return "irons_spell_books";
             default:
-                return "unknown";
+                return "unknown_" + type;
         }
     }
 
