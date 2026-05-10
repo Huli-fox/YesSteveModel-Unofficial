@@ -6,6 +6,8 @@ YSMU is a Minecraft Forge 1.7.10 mod that ports Yes Steve Model/OpenYSM-style pl
 
 The build uses the GTNH Gradle convention plugin through `settings.gradle.kts` and `build.gradle.kts`. `gradle.properties` targets Minecraft `1.7.10`, Forge `10.13.4.1614`, MCP stable `12`, enables Mixins, enables Jabel modern Java syntax while still targeting JVM 8, and shades/relocates Jackson. Runtime/development dependencies are declared in `dependencies.gradle`.
 
+The current focus of work is to port OpenYSM. The OpenYSM code should be carefully analyzed and the implementation should be closely followed.
+
 ## ExecPlans
 
 When writing complex features or significant refactors, use an ExecPlan (as described in .agent/PLANS.md) from design to implementation.

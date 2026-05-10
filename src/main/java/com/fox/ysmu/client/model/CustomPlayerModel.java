@@ -11,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 
 import com.fox.ysmu.client.animation.AnimationRegister;
+import com.fox.ysmu.client.animation.molang.MolangPhysicsRuntime;
 import com.fox.ysmu.client.animation.RemotePlayerAnimationQueries;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.util.ModelIdUtil;
@@ -75,10 +76,18 @@ public class CustomPlayerModel extends AnimatedGeoModel {
             && customPlayer.getPlayer() != null) {
             EntityPlayer player = customPlayer.getPlayer();
             AnimationRegister.setParserValue(animationEvent, parser, data, player);
-            super.setLivingAnimations(animatable, instanceId, animationEvent);
-            this.codeAnimation(animationEvent, data, player);
+            try {
+                super.setLivingAnimations(animatable, instanceId, animationEvent);
+                this.codeAnimation(animationEvent, data, player);
+            } finally {
+                MolangPhysicsRuntime.end();
+            }
         } else {
-            super.setLivingAnimations(animatable, instanceId, animationEvent);
+            try {
+                super.setLivingAnimations(animatable, instanceId, animationEvent);
+            } finally {
+                MolangPhysicsRuntime.end();
+            }
         }
     }
 
@@ -136,5 +145,9 @@ public class CustomPlayerModel extends AnimatedGeoModel {
 
     @Override
 
-    public void setMolangQueries(IAnimatable animatable, double seekTime) {}
+    public void setMolangQueries(IAnimatable animatable, double seekTime) {
+        if (animatable instanceof CustomPlayerEntity customPlayer) {
+            MolangPhysicsRuntime.begin(customPlayer, seekTime, getAnimationProcessor());
+        }
+    }
 }

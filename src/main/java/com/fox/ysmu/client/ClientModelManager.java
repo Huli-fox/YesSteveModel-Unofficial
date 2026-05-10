@@ -23,6 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fox.ysmu.client.animation.condition.ConditionManager;
 import com.fox.ysmu.client.animation.controller.OpenYsmAnimationControllerRegistry;
+import com.fox.ysmu.client.animation.molang.MolangInstructionExecutor;
+import com.fox.ysmu.client.animation.molang.MolangPhysicsRuntime;
 import com.fox.ysmu.client.sync.OpenYsmModelSyncClient;
 import com.fox.ysmu.client.texture.OuterFileTexture;
 import com.fox.ysmu.data.ModelData;
@@ -329,6 +331,8 @@ public class ClientModelManager {
         EXTRA_ANIMATION_NAME.clear();
         ConditionManager.clear();
         OpenYsmAnimationControllerRegistry.clear();
+        MolangPhysicsRuntime.clear();
+        MolangInstructionExecutor.clearWarnings();
     }
 
     public static void rememberCachedModel(String md5) {

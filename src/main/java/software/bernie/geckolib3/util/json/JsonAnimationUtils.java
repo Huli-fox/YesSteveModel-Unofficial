@@ -320,11 +320,7 @@ public class JsonAnimationUtils {
                 animation.customInstructionKeyframes.add(
                     new EventKeyFrame(
                         Double.parseDouble(keyFrame.getKey()) * 20,
-                        keyFrame.getValue() instanceof JsonArray ? convertJsonArrayToList(
-                            keyFrame.getValue()
-                                .getAsJsonArray()).toString()
-                            : keyFrame.getValue()
-                                .getAsString()));
+                        instructionString(keyFrame.getValue())));
             }
         }
 
@@ -371,6 +367,21 @@ public class JsonAnimationUtils {
         }
 
         return animation;
+    }
+
+    private static String instructionString(JsonElement element) {
+        if (element instanceof JsonArray) {
+            StringBuilder out = new StringBuilder();
+            JsonArray array = element.getAsJsonArray();
+            for (int i = 0; i < array.size(); i++) {
+                if (i > 0) {
+                    out.append(';');
+                }
+                out.append(array.get(i).getAsString());
+            }
+            return out.toString();
+        }
+        return element.getAsString();
     }
 
     private static double calculateLength(List<BoneAnimation> boneAnimations) {

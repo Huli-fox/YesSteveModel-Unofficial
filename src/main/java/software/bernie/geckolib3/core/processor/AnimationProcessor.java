@@ -70,8 +70,7 @@ public class AnimationProcessor<T extends IAnimatable> {
             controller.process(seekTime, event, modelRendererList, boneSnapshots, parser, crashWhenCantFindBone);
 
             // Loop through every single bone and lerp each property
-            for (BoneAnimationQueue boneAnimation : controller.getBoneAnimationQueues()
-                .values()) {
+            for (BoneAnimationQueue boneAnimation : controller.getActiveBoneAnimationQueues()) {
                 IBone bone = boneAnimation.bone;
                 BoneSnapshot snapshot = boneSnapshots.get(bone.getName())
                     .getRight();

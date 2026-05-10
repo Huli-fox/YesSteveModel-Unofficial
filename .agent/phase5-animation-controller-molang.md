@@ -25,6 +25,12 @@ The user-visible proof is a model under `config/ysmu/custom/<model>/ysm.json` th
 - [x] (2026-05-10 10:59+08:00) Fixed controller expression `ctrl.idle` so it is false during run, walk, sneak, jump, swim, ladder, sleep, hurt, and similar non-idle states.
 - [x] (2026-05-10 11:13+08:00) Fixed a remaining sword attack restart when `ctrl.idle` changes mid-attack by letting the OpenYSM state switch animation entries while preserving the state's elapsed tick.
 - [x] (2026-05-10 11:13+08:00) Fixed controller processing order by preserving GeckoLib controller registration order, so pre-parallel blink layers do not randomly run after and override bow-use eyelid transforms.
+- [x] (2026-05-10 12:20+08:00) Inspected OpenYSM `PhysicsManager`, first/second-order physics functions, bone accessor functions, and built-in hair/chest animation examples.
+- [x] (2026-05-10 12:20+08:00) Added `ysm.first_order`, `ysm.second_order`, `ysm.bone_rot(...).x/y/z`, `ysm.bone_pos(...).x/y/z`, and `ysm.bone_scale(...).x/y/z` support to the existing GeckoLib Molang path.
+- [x] (2026-05-10 12:20+08:00) Scoped runtime `v.*` variables and physics state by player, model id, and animation id, and wired animation timeline instructions so OpenYSM physics helper variables can update during playback.
+- [x] (2026-05-10 12:20+08:00) Added a focused parser unit test for OpenYSM physics function strings, bone-vector accessor rewriting, and timeline statement splitting.
+- [x] (2026-05-10 12:20+08:00) Ran non-Gradle static checks for the physics pass.
+- [x] (2026-05-10 12:40+08:00) Rechecked physics behavior against OpenYSM after manual feedback and fixed timeline-before-bone evaluation, short-loop remaining event execution, deterministic active bone application order, and abbreviated sync footer parsing.
 - [ ] Run host Gradle verification and a manual `4_default_controllers` client pass after these OpenYSM-alignment fixes.
 
 ## Surprises & Discoveries
@@ -57,6 +63,20 @@ The user-visible proof is a model under `config/ysmu/custom/<model>/ysm.json` th
   Evidence: `OpenYSM/src/main/java/com/elfmcys/yesstevemodel/client/animation/molang/YSMBinding.java` implements `is_close_eyes` as sleep-or-blink, while `OpenYSM/src/main/resources/assets/yes_steve_model/builtin/misc/4_default_controllers/animations/arm.animation.json` animates `RightEyelid`/`RightEyebrow` for `use_mainhand:bow` and `LeftEyelid`/`LeftEyebrow` for `use_offhand:bow`.
 - Observation: The 1.7.10 GeckoLib `AnimationData` stored controllers in a `HashMap`, which loses the registration order that `CustomPlayerEntity.registerControllers` relies on for layer priority.
   Evidence: `AnimationData.getAnimationControllers().values()` is the order used by `AnimationProcessor`; replacing the map with `LinkedHashMap` keeps `pre_parallel_*` before `use_controller`, matching the intended registration order.
+- Observation: OpenYSM's hair and chest physics are mostly normal Molang keyframe expressions that call `ysm.second_order(...)`, while some hair chains depend on timeline assignments such as `v.HP_x=...` and bone reads such as `ysm.bone_rot('BackHairA1').x`.
+  Evidence: `OpenYSM/src/main/resources/assets/yes_steve_model/builtin/default/animations/main.animation.json` and `misc/4_default_controllers/animations/main.animation.json`.
+- Observation: OpenYSM stores physics values per entity and uses the first string argument as the stable key. A newly created first/second-order value returns the current input for that evaluation, then later frames return the simulated value.
+  Evidence: `OpenYSM/src/main/java/com/elfmcys/yesstevemodel/client/animation/molang/PhysicsManager.java`, `FirstOrderFunction.java`, and `SecondOrderFunction.java`.
+- Observation: The current mclib parser rejects quoted strings before function parsing, so OpenYSM string-keyed functions cannot be represented directly.
+  Evidence: `com.eliotlash.mclib.math.MathBuilder.breakdown` only accepts word, digit, operator, dot, comma, and parenthesis characters.
+- Observation: OpenYSM executes animation timeline instructions before sampling bone animation points. The 1.7.10 port was executing custom instruction keyframes after building bone queues, so same-frame helpers such as `v.HP_x` were stale while hair/chest physics expressions were evaluated.
+  Evidence: `OpenYSM/.../AnimationControllerInstance.process` calls `executeTimelineEvents` before `processRunningAnimation`, while `software.bernie.geckolib3.core.controller.AnimationController.processCurrentAnimation` previously processed bone keyframes first.
+- Observation: OpenYSM runs remaining timeline events before looping an animation and then rewinds to the modulo tick. The port reset executed keyframes immediately, so the `Hair_Physics` event at `0.0101` could be skipped on normal frame deltas.
+  Evidence: OpenYSM `AnimationControllerInstance.process` calls `executeRemainingEvents` before resetting the loop; `Hair_Physics` in `misc/4_default_controllers` stores previous hair root rotation at `0.0101`.
+- Observation: Chain hair physics depends on applying active bone transforms in animation order. Iterating `HashMap.values()` can apply `BackHairC1` before the `BackHairB1` rotation it reads through `ysm.bone_rot(...)`.
+  Evidence: OpenYSM builds `activeBoneAnimationQueues` from `currentAnimation.boneAnimations`; this port previously iterated `AnimationController.boneAnimationQueues`, a `HashMap`.
+- Observation: The sync footer writer emits a shortened footer when `footer.version == 65535`: version, zero flag, and time only. The parser always tried to read `rand`, `extra`, and `unkInt2`, causing EOF on synced folder models.
+  Evidence: `YSMBinarySerializer.writeFooter` skips strings when `unkInt1 == 0`; the reported stack traces ended in `YSMByteBuf.readVarLong` after parsing the model body.
 
 ## Decision Log
 
@@ -90,14 +110,36 @@ The user-visible proof is a model under `config/ysmu/custom/<model>/ysm.json` th
 - Decision: Preserve GeckoLib controller registration order with `LinkedHashMap`.
   Rationale: The player controller registration comment and OpenYSM's list-based `AnimationData` both depend on deterministic layer order. This also lets bow-use eyelid transforms run after the pre-parallel blink layer.
   Date/Author: 2026-05-10 / Codex
+- Decision: Keep using the existing mclib-based Molang parser and rewrite OpenYSM string literals into interned numeric ids before `MathBuilder.breakdown`.
+  Rationale: This enables `ysm.second_order('胸部垂直', ...)` and bone-name arguments without replacing the parser in Phase 5.
+  Date/Author: 2026-05-10 / Codex
+- Decision: Store `v.*` values and physics simulations in a per-render-frame runtime keyed by player UUID, model `ResourceLocation`, and animation `ResourceLocation`.
+  Rationale: OpenYSM variables used by physics are entity-local. Leaving them in the global parser map would let one rendered player leak hair/chest state into another.
+  Date/Author: 2026-05-10 / Codex
+- Decision: Execute GeckoLib custom instruction keyframes as Molang statements for every player controller.
+  Rationale: OpenYSM uses animation `timeline` entries for helper variables such as sword-combo and hair-chain deltas. Without executing those instructions, the physics expressions have no current `v.*` inputs.
+  Date/Author: 2026-05-10 / Codex
+- Decision: Move keyframe event execution ahead of bone expression sampling and process remaining events before loop rewind.
+  Rationale: This matches OpenYSM's ordering and is required for physics helper variables and very short loop animations such as `Hair_Physics`.
+  Date/Author: 2026-05-10 / Codex
+- Decision: Apply only active bone animation queues in animation JSON order.
+  Rationale: OpenYSM chain physics reads previous bones by name during the same controller pass. Stable animation order keeps source bones current before dependent bones evaluate.
+  Date/Author: 2026-05-10 / Codex
+- Decision: Treat absent or abbreviated OpenYSM sync footers as valid.
+  Rationale: Folder-derived sync payloads can use the serializer's `65535,0,time` footer form, and older cache payloads may have no footer at all. Footer absence should not make an otherwise parsed bridgeable model fail registration.
+  Date/Author: 2026-05-10 / Codex
 
 ## Outcomes & Retrospective
 
-This pass implemented a first controller/Molang runtime slice. `RawYsmModelAdapter` now preserves folder controller JSON and synthesizes controller JSON for binary raw controller structures. `ClientModelManager` separates controller resources from normal animation files, stores them in `OpenYsmAnimationControllerRegistry`, and clears controller runtime state when model caches clear. `OpenYsmPlayerControllerRuntime` maps common OpenYSM player controller names to the existing GeckoLib controller slots and evaluates state transitions with a focused expression evaluator.
+This pass implemented a first controller/Molang runtime slice. `RawYsmModelAdapter` now preserves folder controller JSON and synthesizes controller JSON for binary raw controller structures. `ClientModelManager` separates controller resources from normal animation files, stores them in `OpenYsmAnimationControllerRegistry`, and clears controller and Molang runtime state when model caches clear. `OpenYsmPlayerControllerRuntime` maps common OpenYSM player controller names to the existing GeckoLib controller slots and evaluates state transitions with a focused expression evaluator.
 
-The result is intentionally additive. If a controller is absent, selects a missing animation, or hits an unsupported expression/function, the existing fixed `AnimationManager` predicates continue to provide old behavior. Full OpenYSM parser/runtime replacement, audio playback, physics functions, and mesh renderer changes remain future work.
+The result is intentionally additive. If a controller is absent, selects a missing animation, or hits an unsupported expression/function, the existing fixed `AnimationManager` predicates continue to provide old behavior. Full OpenYSM parser/runtime replacement, audio playback, and mesh renderer changes remain future work.
 
 After manual testing with `misc/4_default_controllers`, this plan also fixed several controller-runtime regressions. The 1.7.10 player now has exact OpenYSM pre/post slot controllers so `player.post_swing` and `player.post_hold` layer like OpenYSM instead of replacing old fallback predicates. The sword-combo bridge now only raises `v.swing_sword` on new sword swing edges, `ctrl.idle` no longer remains true during movement states, conditional swing animations play once, and conditional use animations such as `use_mainhand:bow` can be found through an OpenYSM-style item classifier. Controller states now can switch conditional animation entries without resetting their elapsed time, so changing movement state during a sword attack does not replay the attack and does not keep the idle attack overlay over walking. GeckoLib controller iteration now preserves registration order, allowing bow-use eyelid transforms to layer after the pre-parallel blink controller. The GeckoLib controller now treats `HOLD_ON_LAST_FRAME` as a held final frame rather than a replaying loop, and `AnimationManager` no longer forces conditional hold/use animations to `LOOP`.
+
+The physics follow-up adds the OpenYSM first-order and second-order Molang functions, bone rotation/position/scale accessors, scoped `v.*` variables, and timeline Molang instruction execution. This covers built-in hair, breast/chest, eye, elytra, and chained-hair secondary-motion expressions that are expressed through `ysm.second_order(...)` and timeline helper variables.
+
+The follow-up after manual feedback tightened OpenYSM alignment further. Timeline instructions now execute before bone expressions are sampled, looping animations execute remaining timeline events before rewinding, active bone queues apply in animation order instead of hash-map order, and the first-order filter now uses OpenYSM's exact update equation. Sync footer parsing now accepts both full and abbreviated footer forms, fixing the reported EOF warnings for synced models such as `4_default_controllers`.
 
 ## Context and Orientation
 
@@ -132,7 +174,7 @@ For manual client verification, put an OpenYSM folder model with `files.player.a
 
 Acceptance for this phase is that host `.\gradlew.bat test` passes, controller JSON survives through the raw-to-legacy bridge, client registration stores controller definitions, and the player renderer can evaluate basic controller transitions without breaking old models. Old legacy folder models with only `main.animation.json`, `arm.animation.json`, and `extra.animation.json` must continue to animate through the existing `AnimationManager` fallback.
 
-The expression subset accepted in this milestone includes boolean operators, parentheses, numeric comparisons, `query.` and `q.` aliases for basic player queries, `ysm.` values already available in 1.7.10, controller state variables such as `ctrl.idle`, and simple hand functions `ctrl.hold`, `ctrl.use`, and `ctrl.swing`. Unsupported functions should evaluate false with a warning at most once per expression.
+The expression subset accepted in this milestone includes boolean operators, parentheses, numeric comparisons, `query.` and `q.` aliases for basic player queries, `ysm.` values already available in 1.7.10, controller state variables such as `ctrl.idle`, and simple hand functions `ctrl.hold`, `ctrl.use`, and `ctrl.swing`. Unsupported controller functions should evaluate false with a warning at most once per expression. Keyframe Molang expressions also accept OpenYSM physics functions `ysm.first_order`, `ysm.second_order`, and bone accessors `ysm.bone_rot`, `ysm.bone_pos`/`ysm.bone_position`, and `ysm.bone_scale`.
 
 ## Idempotence and Recovery
 
@@ -172,6 +214,34 @@ This exited 0.
 
 This returned no matches.
 
+Additional local checks after the physics-function follow-up:
+
+    git diff --check
+
+This exited 0.
+
+    rg -n "record\b|List\.of|Map\.of|Set\.of|Files\.readString|Files\.writeString|Objects\.requireNonNullElse|var " src/main/java/com/fox/ysmu/client/animation/molang src/main/java/com/fox/ysmu/client/ClientModelManager.java src/main/java/com/fox/ysmu/client/entity/CustomPlayerEntity.java src/main/java/com/fox/ysmu/client/model/CustomPlayerModel.java src/main/java/software/bernie/geckolib3/core/molang src/main/java/software/bernie/geckolib3/core/controller/AnimationController.java src/main/java/software/bernie/geckolib3/util/json/JsonAnimationUtils.java
+
+This only matched existing Guava `ImmutableSet.of(...)` calls in `JsonAnimationUtils`, not Java 9+ collection factories introduced by this pass.
+
+    rg -n "[ \t]$" src/main/java/com/fox/ysmu/client/animation/molang src/main/java/software/bernie/geckolib3/core/molang/MolangStringPool.java src/main/java/software/bernie/geckolib3/core/molang/ScopedMolangVariable.java src/main/java/software/bernie/geckolib3/core/molang/functions/BonePosition.java src/main/java/software/bernie/geckolib3/core/molang/functions/BoneRotation.java src/main/java/software/bernie/geckolib3/core/molang/functions/BoneScale.java src/main/java/software/bernie/geckolib3/core/molang/functions/FirstOrder.java src/main/java/software/bernie/geckolib3/core/molang/functions/SecondOrder.java src/test/java/software/bernie/geckolib3/core/molang/MolangParserOpenYsmPhysicsTest.java
+
+This returned no matches.
+
+Additional local checks after the OpenYSM physics-order and sync-footer follow-up:
+
+    git diff --check
+
+This exited 0.
+
+    rg -n "[ \t]$" src/main/java/com/fox/ysmu/client/animation/molang src/main/java/software/bernie/geckolib3/core/controller/AnimationController.java src/main/java/software/bernie/geckolib3/core/processor/AnimationProcessor.java src/main/java/com/fox/ysmu/model/resource/YSMBinaryDeserializer.java src/test/java/software/bernie/geckolib3/core/molang/MolangParserOpenYsmPhysicsTest.java src/test/java/com/fox/ysmu/model/resource/YsmResourceFormatTest.java
+
+This returned no matches.
+
+    rg -n "record\b|List\.of|Map\.of|Set\.of|Files\.readString|Files\.writeString|Objects\.requireNonNullElse|var " src/main/java/com/fox/ysmu/client/animation/molang src/main/java/software/bernie/geckolib3/core/controller/AnimationController.java src/main/java/software/bernie/geckolib3/core/processor/AnimationProcessor.java src/main/java/com/fox/ysmu/model/resource/YSMBinaryDeserializer.java src/test/java/software/bernie/geckolib3/core/molang/MolangParserOpenYsmPhysicsTest.java src/test/java/com/fox/ysmu/model/resource/YsmResourceFormatTest.java
+
+This returned no matches.
+
 ## Interfaces and Dependencies
 
 The implementation will add these client-side interfaces:
@@ -197,3 +267,7 @@ Revision note, 2026-05-10: Recorded the `misc/4_default_controllers` manual-test
 Revision note, 2026-05-10: Updated the plan after comparing the failing sword and bow behavior against OpenYSM's real controller installer and condition classifiers. The important correction is that OpenYSM pre/post controllers are independent slots, while `swing:sword` and `use_mainhand:bow` are conditional animation names discovered by the coded swing/use predicates.
 
 Revision note, 2026-05-10: Recorded the follow-up fixes for mid-attack movement restarts and bow aiming eye closure. The implementation now preserves elapsed state time when a conditional animation entry changes and preserves GeckoLib controller registration order.
+
+Revision note, 2026-05-10: Recorded the physics-function follow-up. The implementation now supports OpenYSM first/second-order physics functions, bone accessors, scoped `v.*` runtime values, timeline Molang instruction execution for hair/chest secondary motion, and a focused parser regression test.
+
+Revision note, 2026-05-10: Recorded the manual-feedback follow-up. The implementation now matches OpenYSM's timeline-before-bone ordering, short-loop remaining event execution, active bone queue ordering, and abbreviated sync footer parsing.

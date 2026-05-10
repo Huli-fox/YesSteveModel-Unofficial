@@ -59,20 +59,27 @@ public class YSMBinaryDeserializer implements AutoCloseable {
             if (format < 9) { // 《9没有
                 return;
             }
+            if (reader.getRawBuf().readableBytes() == 0) {
+                return;
+            }
             if (format > 26) { // >26 这里有个版本号
                 model.footer.version = reader.readVarInt();
             }
 
             model.footer.unkInt1 = reader.readVarInt(); // always 1
 
-            model.footer.rand = reader.readString(); // 随机字符串
+            if (model.footer.unkInt1 != 0) {
+                model.footer.rand = reader.readString(); // 随机字符串
+            }
 
             model.footer.time = reader.readVarLong(); // Unix 时间戳 如 1775738769
 
-            model.footer.extra = reader.readString(); // 导出时的额外字符串
+            if (model.footer.unkInt1 != 0) {
+                model.footer.extra = reader.readString(); // 导出时的额外字符串
 
-            if (format >= 24) {
-                model.footer.unkInt2 = reader.readVarInt(); // always 0，暂时没看到过其他的情况，似乎是字符串
+                if (format >= 24) {
+                    model.footer.unkInt2 = reader.readVarInt(); // always 0，暂时没看到过其他的情况，似乎是字符串
+                }
             }
 
         } catch (Throwable t) {

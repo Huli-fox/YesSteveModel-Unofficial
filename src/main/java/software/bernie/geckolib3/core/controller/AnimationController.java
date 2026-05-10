@@ -174,6 +174,7 @@ public class AnimationController<T extends IAnimatable> {
     }
 
     private final HashMap<String, BoneAnimationQueue> boneAnimationQueues = new HashMap<>();
+    private final List<BoneAnimationQueue> activeBoneAnimationQueues = new ArrayList<>();
     public double tickOffset;
     protected Queue<Animation> animationQueue = new LinkedList<>();
     public Animation currentAnimation;
@@ -406,6 +407,10 @@ public class AnimationController<T extends IAnimatable> {
         return boneAnimationQueues;
     }
 
+    public List<BoneAnimationQueue> getActiveBoneAnimationQueues() {
+        return activeBoneAnimationQueues;
+    }
+
     /**
      * Registers a sound listener.
      */
@@ -515,6 +520,7 @@ public class AnimationController<T extends IAnimatable> {
                             continue;
                         }
                     }
+                    markActiveBoneAnimationQueue(boneAnimationQueue);
                     BoneSnapshot initialSnapshot = first.get()
                         .getInitialSnapshot();
                     assert boneSnapshot != null : "Bone snapshot was null";
@@ -662,6 +668,7 @@ public class AnimationController<T extends IAnimatable> {
             if (currentAnimation.loop == EDefaultLoopTypes.HOLD_ON_LAST_FRAME) {
                 tick = Math.max(0.0D, currentAnimation.animationLength);
             } else if (!currentAnimation.loop.isRepeatingAfterEnd()) {
+                processKeyFrameEvents(currentAnimation.animationLength);
                 resetEventKeyFrames();
                 // Pull the next animation from the queue
                 Animation peek = animationQueue.peek();
@@ -677,13 +684,13 @@ public class AnimationController<T extends IAnimatable> {
                     currentAnimation = this.animationQueue.peek();
                 }
             } else {
+                processKeyFrameEvents(currentAnimation.animationLength);
                 resetEventKeyFrames();
-                // Reset the adjusted tick so the next animation starts at tick 0
-                shouldResetTick = true;
-                tick = adjustTick(actualTick);
+                tick = wrapLoopTick(actualTick, tick, currentAnimation.animationLength);
             }
         }
         setAnimTime(parser, tick);
+        processKeyFrameEvents(tick);
 
         // Loop through every boneanimation in the current animation and process the
         // values
@@ -697,6 +704,7 @@ public class AnimationController<T extends IAnimatable> {
                     continue;
                 }
             }
+            markActiveBoneAnimationQueue(boneAnimationQueue);
 
             VectorKeyFrameList<KeyFrame<IValue>> rotationKeyFrames = boneAnimation.rotationKeyFrames;
             VectorKeyFrameList<KeyFrame<IValue>> positionKeyFrames = boneAnimation.positionKeyFrames;
@@ -729,8 +737,28 @@ public class AnimationController<T extends IAnimatable> {
                     .add(getAnimationPointAtTick(scaleKeyFrames.zKeyFrames, tick, false, Axis.Z));
             }
         }
+        if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.Transitioning) {
+            this.currentAnimation = animationQueue.poll();
+        }
+    }
 
-        if (soundListener != null || particleListener != null || customInstructionListener != null) {
+    private double wrapLoopTick(double actualTick, double tick, double animationLength) {
+        if (animationLength <= 0.0D) {
+            this.tickOffset = actualTick;
+            this.shouldResetTick = false;
+            return 0.0D;
+        }
+        double wrappedTick = tick % animationLength;
+        if (Double.isNaN(wrappedTick) || Double.isInfinite(wrappedTick)) {
+            wrappedTick = 0.0D;
+        }
+        this.tickOffset = this.animationSpeed == 0.0D ? actualTick : actualTick - wrappedTick / this.animationSpeed;
+        this.shouldResetTick = false;
+        return wrappedTick;
+    }
+
+    private void processKeyFrameEvents(double tick) {
+        if (soundListener != null) {
             for (EventKeyFrame<String> soundKeyFrame : currentAnimation.soundKeyFrames) {
                 if (!this.executedKeyFrames.contains(soundKeyFrame) && tick >= soundKeyFrame.getStartTick()) {
                     SoundKeyframeEvent<T> event = new SoundKeyframeEvent<>(
@@ -743,7 +771,9 @@ public class AnimationController<T extends IAnimatable> {
                     this.executedKeyFrames.add(soundKeyFrame);
                 }
             }
+        }
 
+        if (particleListener != null) {
             for (ParticleEventKeyFrame particleEventKeyFrame : currentAnimation.particleKeyFrames) {
                 if (!this.executedKeyFrames.contains(particleEventKeyFrame)
                     && tick >= particleEventKeyFrame.getStartTick()) {
@@ -759,7 +789,9 @@ public class AnimationController<T extends IAnimatable> {
                     this.executedKeyFrames.add(particleEventKeyFrame);
                 }
             }
+        }
 
+        if (customInstructionListener != null) {
             for (EventKeyFrame<String> customInstructionKeyFrame : currentAnimation.customInstructionKeyframes) {
                 if (!this.executedKeyFrames.contains(customInstructionKeyFrame)
                     && tick >= customInstructionKeyFrame.getStartTick()) {
@@ -774,17 +806,20 @@ public class AnimationController<T extends IAnimatable> {
                 }
             }
         }
-
-        if (this.transitionLengthTicks == 0 && shouldResetTick && this.animationState == AnimationState.Transitioning) {
-            this.currentAnimation = animationQueue.poll();
-        }
     }
 
     // Helper method to populate all the initial animation point queues
     private void createInitialQueues(List<IBone> modelRendererList) {
         boneAnimationQueues.clear();
+        activeBoneAnimationQueues.clear();
         for (IBone modelRenderer : modelRendererList) {
             boneAnimationQueues.put(modelRenderer.getName(), new BoneAnimationQueue(modelRenderer));
+        }
+    }
+
+    private void markActiveBoneAnimationQueue(BoneAnimationQueue boneAnimationQueue) {
+        if (boneAnimationQueue != null && !activeBoneAnimationQueues.contains(boneAnimationQueue)) {
+            activeBoneAnimationQueues.add(boneAnimationQueue);
         }
     }
 

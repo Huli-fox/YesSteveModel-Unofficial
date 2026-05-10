@@ -1,5 +1,6 @@
 package software.bernie.geckolib3.core.molang;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
@@ -16,7 +17,12 @@ import software.bernie.geckolib3.core.molang.expressions.MolangAssignment;
 import software.bernie.geckolib3.core.molang.expressions.MolangExpression;
 import software.bernie.geckolib3.core.molang.expressions.MolangMultiStatement;
 import software.bernie.geckolib3.core.molang.expressions.MolangValue;
+import software.bernie.geckolib3.core.molang.functions.BonePosition;
+import software.bernie.geckolib3.core.molang.functions.BoneRotation;
+import software.bernie.geckolib3.core.molang.functions.BoneScale;
 import software.bernie.geckolib3.core.molang.functions.CosDegrees;
+import software.bernie.geckolib3.core.molang.functions.FirstOrder;
+import software.bernie.geckolib3.core.molang.functions.SecondOrder;
 import software.bernie.geckolib3.core.molang.functions.SinDegrees;
 
 /**
@@ -40,6 +46,20 @@ public class MolangParser extends MathBuilder {
         // 将 sin 和 cos 改成角度参数
         this.functions.put("cos", CosDegrees.class);
         this.functions.put("sin", SinDegrees.class);
+        this.functions.put("ysm.first_order", FirstOrder.class);
+        this.functions.put("ysm.second_order", SecondOrder.class);
+        this.functions.put("ysm.bone_rot_x", BoneRotation.class);
+        this.functions.put("ysm.bone_rot_y", BoneRotation.class);
+        this.functions.put("ysm.bone_rot_z", BoneRotation.class);
+        this.functions.put("ysm.bone_pos_x", BonePosition.class);
+        this.functions.put("ysm.bone_pos_y", BonePosition.class);
+        this.functions.put("ysm.bone_pos_z", BonePosition.class);
+        this.functions.put("ysm.bone_position_x", BonePosition.class);
+        this.functions.put("ysm.bone_position_y", BonePosition.class);
+        this.functions.put("ysm.bone_position_z", BonePosition.class);
+        this.functions.put("ysm.bone_scale_x", BoneScale.class);
+        this.functions.put("ysm.bone_scale_y", BoneScale.class);
+        this.functions.put("ysm.bone_scale_z", BoneScale.class);
 
         remap("abs", "math.abs");
         remap("acos", "math.acos");
@@ -76,7 +96,12 @@ public class MolangParser extends MathBuilder {
         if (!(variable instanceof LazyVariable)) {
             variable = LazyVariable.from(variable);
         }
-        VARIABLES.put(variable.getName(), (LazyVariable) variable);
+        String name = normalizeVariableName(variable.getName());
+        if (name.startsWith("v.") && !(variable instanceof ScopedMolangVariable)) {
+            Variable fallback = variable;
+            variable = new ScopedMolangVariable(name, fallback::get);
+        }
+        VARIABLES.put(name, (LazyVariable) variable);
     }
 
     /**
@@ -101,10 +126,12 @@ public class MolangParser extends MathBuilder {
     @Override
 
     protected LazyVariable getVariable(String name) {
-        return VARIABLES.computeIfAbsent(name, key -> new LazyVariable(key, 0));
+        name = normalizeVariableName(name);
+        return VARIABLES.computeIfAbsent(name, MolangParser::newVariable);
     }
 
     public LazyVariable getVariable(String name, MolangMultiStatement currentStatement) {
+        name = normalizeVariableName(name);
         LazyVariable variable;
         if (currentStatement != null) {
             variable = currentStatement.locals.get(name);
@@ -113,6 +140,20 @@ public class MolangParser extends MathBuilder {
             }
         }
         return getVariable(name);
+    }
+
+    private static String normalizeVariableName(String name) {
+        if (name.startsWith("q.")) {
+            return "query." + name.substring(2);
+        }
+        if (name.startsWith("variable.")) {
+            return "v." + name.substring("variable.".length());
+        }
+        return name;
+    }
+
+    private static LazyVariable newVariable(String key) {
+        return key.startsWith("v.") ? new ScopedMolangVariable(key, 0) : new LazyVariable(key, 0);
     }
 
     public MolangExpression parseJson(JsonElement element) throws MolangException {
@@ -139,9 +180,7 @@ public class MolangParser extends MathBuilder {
      */
     public MolangExpression parseExpression(String expression) throws MolangException {
         MolangMultiStatement result = null;
-        for (String split : expression.toLowerCase()
-            .trim()
-            .split(";")) {
+        for (String split : splitStatements(lowerCaseOutsideStrings(expression).trim())) {
             String trimmed = split.trim();
             if (!trimmed.isEmpty()) {
                 if (result == null) {
@@ -154,6 +193,43 @@ public class MolangParser extends MathBuilder {
             throw new MolangException("Molang expression cannot be blank!");
         }
         return result;
+    }
+
+    public static List<String> splitStatements(String expression) throws MolangException {
+        List<String> statements = new ArrayList<>();
+        StringBuilder current = new StringBuilder(expression.length());
+        boolean quoted = false;
+        char quote = 0;
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (quoted) {
+                current.append(c);
+                if (c == '\\' && i + 1 < expression.length()) {
+                    current.append(expression.charAt(++i));
+                } else if (c == quote) {
+                    quoted = false;
+                }
+            } else if (c == '\'' || c == '"') {
+                quoted = true;
+                quote = c;
+                current.append(c);
+            } else if (c == ';') {
+                statements.add(current.toString());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        if (quoted) {
+            throw new MolangException("Unclosed string literal in Molang expression!");
+        }
+        statements.add(current.toString());
+        return statements;
+    }
+
+    @Override
+    public String[] breakdown(String expression) throws Exception {
+        return super.breakdown(rewriteOpenYsmExpression(expression));
     }
 
     /**
@@ -178,8 +254,11 @@ public class MolangParser extends MathBuilder {
                 && symbols.get(1)
                     .equals("=")) {
                 symbols = symbols.subList(2, symbols.size());
+                name = normalizeVariableName(name);
                 LazyVariable variable;
-                if (!VARIABLES.containsKey(name) && !currentStatement.locals.containsKey(name)) {
+                if (!name.startsWith("v.")
+                    && !VARIABLES.containsKey(name)
+                    && !currentStatement.locals.containsKey(name)) {
                     currentStatement.locals.put(name, (variable = new LazyVariable(name, 0)));
                 } else {
                     variable = getVariable(name, currentStatement);
@@ -213,5 +292,109 @@ public class MolangParser extends MathBuilder {
 
     protected boolean isOperator(String s) {
         return super.isOperator(s) || s.equals("=");
+    }
+
+    private static String lowerCaseOutsideStrings(String expression) {
+        StringBuilder out = new StringBuilder(expression.length());
+        boolean quoted = false;
+        char quote = 0;
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (quoted) {
+                out.append(c);
+                if (c == '\\' && i + 1 < expression.length()) {
+                    out.append(expression.charAt(++i));
+                } else if (c == quote) {
+                    quoted = false;
+                }
+            } else if (c == '\'' || c == '"') {
+                quoted = true;
+                quote = c;
+                out.append(c);
+            } else {
+                out.append(Character.toLowerCase(c));
+            }
+        }
+        return out.toString();
+    }
+
+    private static String rewriteOpenYsmExpression(String expression) throws MolangException {
+        String rewritten = replaceStringLiterals(expression);
+        rewritten = rewriteVectorFunction(rewritten, "ysm.bone_rot", "ysm.bone_rot");
+        rewritten = rewriteVectorFunction(rewritten, "ysm.bone_pos", "ysm.bone_pos");
+        rewritten = rewriteVectorFunction(rewritten, "ysm.bone_position", "ysm.bone_position");
+        rewritten = rewriteVectorFunction(rewritten, "ysm.bone_scale", "ysm.bone_scale");
+        return rewritten;
+    }
+
+    private static String replaceStringLiterals(String expression) throws MolangException {
+        StringBuilder out = new StringBuilder(expression.length());
+        boolean quoted = false;
+        char quote = 0;
+        StringBuilder literal = new StringBuilder();
+        for (int i = 0; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (quoted) {
+                if (c == '\\' && i + 1 < expression.length()) {
+                    literal.append(expression.charAt(++i));
+                } else if (c == quote) {
+                    quoted = false;
+                    out.append(MolangStringPool.intern(literal.toString()));
+                    literal.setLength(0);
+                } else {
+                    literal.append(c);
+                }
+            } else if (c == '\'' || c == '"') {
+                quoted = true;
+                quote = c;
+            } else {
+                out.append(c);
+            }
+        }
+        if (quoted) {
+            throw new MolangException("Unclosed string literal in Molang expression!");
+        }
+        return out.toString();
+    }
+
+    private static String rewriteVectorFunction(String expression, String sourceFunction, String targetPrefix) {
+        String out = expression;
+        for (char axis : new char[] { 'x', 'y', 'z' }) {
+            String suffix = ")." + axis;
+            int searchFrom = 0;
+            while (true) {
+                int functionStart = out.indexOf(sourceFunction + "(", searchFrom);
+                if (functionStart < 0) {
+                    break;
+                }
+                int argsStart = functionStart + sourceFunction.length() + 1;
+                int argsEnd = findMatchingParen(out, argsStart - 1);
+                if (argsEnd < 0 || !out.startsWith(suffix, argsEnd)) {
+                    searchFrom = argsStart;
+                    continue;
+                }
+                String args = out.substring(argsStart, argsEnd);
+                String replacement = targetPrefix + "_" + axis + "(" + args + ")";
+                out = out.substring(0, functionStart) + replacement + out.substring(argsEnd + suffix.length());
+                searchFrom = functionStart + replacement.length();
+            }
+        }
+        return out;
+    }
+
+    private static int findMatchingParen(String expression, int openIndex) {
+        int depth = 0;
+        for (int i = openIndex; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            if (c == '(') {
+                depth++;
+            } else if (c == ')') {
+                depth--;
+                if (depth == 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 }

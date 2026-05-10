@@ -196,6 +196,41 @@ class YsmResourceFormatTest {
     }
 
     @Test
+    void binaryDeserializerAcceptsAbbreviatedSyncFooter() throws Exception {
+        RawYsmModel source = new RawYsmModel();
+        source.formatVersion = 32;
+        source.properties.sha256 = "0123456789abcdef";
+        source.properties.defaultTexture = "default";
+        source.metadata.name = "Footer Sample";
+        source.mainEntity.mainModel = geometry(1, "geometry.main");
+        source.mainEntity.armModel = geometry(2, "geometry.arm");
+        RawYsmModel.RawTexture texture = new RawYsmModel.RawTexture();
+        texture.name = "default";
+        texture.sourceFileName = "default.png";
+        texture.hash = "texture-hash";
+        texture.width = 1;
+        texture.height = 1;
+        texture.imageFormat = 2;
+        texture.unknownFlag = 1;
+        texture.data = PNG_1X1;
+        source.mainEntity.textures.put(texture.name, texture);
+
+        byte[] bytes;
+        try (YSMByteBuf serialized = YSMBinarySerializer.serialize(source, 32, true)) {
+            bytes = serialized.toArray();
+        }
+
+        try (YSMBinaryDeserializer deserializer = new YSMBinaryDeserializer(bytes, 32)) {
+            RawYsmModel decoded = deserializer.deserializeKeepOpen();
+            deserializer.parseYSMFooter(decoded);
+
+            assertEquals(65535, decoded.footer.version);
+            assertEquals(0, decoded.footer.unkInt1);
+            assertEquals(0L, decoded.footer.time);
+        }
+    }
+
+    @Test
     void binaryDeserializerReadsFormat15AndBridgeConvertsRgbaTexture() throws Exception {
         byte[] rgbaRedPixel = new byte[] { (byte) 0xFF, 0, 0, (byte) 0xFF };
 

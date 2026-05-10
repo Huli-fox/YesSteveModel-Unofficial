@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import com.fox.ysmu.client.ClientModelManager;
 import com.fox.ysmu.client.animation.AnimationManager;
 import com.fox.ysmu.client.animation.condition.ConditionArmor;
+import com.fox.ysmu.client.animation.molang.MolangInstructionExecutor;
 import com.fox.ysmu.client.model.CustomPlayerModel;
 
 import software.bernie.geckolib3.core.IAnimatable;
@@ -90,6 +91,11 @@ public class CustomPlayerEntity implements IAnimatable {
                 new AnimationController(this, controllerName, 0, e -> manager.predicateArmor(e, finalSlotIndex)));
         }
         data.addAnimationController(new AnimationController(this, CAP_CONTROLLER, 2, manager::predicateCap));
+        data.getAnimationControllers()
+            .values()
+            .forEach(
+                controller -> controller
+                    .registerCustomInstructionListener(event -> MolangInstructionExecutor.execute(event.instructions)));
     }
 
     public ResourceLocation getMainModel() {
