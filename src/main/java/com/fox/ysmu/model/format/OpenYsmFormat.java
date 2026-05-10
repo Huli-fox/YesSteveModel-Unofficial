@@ -1,6 +1,7 @@
 package com.fox.ysmu.model.format;
 
 import static com.fox.ysmu.model.ServerModelManager.CACHE_NAME_INFO;
+import static com.fox.ysmu.model.ServerModelManager.OPEN_YSM_SYNC_INFO;
 import static com.fox.ysmu.model.ServerModelManager.RAW_MODEL_INFO;
 import static com.fox.ysmu.model.ServerModelManager.removeExtension;
 
@@ -79,6 +80,8 @@ public final class OpenYsmFormat {
             if (info != null) {
                 CACHE_NAME_INFO.put(modelId, info);
             }
+            OpenYsmSyncInfo syncInfo = ModelCacheWriter.writeOpenYsm(raw, modelId);
+            OPEN_YSM_SYNC_INFO.put(modelId, syncInfo);
         } catch (Exception e) {
             ysmu.LOG.warn("Failed to load OpenYSM folder model {}", dir, e);
         }
@@ -106,6 +109,8 @@ public final class OpenYsmFormat {
                 if (info != null) {
                     CACHE_NAME_INFO.put(modelId, info);
                 }
+                OpenYsmSyncInfo syncInfo = ModelCacheWriter.writeOpenYsm(raw, modelId);
+                OPEN_YSM_SYNC_INFO.put(modelId, syncInfo);
             }
         } catch (UnsupportedOperationException e) {
             ysmu.LOG.warn("Unsupported OpenYSM binary model {}", file, e);

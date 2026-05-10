@@ -19,6 +19,7 @@ import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.SyncModelInfo;
 import com.fox.ysmu.network.message.SyncPlayerMotionState;
 import com.fox.ysmu.network.message.SyncStarModels;
+import com.fox.ysmu.network.sync.OpenYsmModelSyncServer;
 import com.gtnewhorizon.gtnhlib.eventbus.EventBusSubscriber;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -39,6 +40,7 @@ public class CommonEventHandler {
     public static void onPlayerLoggedOut(cpw.mods.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.player instanceof EntityPlayerMP) {
             LAST_MOTION_STATES.remove(event.player.getUniqueID());
+            OpenYsmModelSyncServer.clear(event.player.getUniqueID());
         }
     }
 

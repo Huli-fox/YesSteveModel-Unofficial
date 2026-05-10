@@ -21,6 +21,7 @@ import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fox.ysmu.client.animation.condition.ConditionManager;
+import com.fox.ysmu.client.sync.OpenYsmModelSyncClient;
 import com.fox.ysmu.client.texture.OuterFileTexture;
 import com.fox.ysmu.data.ModelData;
 import com.fox.ysmu.model.ServerModelManager;
@@ -320,6 +321,7 @@ public class ClientModelManager {
         PASSWORD = null;
         PASSWORD_UUID = null;
         clearCachedModelMd5();
+        OpenYsmModelSyncClient.clearConnectionState();
     }
 
     private static void clearCachedModelMd5() {

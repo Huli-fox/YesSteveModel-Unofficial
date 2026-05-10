@@ -14,14 +14,17 @@ import net.minecraft.entity.player.EntityPlayer;
 
 import org.apache.commons.io.FileUtils;
 
+import com.fox.ysmu.Config;
 import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.model.format.FolderFormat;
 import com.fox.ysmu.model.format.OpenYsmFormat;
+import com.fox.ysmu.model.format.OpenYsmSyncInfo;
 import com.fox.ysmu.model.format.ServerModelInfo;
 import com.fox.ysmu.model.format.YsmFormat;
 import com.fox.ysmu.model.resource.pojo.RawYsmModel;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.RequestSyncModel;
+import com.fox.ysmu.network.message.S2CVersionCheck17;
 import com.fox.ysmu.util.GetJarResources;
 import com.fox.ysmu.ysmu;
 import com.google.common.collect.Maps;
@@ -63,6 +66,7 @@ public final class ServerModelManager {
      */
     public static final Map<String, ServerModelInfo> CACHE_NAME_INFO = Maps.newHashMap();
     public static final Map<String, RawYsmModel> RAW_MODEL_INFO = Maps.newHashMap();
+    public static final Map<String, OpenYsmSyncInfo> OPEN_YSM_SYNC_INFO = Maps.newHashMap();
     public static volatile byte[] OPEN_YSM_SERVER_KEY;
 
     /**
@@ -76,11 +80,14 @@ public final class ServerModelManager {
 
     public static void sendRequestSyncModelMessage(List<EntityPlayer> playerList) {
         for (EntityPlayer player : playerList) {
-            NetworkHandler.sendToClientPlayer(new RequestSyncModel(), player);
+            sendRequestSyncModelMessage(player);
         }
     }
 
     public static void sendRequestSyncModelMessage(EntityPlayer player) {
+        if (Config.ENABLE_OPEN_YSM_SYNC_PROTOCOL) {
+            NetworkHandler.sendToClientPlayer(new S2CVersionCheck17(NetworkHandler.PROTOCOL_VERSION), player);
+        }
         NetworkHandler.sendToClientPlayer(new RequestSyncModel(), player);
     }
 
@@ -98,6 +105,7 @@ public final class ServerModelManager {
     private static void clearModelCaches() {
         CACHE_NAME_INFO.clear();
         RAW_MODEL_INFO.clear();
+        OPEN_YSM_SYNC_INFO.clear();
     }
 
     private static void createConfigDirectories() {
