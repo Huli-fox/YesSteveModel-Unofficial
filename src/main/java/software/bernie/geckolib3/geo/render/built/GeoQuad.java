@@ -2,6 +2,8 @@ package software.bernie.geckolib3.geo.render.built;
 
 import java.io.Serializable;
 
+import javax.vecmath.Vector3f;
+
 import net.geckominecraft.util.math.Vec3i;
 import net.minecraft.util.EnumFacing;
 
@@ -12,6 +14,7 @@ public class GeoQuad implements Serializable {
     private static final long serialVersionUID = 42L;
     public GeoVertex[] vertices;
     public final Vec3i normal;
+    public final Vector3f normalVector;
     public EnumFacing direction;
     public int uvRotation;
 
@@ -57,6 +60,7 @@ public class GeoQuad implements Serializable {
         vertices[2] = verticesIn[2].setTextureUV(uvs[4], uvs[5]);
         vertices[3] = verticesIn[3].setTextureUV(uvs[6], uvs[7]);
         this.normal = new Vec3i(nx, ny, nz);
+        this.normalVector = new Vector3f(nx, ny, nz);
     }
 
     public GeoQuad(GeoVertex[] verticesIn, double[] uvCoords, double[] uvSize, int uvRotation, float texWidth,
@@ -92,5 +96,13 @@ public class GeoQuad implements Serializable {
             texHeight,
             mirrorIn,
             directionIn);
+    }
+
+    public GeoQuad(GeoVertex[] verticesIn, Vector3f normalIn) {
+        this.direction = null;
+        this.vertices = verticesIn;
+        this.uvRotation = 0;
+        this.normal = new Vec3i(Math.round(normalIn.x), Math.round(normalIn.y), Math.round(normalIn.z));
+        this.normalVector = new Vector3f(normalIn);
     }
 }

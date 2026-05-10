@@ -238,106 +238,47 @@ public final class RawYsmModelAdapter {
         }
         bone.add("pivot", generatedPivotArray(rawBone.pivot));
         bone.add("rotation", generatedRotationArray(rawBone.rotation));
-        if (!rawBone.cubes.isEmpty()) {
-            JsonArray cubes = new JsonArray();
-            for (RawYsmModel.RawCube rawCube : rawBone.cubes) {
-                JsonObject cube = createCubeJson(rawCube, geometry);
-                if (cube != null) {
-                    cubes.add(cube);
-                }
-            }
-            if (cubes.size() > 0) {
-                bone.add("cubes", cubes);
-            }
+        JsonObject polyMesh = createPolyMeshJson(rawBone);
+        if (polyMesh != null) {
+            bone.add("poly_mesh", polyMesh);
         }
         return bone;
     }
 
-    private static JsonObject createCubeJson(RawYsmModel.RawCube rawCube, RawYsmModel.RawGeometry geometry) {
-        Bounds bounds = getBounds(rawCube);
-        if (bounds == null) {
-            return null;
-        }
-        float textureWidth = defaultPositive(geometry.textureWidth, 64f);
-        float textureHeight = defaultPositive(geometry.textureHeight, 64f);
+    private static JsonObject createPolyMeshJson(RawYsmModel.RawBone rawBone) {
+        JsonArray positions = new JsonArray();
+        JsonArray normals = new JsonArray();
+        JsonArray uvs = new JsonArray();
 
-        JsonObject cube = new JsonObject();
-        cube.add("origin", doubleArray(-bounds.maxX * 16d, bounds.minY * 16d, bounds.minZ * 16d));
-        cube.add(
-            "size",
-            doubleArray(
-                (bounds.maxX - bounds.minX) * 16d,
-                (bounds.maxY - bounds.minY) * 16d,
-                (bounds.maxZ - bounds.minZ) * 16d));
-        JsonObject faces = new JsonObject();
-        for (RawYsmModel.RawFace face : rawCube.faces) {
-            String direction = getFaceDirection(face);
-            if (direction != null && !faces.has(direction)) {
-                faces.add(direction, createFaceUvJson(face, textureWidth, textureHeight));
-            }
-        }
-        if (faces.entrySet().isEmpty()) {
-            return null;
-        }
-        cube.add("uv", faces);
-        return cube;
-    }
+        for (RawYsmModel.RawCube rawCube : rawBone.cubes) {
+            for (RawYsmModel.RawFace face : rawCube.faces) {
+                for (int i = 0; i < 4; i++) {
+                    float[] position = face.positions[i];
+                    positions.add(new JsonPrimitive((double) getVectorValue(position, 0)));
+                    positions.add(new JsonPrimitive((double) getVectorValue(position, 1)));
+                    positions.add(new JsonPrimitive((double) getVectorValue(position, 2)));
 
-    private static Bounds getBounds(RawYsmModel.RawCube rawCube) {
-        Bounds bounds = new Bounds();
-        boolean found = false;
-        for (RawYsmModel.RawFace face : rawCube.faces) {
-            for (float[] position : face.positions) {
-                if (position == null || position.length < 3) {
-                    continue;
+                    normals.add(new JsonPrimitive((double) getVectorValue(face.normal, 0)));
+                    normals.add(new JsonPrimitive((double) getVectorValue(face.normal, 1)));
+                    normals.add(new JsonPrimitive((double) getVectorValue(face.normal, 2)));
+
+                    uvs.add(new JsonPrimitive((double) face.u[i]));
+                    uvs.add(new JsonPrimitive((double) face.v[i]));
                 }
-                bounds.add(position[0], position[1], position[2]);
-                found = true;
             }
         }
-        return found ? bounds : null;
-    }
 
-    private static String getFaceDirection(RawYsmModel.RawFace face) {
-        float x = face.normal.length > 0 ? face.normal[0] : 0f;
-        float y = face.normal.length > 1 ? face.normal[1] : 0f;
-        float z = face.normal.length > 2 ? face.normal[2] : 0f;
-        float absX = Math.abs(x);
-        float absY = Math.abs(y);
-        float absZ = Math.abs(z);
-        if (absX >= absY && absX >= absZ && absX > 0f) {
-            return x > 0f ? "east" : "west";
+        if (positions.size() == 0) {
+            return null;
         }
-        if (absY >= absZ && absY > 0f) {
-            return y > 0f ? "up" : "down";
-        }
-        if (absZ > 0f) {
-            return z > 0f ? "south" : "north";
-        }
-        return null;
-    }
 
-    private static JsonObject createFaceUvJson(RawYsmModel.RawFace face, float textureWidth, float textureHeight) {
-        float minU = Float.POSITIVE_INFINITY;
-        float minV = Float.POSITIVE_INFINITY;
-        float maxU = Float.NEGATIVE_INFINITY;
-        float maxV = Float.NEGATIVE_INFINITY;
-        for (int i = 0; i < 4; i++) {
-            minU = Math.min(minU, face.u[i]);
-            minV = Math.min(minV, face.v[i]);
-            maxU = Math.max(maxU, face.u[i]);
-            maxV = Math.max(maxV, face.v[i]);
-        }
-        if (!Float.isFinite(minU) || !Float.isFinite(minV) || !Float.isFinite(maxU) || !Float.isFinite(maxV)) {
-            minU = 0f;
-            minV = 0f;
-            maxU = 1f / textureWidth;
-            maxV = 1f / textureHeight;
-        }
-        JsonObject uv = new JsonObject();
-        uv.add("uv", doubleArray(minU * textureWidth, minV * textureHeight));
-        uv.add("uv_size", doubleArray((maxU - minU) * textureWidth, (maxV - minV) * textureHeight));
-        return uv;
+        JsonObject mesh = new JsonObject();
+        mesh.addProperty("normalized_uvs", true);
+        mesh.addProperty("polys", "quad_list");
+        mesh.add("positions", positions);
+        mesh.add("normals", normals);
+        mesh.add("uvs", uvs);
+        return mesh;
     }
 
     private static JsonObject getOrCreateDescription(JsonObject root) {
@@ -792,22 +733,4 @@ public final class RawYsmModelAdapter {
         json.add(name, array);
     }
 
-    private static final class Bounds {
-
-        private float minX = Float.POSITIVE_INFINITY;
-        private float minY = Float.POSITIVE_INFINITY;
-        private float minZ = Float.POSITIVE_INFINITY;
-        private float maxX = Float.NEGATIVE_INFINITY;
-        private float maxY = Float.NEGATIVE_INFINITY;
-        private float maxZ = Float.NEGATIVE_INFINITY;
-
-        private void add(float x, float y, float z) {
-            this.minX = Math.min(this.minX, x);
-            this.minY = Math.min(this.minY, y);
-            this.minZ = Math.min(this.minZ, z);
-            this.maxX = Math.max(this.maxX, x);
-            this.maxY = Math.max(this.maxY, y);
-            this.maxZ = Math.max(this.maxZ, z);
-        }
-    }
 }

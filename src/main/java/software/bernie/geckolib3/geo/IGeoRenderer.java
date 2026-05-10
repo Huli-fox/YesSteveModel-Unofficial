@@ -108,7 +108,7 @@ public interface IGeoRenderer<T> {
         MATRIX_STACK.rotate(cube);
         MATRIX_STACK.moveBackFromPivot(cube);
 
-        boolean flat = cube.size.x == 0 || cube.size.y == 0 || cube.size.z == 0;
+        boolean flat = !cube.mesh && (cube.size.x == 0 || cube.size.y == 0 || cube.size.z == 0);
         if (flat) {
             GlStateManager.enablePolygonOffset();
             GlStateManager.doPolygonOffset(-1.0F, -10.0F);
@@ -116,7 +116,9 @@ public interface IGeoRenderer<T> {
 
         for (GeoQuad quad : cube.quads) {
             if (quad == null) continue;
-            Vector3f normal = new Vector3f(quad.normal.getX(), quad.normal.getY(), quad.normal.getZ());
+            Vector3f normal = quad.normalVector == null
+                ? new Vector3f(quad.normal.getX(), quad.normal.getY(), quad.normal.getZ())
+                : new Vector3f(quad.normalVector);
 
             MATRIX_STACK.getNormalMatrix()
                 .transform(normal);
@@ -124,13 +126,13 @@ public interface IGeoRenderer<T> {
             /*
              * Fix shading dark shading for flat cubes + compatibility wish Optifine shaders
              */
-            if ((cube.size.y == 0 || cube.size.z == 0) && normal.x < 0) {
+            if (!cube.mesh && (cube.size.y == 0 || cube.size.z == 0) && normal.x < 0) {
                 normal.x *= -1;
             }
-            if ((cube.size.x == 0 || cube.size.z == 0) && normal.y < 0) {
+            if (!cube.mesh && (cube.size.x == 0 || cube.size.z == 0) && normal.y < 0) {
                 normal.y *= -1;
             }
-            if ((cube.size.x == 0 || cube.size.y == 0) && normal.z < 0) {
+            if (!cube.mesh && (cube.size.x == 0 || cube.size.y == 0) && normal.z < 0) {
                 normal.z *= -1;
             }
 

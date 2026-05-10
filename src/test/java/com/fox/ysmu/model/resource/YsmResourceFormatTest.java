@@ -122,12 +122,14 @@ class YsmResourceFormatTest {
             .getAsJsonArray("minecraft:geometry")
             .get(0)
             .getAsJsonObject();
-        assertTrue(
-            geometry.getAsJsonArray("bones")
-                .get(0)
-                .getAsJsonObject()
-                .getAsJsonArray("cubes")
-                .size() > 0);
+        JsonObject polyMesh = geometry.getAsJsonArray("bones")
+            .get(0)
+            .getAsJsonObject()
+            .getAsJsonObject("poly_mesh");
+        assertEquals("quad_list", polyMesh.get("polys").getAsString());
+        assertTrue(polyMesh.get("normalized_uvs").getAsBoolean());
+        assertEquals(12, polyMesh.getAsJsonArray("positions").size());
+        assertEquals(8, polyMesh.getAsJsonArray("uvs").size());
     }
 
     @Test

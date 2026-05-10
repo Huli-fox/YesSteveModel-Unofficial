@@ -102,6 +102,9 @@ public class GeoBuilder implements IGeoBuilder {
                         geoBone.mirror));
             }
         }
+        if (rawBone.getPolyMesh() != null) {
+            geoBone.childCubes.add(GeoCube.createFromPolyMesh(rawBone.getPolyMesh(), properties));
+        }
 
         for (RawBoneGroup child : bone.children.values()) {
             geoBone.childBones.add(constructBone(child, properties, geoBone));
