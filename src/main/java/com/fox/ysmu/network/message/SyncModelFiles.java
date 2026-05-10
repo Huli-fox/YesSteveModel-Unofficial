@@ -4,6 +4,8 @@ import static com.fox.ysmu.model.ServerModelManager.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +30,8 @@ import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 
 public class SyncModelFiles implements IMessage {
+
+    private static final int LEGACY_DIRECT_SEND_LIMIT = 1900 * 1024;
 
     private String[] md5Info;
 
@@ -82,14 +86,49 @@ public class SyncModelFiles implements IMessage {
             for (String md5 : output) {
                 File modelFile = CACHE_SERVER.resolve(md5)
                     .toFile();
-                try {
-                    byte[] modelBytes = FileUtils.readFileToByteArray(modelFile);
-                    // Send large model bytes off the packet handler path; this task only enqueues a Forge packet.
-                    ThreadTools.THREAD_POOL
-                        .submit(() -> NetworkHandler.sendToClientPlayer(new SendModelFile(modelBytes), sender));
-                } catch (IOException e) {
-                    ysmu.LOG.warn("Failed to read YSM server model cache file " + md5, e);
+                ThreadTools.THREAD_POOL.submit(() -> sendModelFile(md5, modelFile, sender));
+            }
+        }
+
+        private void sendModelFile(String md5, File modelFile, EntityPlayerMP sender) {
+            try {
+                long fileLength = modelFile.length();
+                if (fileLength > Integer.MAX_VALUE) {
+                    ysmu.LOG.warn(
+                        "Skipping YSM legacy model cache file {} because it is too large: {} bytes",
+                        md5,
+                        fileLength);
+                    return;
                 }
+                if (fileLength <= LEGACY_DIRECT_SEND_LIMIT) {
+                    NetworkHandler.sendToClientPlayer(
+                        new SendModelFile(FileUtils.readFileToByteArray(modelFile)),
+                        sender);
+                    return;
+                }
+
+                ysmu.LOG.info(
+                    "Sending large YSM legacy model cache {} in chunks: size={} bytes, chunk={} bytes",
+                    md5,
+                    fileLength,
+                    SendModelFileChunk.MAX_CHUNK_BYTES);
+                int offset = 0;
+                byte[] buffer = new byte[SendModelFileChunk.MAX_CHUNK_BYTES];
+                try (InputStream input = FileUtils.openInputStream(modelFile)) {
+                    int read;
+                    while ((read = input.read(buffer)) != -1) {
+                        if (read == 0) {
+                            continue;
+                        }
+                        byte[] chunk = Arrays.copyOf(buffer, read);
+                        NetworkHandler.sendToClientPlayer(
+                            new SendModelFileChunk(md5, (int) fileLength, offset, chunk),
+                            sender);
+                        offset += read;
+                    }
+                }
+            } catch (IOException e) {
+                ysmu.LOG.warn("Failed to read YSM server model cache file " + md5, e);
             }
         }
 

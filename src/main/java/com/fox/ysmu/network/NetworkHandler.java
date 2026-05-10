@@ -36,6 +36,7 @@ public final class NetworkHandler {
     private static final int CLIENTBOUND_SEND_MODEL_PASSWORD = 13;
     private static final int CLIENTBOUND_OPENYSM_MODEL_SYNC_PAYLOAD_17 = 17;
     private static final int CLIENTBOUND_OPENYSM_VERSION_CHECK_17 = 18;
+    private static final int CLIENTBOUND_SEND_MODEL_FILE_CHUNK = 19;
 
     public static final int OPEN_NPC_MODEL_GUI = 93;
     public static final int SET_NPC_MODEL_ID = 94;
@@ -141,6 +142,11 @@ public final class NetworkHandler {
             S2CVersionCheck17.Handler.class,
             S2CVersionCheck17.class,
             CLIENTBOUND_OPENYSM_VERSION_CHECK_17,
+            Side.CLIENT);
+        CHANNEL.registerMessage(
+            SendModelFileChunk.Handler.class,
+            SendModelFileChunk.class,
+            CLIENTBOUND_SEND_MODEL_FILE_CHUNK,
             Side.CLIENT);
     }
 
