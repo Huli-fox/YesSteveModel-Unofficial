@@ -5,8 +5,6 @@ import java.io.File;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
-import com.fox.ysmu.util.ThreadTools;
-
 public class Config {
     private static Configuration configuration;
 
@@ -18,11 +16,6 @@ public class Config {
     public static boolean DISABLE_SELF_HANDS = false;
     public static String DEFAULT_MODEL_ID = "default";
     public static String DEFAULT_MODEL_TEXTURE = "default.png";
-    public static int THREAD_COUNT = 10;
-    public static int BANDWIDTH_LIMIT = 5;
-    public static int PLAYER_SYNC_TIMEOUT = 60;
-    public static boolean LOW_BANDWIDTH_USAGE = false;
-    public static int ACCEPT_SOUND_FX = 0;
 
     // Extra Player Screen Config
     public static boolean DISABLE_PLAYER_RENDER = false;
@@ -30,6 +23,14 @@ public class Config {
     public static int PLAYER_POS_Y = 10;
     public static double PLAYER_SCALE = 40.0;
     public static double PLAYER_YAW_OFFSET = 5.0;
+
+    // OpenYSM model sync config
+    public static boolean ENABLE_OPEN_YSM_SYNC_PROTOCOL = true;
+    public static int THREAD_COUNT = 4;
+    public static int BANDWIDTH_LIMIT = 0;
+    public static int PLAYER_SYNC_TIMEOUT = 60;
+    public static boolean LOW_BANDWIDTH_USAGE = false;
+    public static boolean ACCEPT_SOUND_FX = true;
 
     /**
      * 在 Mod preInit 阶段调用，用于初始化配置文件并进行首次加载。
@@ -66,12 +67,6 @@ public class Config {
         DISABLE_SELF_HANDS = syncBoolean("DisableSelfHands", Configuration.CATEGORY_GENERAL, DISABLE_SELF_HANDS, "Prevents rendering of self player's hand", load);
         DEFAULT_MODEL_ID = syncString("DefaultModelId", Configuration.CATEGORY_GENERAL, DEFAULT_MODEL_ID, "The default model ID when a player first enters the game", load);
         DEFAULT_MODEL_TEXTURE = syncString("DefaultModelTexture", Configuration.CATEGORY_GENERAL, DEFAULT_MODEL_TEXTURE, "The default model texture when a player first enters the game", load);
-        THREAD_COUNT = syncInt("ThreadCount", "server_model_sync", THREAD_COUNT, "Maximum worker threads for model sync tasks", 1, 64, load);
-        BANDWIDTH_LIMIT = syncInt("BandwidthLimit", "server_model_sync", BANDWIDTH_LIMIT, "Approximate per-player model sync bandwidth limit in MB/s", 1, 999, load);
-        PLAYER_SYNC_TIMEOUT = syncInt("PlayerSyncTimeout", "server_model_sync", PLAYER_SYNC_TIMEOUT, "Seconds before an in-progress model sync is considered stale", 5, 600, load);
-        LOW_BANDWIDTH_USAGE = syncBoolean("LowBandwidthUsage", "server_model_sync", LOW_BANDWIDTH_USAGE, "Use slower chunk pacing for low bandwidth servers", load);
-        ACCEPT_SOUND_FX = syncInt("AcceptSoundFX", "server_model_sync", ACCEPT_SOUND_FX, "Reserved for later OpenYSM sound effect sync support", 0, 2, load);
-        ThreadTools.configureThreadCount(THREAD_COUNT);
 
         // Extra player render config values
         DISABLE_PLAYER_RENDER = syncBoolean("DisablePlayerRender", "extra_player_render", DISABLE_PLAYER_RENDER, "Whether to display player", load);
@@ -79,6 +74,14 @@ public class Config {
         PLAYER_POS_Y = syncInt("PlayerPosY", "extra_player_render", PLAYER_POS_Y, "Player position y in screen", 0, Integer.MAX_VALUE, load);
         PLAYER_SCALE = syncDouble("PlayerScale", "extra_player_render", PLAYER_SCALE, "Player scale in screen", 8.0, 360.0, load);
         PLAYER_YAW_OFFSET = syncDouble("PlayerYawOffset", "extra_player_render", PLAYER_YAW_OFFSET, "Player yaw offset in screen", load);
+
+        // OpenYSM model sync config values
+        ENABLE_OPEN_YSM_SYNC_PROTOCOL = syncBoolean("EnableOpenYsmSyncProtocol", "openysm_sync", ENABLE_OPEN_YSM_SYNC_PROTOCOL, "Whether to use the appended OpenYSM hash/cache/chunk sync path before legacy fallback", load);
+        THREAD_COUNT = syncInt("ThreadCount", "openysm_sync", THREAD_COUNT, "Target worker count for OpenYSM model sync tasks", 1, 32, load);
+        BANDWIDTH_LIMIT = syncInt("BandwidthLimit", "openysm_sync", BANDWIDTH_LIMIT, "OpenYSM model sync bandwidth limit in bytes per second. 0 means unlimited", 0, Integer.MAX_VALUE, load);
+        PLAYER_SYNC_TIMEOUT = syncInt("PlayerSyncTimeout", "openysm_sync", PLAYER_SYNC_TIMEOUT, "OpenYSM model sync timeout in seconds", 5, Integer.MAX_VALUE, load);
+        LOW_BANDWIDTH_USAGE = syncBoolean("LowBandwidthUsage", "openysm_sync", LOW_BANDWIDTH_USAGE, "Whether OpenYSM sync should use smaller chunks and conservative throttling", load);
+        ACCEPT_SOUND_FX = syncBoolean("AcceptSoundFX", "openysm_sync", ACCEPT_SOUND_FX, "Whether OpenYSM sync should accept model sound effect resources", load);
 
         // 检查配置是否已更改，如果已更改，则保存
         if (configuration.hasChanged()) {

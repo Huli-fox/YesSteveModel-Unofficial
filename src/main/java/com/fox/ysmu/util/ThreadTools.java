@@ -14,12 +14,4 @@ public final class ThreadTools {
         30,
         TimeUnit.SECONDS,
         new LinkedBlockingQueue());
-
-    public static void configureThreadCount(int maxThreads) {
-        if (THREAD_POOL instanceof ThreadPoolExecutor) {
-            ThreadPoolExecutor executor = (ThreadPoolExecutor) THREAD_POOL;
-            int safeMax = Math.max(1, maxThreads);
-            executor.setMaximumPoolSize(safeMax);
-        }
-    }
 }

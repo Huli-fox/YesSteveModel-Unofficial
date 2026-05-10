@@ -21,6 +21,7 @@ import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fox.ysmu.client.animation.condition.ConditionManager;
+import com.fox.ysmu.client.sync.OpenYsmModelSyncClient;
 import com.fox.ysmu.client.texture.OuterFileTexture;
 import com.fox.ysmu.data.ModelData;
 import com.fox.ysmu.model.ServerModelManager;
@@ -272,13 +273,6 @@ public class ClientModelManager {
         });
     }
 
-    public static void startOpenYsmSync17() {
-        ysmu.LOG.info("YSM client starting OpenYSM sync17");
-        PASSWORD = null;
-        PASSWORD_UUID = null;
-        clearCachedModelMd5();
-    }
-
     private static String[] getMd5Info() {
         File cacheDir = ServerModelManager.CACHE_CLIENT.toFile();
         if (!cacheDir.isDirectory() && !cacheDir.mkdirs()) {
@@ -327,6 +321,7 @@ public class ClientModelManager {
         PASSWORD = null;
         PASSWORD_UUID = null;
         clearCachedModelMd5();
+        OpenYsmModelSyncClient.clearConnectionState();
     }
 
     private static void clearCachedModelMd5() {

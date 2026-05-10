@@ -1,6 +1,6 @@
-package com.fox.ysmu.network.message.sync17;
+package com.fox.ysmu.network.message;
 
-import com.fox.ysmu.network.sync.ModelSyncClient17;
+import com.fox.ysmu.client.sync.OpenYsmModelSyncClient;
 
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
 import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
@@ -10,24 +10,26 @@ import io.netty.buffer.ByteBuf;
 
 public class S2CModelSyncPayload17 implements IMessage {
 
-    private byte[] payload;
+    private byte[] data = new byte[0];
 
     public S2CModelSyncPayload17() {}
 
-    public S2CModelSyncPayload17(byte[] payload) {
-        this.payload = payload;
+    public S2CModelSyncPayload17(byte[] data) {
+        this.data = data == null ? new byte[0] : data;
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        this.payload = new byte[buf.readInt()];
-        buf.readBytes(this.payload);
+        this.data = C2SModelSyncPayload17.readByteArray(buf);
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeInt(this.payload.length);
-        buf.writeBytes(this.payload);
+        C2SModelSyncPayload17.writeByteArray(buf, this.data);
+    }
+
+    public byte[] getData() {
+        return data;
     }
 
     public static class Handler implements IMessageHandler<S2CModelSyncPayload17, IMessage> {
@@ -35,7 +37,7 @@ public class S2CModelSyncPayload17 implements IMessage {
         @Override
         public IMessage onMessage(S2CModelSyncPayload17 message, MessageContext ctx) {
             if (ctx.side == Side.CLIENT) {
-                ModelSyncClient17.handlePayload(message.payload);
+                OpenYsmModelSyncClient.handlePayload(message.data);
             }
             return null;
         }
