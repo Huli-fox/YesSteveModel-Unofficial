@@ -33,6 +33,7 @@ import com.google.gson.JsonPrimitive;
 public final class RawYsmModelAdapter {
 
     private static final byte[] EMPTY_ANIMATION = "{\"animations\":{}}".getBytes(StandardCharsets.UTF_8);
+    private static final String ANIMATION_FORMAT_VERSION = "1.8.0";
     private static final int RGBA_FORMAT = -1;
     private static final int PNG_FORMAT = 2;
     private static final int EXTRA_ANIMATION_SLOT_COUNT = 8;
@@ -96,8 +97,8 @@ public final class RawYsmModelAdapter {
         putAnimation(animations, raw, "arm", ARM_ANIMATION_FILE_NAME);
         putAnimation(animations, raw, "extra", EXTRA_ANIMATION_FILE_NAME);
         for (Map.Entry<String, RawYsmModel.RawAnimationFile> entry : raw.mainEntity.animationFiles.entrySet()) {
-            if (!animations.containsKey(entry.getKey()) && entry.getValue().sourceJson != null) {
-                animations.put(entry.getKey(), entry.getValue().sourceJson);
+            if (!animations.containsKey(entry.getKey())) {
+                putAnimationFile(animations, entry.getKey(), entry.getValue());
             }
         }
         putAnimationControllers(animations, raw);
@@ -498,12 +499,198 @@ public final class RawYsmModelAdapter {
 
     private static void putAnimation(Map<String, byte[]> animations, RawYsmModel raw, String key, String defaultFileName)
         throws IOException {
-        RawYsmModel.RawAnimationFile animationFile = raw.mainEntity.animationFiles.get(key);
-        if (animationFile != null && animationFile.sourceJson != null) {
-            animations.put(key, animationFile.sourceJson);
+        if (putAnimationFile(animations, key, raw.mainEntity.animationFiles.get(key))) {
             return;
         }
         animations.put(key, readDefaultAnimation(defaultFileName));
+    }
+
+    private static boolean putAnimationFile(Map<String, byte[]> animations, String key,
+        RawYsmModel.RawAnimationFile animationFile) {
+        if (animationFile == null) {
+            return false;
+        }
+        if (animationFile.sourceJson != null) {
+            animations.put(key, animationFile.sourceJson);
+            return true;
+        }
+        if (!animationFile.animations.isEmpty()) {
+            animations.put(key, createAnimationJson(animationFile));
+            return true;
+        }
+        return false;
+    }
+
+    private static byte[] createAnimationJson(RawYsmModel.RawAnimationFile animationFile) {
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", ANIMATION_FORMAT_VERSION);
+        JsonObject animations = new JsonObject();
+        for (RawYsmModel.RawAnimation animation : animationFile.animations.values()) {
+            if (StringUtils.isBlank(animation.name)) {
+                continue;
+            }
+            animations.add(animation.name, createAnimationJson(animation));
+        }
+        root.add("animations", animations);
+        return ysmu.GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static JsonObject createAnimationJson(RawYsmModel.RawAnimation animation) {
+        JsonObject json = new JsonObject();
+        if (isFinite(animation.length) && animation.length > 0f) {
+            json.addProperty("animation_length", (double) animation.length);
+        }
+        putLoopMode(json, animation.loopMode);
+        if (animation.blendWeight != null) {
+            json.add("blend_weight", molangValue(animation.blendWeight));
+        }
+
+        JsonObject bones = new JsonObject();
+        for (RawYsmModel.RawBoneAnimation boneAnimation : animation.boneAnimations) {
+            if (StringUtils.isBlank(boneAnimation.boneName)) {
+                continue;
+            }
+            JsonObject bone = new JsonObject();
+            putChannel(bone, "rotation", boneAnimation.rotation);
+            putChannel(bone, "position", boneAnimation.position);
+            putChannel(bone, "scale", boneAnimation.scale);
+            if (!bone.entrySet().isEmpty()) {
+                bones.add(boneAnimation.boneName, bone);
+            }
+        }
+        if (!bones.entrySet().isEmpty()) {
+            json.add("bones", bones);
+        }
+
+        putTimeline(json, animation.timelineEvents);
+        putSoundEffects(json, animation.soundEffects);
+        return json;
+    }
+
+    private static void putLoopMode(JsonObject json, int loopMode) {
+        if (loopMode == 1) {
+            json.addProperty("loop", true);
+        } else if (loopMode == 3) {
+            json.addProperty("loop", "hold_on_last_frame");
+        } else if (loopMode == 0) {
+            json.addProperty("loop", false);
+        }
+    }
+
+    private static void putChannel(JsonObject bone, String channelName, List<RawYsmModel.RawKeyframe> keyframes) {
+        if (keyframes.isEmpty()) {
+            return;
+        }
+        JsonObject channel = new JsonObject();
+        for (RawYsmModel.RawKeyframe keyframe : keyframes) {
+            channel.add(timeKey(keyframe.timestamp), createKeyframeJson(keyframe));
+        }
+        bone.add(channelName, channel);
+    }
+
+    private static JsonElement createKeyframeJson(RawYsmModel.RawKeyframe keyframe) {
+        String lerpMode = lerpMode(keyframe.interpolationMode);
+        if (!keyframe.hasPreData) {
+            JsonArray value = molangArray(keyframe.postData);
+            if (StringUtils.isBlank(lerpMode)) {
+                return value;
+            }
+            JsonObject json = new JsonObject();
+            json.add("vector", value);
+            json.addProperty("lerp_mode", lerpMode);
+            return json;
+        }
+        JsonObject json = new JsonObject();
+        json.add("pre", molangArray(keyframe.preData));
+        json.add("post", molangArray(keyframe.postData));
+        if (StringUtils.isNotBlank(lerpMode)) {
+            json.addProperty("lerp_mode", lerpMode);
+        }
+        return json;
+    }
+
+    private static String lerpMode(int interpolationMode) {
+        if (interpolationMode == 1) {
+            return "step";
+        }
+        if (interpolationMode == 2) {
+            return "catmullrom";
+        }
+        return "";
+    }
+
+    private static JsonArray molangArray(Object[] values) {
+        JsonArray array = new JsonArray();
+        for (int i = 0; i < 3; i++) {
+            array.add(molangValue(values != null && values.length > i ? values[i] : Float.valueOf(0f)));
+        }
+        return array;
+    }
+
+    private static JsonPrimitive molangValue(Object value) {
+        if (value instanceof Number) {
+            return new JsonPrimitive((Number) value);
+        }
+        if (value instanceof Boolean) {
+            return new JsonPrimitive((Boolean) value);
+        }
+        return new JsonPrimitive(value == null ? "0" : value.toString());
+    }
+
+    private static void putTimeline(JsonObject animationJson, List<RawYsmModel.RawTimelineEvent> events) {
+        if (events.isEmpty()) {
+            return;
+        }
+        JsonObject timeline = new JsonObject();
+        for (RawYsmModel.RawTimelineEvent event : events) {
+            if (event.events.isEmpty()) {
+                continue;
+            }
+            String key = timeKey(event.timestamp);
+            if (event.events.size() == 1 && !timeline.has(key)) {
+                timeline.addProperty(key, event.events.get(0));
+            } else {
+                JsonArray array = timeline.has(key) && timeline.get(key).isJsonArray()
+                    ? timeline.getAsJsonArray(key)
+                    : new JsonArray();
+                if (timeline.has(key) && timeline.get(key).isJsonPrimitive()) {
+                    array.add(new JsonPrimitive(timeline.get(key).getAsString()));
+                }
+                for (String instruction : event.events) {
+                    array.add(new JsonPrimitive(instruction));
+                }
+                timeline.add(key, array);
+            }
+        }
+        if (!timeline.entrySet().isEmpty()) {
+            animationJson.add("timeline", timeline);
+        }
+    }
+
+    private static void putSoundEffects(JsonObject animationJson, List<RawYsmModel.RawSoundEffect> effects) {
+        if (effects.isEmpty()) {
+            return;
+        }
+        JsonObject soundEffects = new JsonObject();
+        for (RawYsmModel.RawSoundEffect effect : effects) {
+            if (StringUtils.isBlank(effect.effectName)) {
+                continue;
+            }
+            JsonObject frame = new JsonObject();
+            frame.addProperty("effect", effect.effectName);
+            soundEffects.add(timeKey(effect.timestamp), frame);
+        }
+        if (!soundEffects.entrySet().isEmpty()) {
+            animationJson.add("sound_effects", soundEffects);
+        }
+    }
+
+    private static String timeKey(float seconds) {
+        return isFinite(seconds) ? Float.toString(seconds) : "0.0";
+    }
+
+    private static boolean isFinite(float value) {
+        return !Float.isNaN(value) && !Float.isInfinite(value);
     }
 
     private static byte[] readDefaultAnimation(String fileName) throws IOException {

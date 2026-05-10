@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -22,6 +23,7 @@ import com.fox.ysmu.data.EncryptTools;
 import com.fox.ysmu.data.ModelData;
 import com.fox.ysmu.model.format.Type;
 import com.fox.ysmu.model.resource.pojo.RawYsmModel;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -193,6 +195,67 @@ class YsmResourceFormatTest {
         assertNotNull(decoded.mainEntity.mainModel);
         assertNotNull(decoded.mainEntity.armModel);
         assertTrue(decoded.mainEntity.textures.containsKey("default"));
+    }
+
+    @Test
+    void binaryAnimationsWithoutSourceJsonGenerateLegacyAnimationJson() throws Exception {
+        RawYsmModel source = new RawYsmModel();
+        source.formatVersion = 32;
+        source.properties.sha256 = "0123456789abcdef";
+        source.properties.defaultTexture = "default";
+        source.mainEntity.mainModel = geometryWithFlatCube(1, "geometry.main");
+        source.mainEntity.armModel = geometryWithFlatCube(2, "geometry.arm");
+        RawYsmModel.RawTexture texture = new RawYsmModel.RawTexture();
+        texture.name = "default";
+        texture.sourceFileName = "default.png";
+        texture.hash = "texture-hash";
+        texture.width = 1;
+        texture.height = 1;
+        texture.imageFormat = 2;
+        texture.unknownFlag = 1;
+        texture.data = PNG_1X1;
+        source.mainEntity.textures.put(texture.name, texture);
+
+        RawYsmModel.RawAnimationFile animationFile = new RawYsmModel.RawAnimationFile();
+        animationFile.animType = 1;
+        RawYsmModel.RawAnimation idle = new RawYsmModel.RawAnimation();
+        idle.name = "idle";
+        idle.length = 1.0f;
+        idle.loopMode = 1;
+        RawYsmModel.RawBoneAnimation sceneBone = new RawYsmModel.RawBoneAnimation();
+        sceneBone.boneName = "SceneRoot";
+        RawYsmModel.RawKeyframe hiddenScale = new RawYsmModel.RawKeyframe();
+        hiddenScale.timestamp = 0.0f;
+        hiddenScale.postData = new Object[] { 0f, 0f, 0f };
+        sceneBone.scale.add(hiddenScale);
+        idle.boneAnimations.add(sceneBone);
+        animationFile.animations.put(idle.name, idle);
+        source.mainEntity.animationFiles.put("main", animationFile);
+
+        byte[] bytes;
+        try (YSMByteBuf serialized = YSMBinarySerializer.serialize(source, 32, false)) {
+            bytes = serialized.toArray();
+        }
+
+        RawYsmModel decoded;
+        try (YSMBinaryDeserializer deserializer = new YSMBinaryDeserializer(bytes, 32)) {
+            decoded = deserializer.deserialize();
+        }
+
+        assertNull(decoded.mainEntity.animationFiles.get("main").sourceJson);
+
+        ModelData data = RawYsmModelAdapter.toLegacyModelData(decoded, "binary_anim");
+        JsonObject root = new JsonParser().parse(new String(data.getAnimation().get("main"), StandardCharsets.UTF_8))
+            .getAsJsonObject();
+        JsonObject idleJson = root.getAsJsonObject("animations").getAsJsonObject("idle");
+        assertTrue(idleJson.get("loop").getAsBoolean());
+        JsonArray scale = idleJson.getAsJsonObject("bones")
+            .getAsJsonObject("SceneRoot")
+            .getAsJsonObject("scale")
+            .getAsJsonArray("0.0");
+        assertEquals(0.0d, scale.get(0).getAsDouble(), 0.0001d);
+        assertEquals(0.0d, scale.get(1).getAsDouble(), 0.0001d);
+        assertEquals(0.0d, scale.get(2).getAsDouble(), 0.0001d);
     }
 
     @Test
