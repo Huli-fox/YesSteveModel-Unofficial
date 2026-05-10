@@ -3,8 +3,8 @@ package com.fox.ysmu.network;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 
+import com.fox.ysmu.Tags;
 import com.fox.ysmu.network.message.*;
-import com.fox.ysmu.network.message.sync17.*;
 
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.network.simpleimpl.IMessage;
@@ -13,6 +13,7 @@ import cpw.mods.fml.relauncher.Side;
 
 public final class NetworkHandler {
 
+    public static final String PROTOCOL_VERSION = Tags.VERSION;
     public static final SimpleNetworkWrapper CHANNEL = NetworkRegistry.INSTANCE.newSimpleChannel("ysmu_network");
 
     // Packet ids are part of the wire protocol. Add new ids; do not renumber existing ones.
@@ -20,6 +21,9 @@ public final class NetworkHandler {
     private static final int SERVERBOUND_SET_MODEL_AND_TEXTURE = 5;
     private static final int SERVERBOUND_SET_PLAY_ANIMATION = 7;
     private static final int SERVERBOUND_SET_STAR_MODEL = 9;
+    private static final int SERVERBOUND_OPENYSM_MODEL_SYNC_PAYLOAD_17 = 14;
+    private static final int SERVERBOUND_OPENYSM_VERSION_CHECK_17 = 15;
+    private static final int SERVERBOUND_OPENYSM_COMPLETE_FEEDBACK_17 = 16;
 
     private static final int CLIENTBOUND_SEND_MODEL_FILE = 1;
     private static final int CLIENTBOUND_REQUEST_SYNC_MODEL = 2;
@@ -30,11 +34,8 @@ public final class NetworkHandler {
     private static final int CLIENTBOUND_SYNC_PLAYER_MOTION_STATE = 11;
     private static final int CLIENTBOUND_COMPLETE_FEEDBACK = 12;
     private static final int CLIENTBOUND_SEND_MODEL_PASSWORD = 13;
-    private static final int CLIENTBOUND_SYNC17_VERSION_CHECK = 14;
-    private static final int SERVERBOUND_SYNC17_VERSION_CHECK = 15;
-    private static final int CLIENTBOUND_SYNC17_MODEL_PAYLOAD = 16;
-    private static final int SERVERBOUND_SYNC17_MODEL_PAYLOAD = 17;
-    private static final int SERVERBOUND_SYNC17_COMPLETE_FEEDBACK = 18;
+    private static final int CLIENTBOUND_OPENYSM_MODEL_SYNC_PAYLOAD_17 = 17;
+    private static final int CLIENTBOUND_OPENYSM_VERSION_CHECK_17 = 18;
 
     public static final int OPEN_NPC_MODEL_GUI = 93;
     public static final int SET_NPC_MODEL_ID = 94;
@@ -69,19 +70,19 @@ public final class NetworkHandler {
             SERVERBOUND_SET_STAR_MODEL,
             Side.SERVER);
         CHANNEL.registerMessage(
-            C2SVersionCheck17.Handler.class,
-            C2SVersionCheck17.class,
-            SERVERBOUND_SYNC17_VERSION_CHECK,
-            Side.SERVER);
-        CHANNEL.registerMessage(
             C2SModelSyncPayload17.Handler.class,
             C2SModelSyncPayload17.class,
-            SERVERBOUND_SYNC17_MODEL_PAYLOAD,
+            SERVERBOUND_OPENYSM_MODEL_SYNC_PAYLOAD_17,
+            Side.SERVER);
+        CHANNEL.registerMessage(
+            C2SVersionCheck17.Handler.class,
+            C2SVersionCheck17.class,
+            SERVERBOUND_OPENYSM_VERSION_CHECK_17,
             Side.SERVER);
         CHANNEL.registerMessage(
             C2SCompleteFeedback17.Handler.class,
             C2SCompleteFeedback17.class,
-            SERVERBOUND_SYNC17_COMPLETE_FEEDBACK,
+            SERVERBOUND_OPENYSM_COMPLETE_FEEDBACK_17,
             Side.SERVER);
     }
 
@@ -132,14 +133,14 @@ public final class NetworkHandler {
             CLIENTBOUND_SEND_MODEL_PASSWORD,
             Side.CLIENT);
         CHANNEL.registerMessage(
-            S2CVersionCheck17.Handler.class,
-            S2CVersionCheck17.class,
-            CLIENTBOUND_SYNC17_VERSION_CHECK,
-            Side.CLIENT);
-        CHANNEL.registerMessage(
             S2CModelSyncPayload17.Handler.class,
             S2CModelSyncPayload17.class,
-            CLIENTBOUND_SYNC17_MODEL_PAYLOAD,
+            CLIENTBOUND_OPENYSM_MODEL_SYNC_PAYLOAD_17,
+            Side.CLIENT);
+        CHANNEL.registerMessage(
+            S2CVersionCheck17.Handler.class,
+            S2CVersionCheck17.class,
+            CLIENTBOUND_OPENYSM_VERSION_CHECK_17,
             Side.CLIENT);
     }
 
