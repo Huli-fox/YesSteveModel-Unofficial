@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import com.fox.ysmu.client.animation.RemotePlayerMotionStates;
 import com.fox.ysmu.client.animation.condition.InnerClassify;
 import com.fox.ysmu.compat.BackhandCompat;
-import com.fox.ysmu.compat.EtfuturumCompat;
 
 import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
@@ -539,7 +538,7 @@ final class OpenYsmControllerExpressionEvaluator {
                 return player.isOnLadder() ? TRUE : FALSE;
             }
             if ("is_riptide".equals(name)) {
-                return EtfuturumCompat.isAutoSpinAttack(player) ? TRUE : FALSE;
+                return FALSE;
             }
             if ("has_mainhand".equals(name)) {
                 return player.getHeldItem() != null ? TRUE : FALSE;
@@ -574,7 +573,6 @@ final class OpenYsmControllerExpressionEvaluator {
 
         private boolean hasNonIdleControllerState() {
             return isControllerStateDirect("death")
-                || isControllerStateDirect("riptide")
                 || isControllerStateDirect("sleep")
                 || isControllerStateDirect("swim")
                 || isControllerStateDirect("climb")
@@ -583,7 +581,6 @@ final class OpenYsmControllerExpressionEvaluator {
                 || isControllerStateDirect("ladder_stillness")
                 || isControllerStateDirect("ladder_down")
                 || isControllerStateDirect("fly")
-                || isControllerStateDirect("elytra_fly")
                 || isControllerStateDirect("swim_stand")
                 || isControllerStateDirect("attacked")
                 || isControllerStateDirect("jump")
@@ -596,9 +593,6 @@ final class OpenYsmControllerExpressionEvaluator {
         private boolean isControllerStateDirect(String name) {
             if ("death".equals(name)) {
                 return player.isDead;
-            }
-            if ("riptide".equals(name)) {
-                return EtfuturumCompat.isAutoSpinAttack(player);
             }
             if ("sleep".equals(name)) {
                 return player.isPlayerSleeping();
@@ -629,9 +623,6 @@ final class OpenYsmControllerExpressionEvaluator {
             }
             if ("fly".equals(name)) {
                 return isFlying();
-            }
-            if ("elytra_fly".equals(name)) {
-                return EtfuturumCompat.isFallFlying(player);
             }
             if ("swim_stand".equals(name)) {
                 return player.isInWater();

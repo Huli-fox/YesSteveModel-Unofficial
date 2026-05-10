@@ -31,7 +31,6 @@ public class CustomPlayerRenderer extends GeoReplacedEntityRenderer<CustomPlayer
     public CustomPlayerRenderer() {
         super(new CustomPlayerModel(), new CustomPlayerEntity());
         addLayer(new CustomPlayerItemInHandLayer<>(this));
-        // addLayer(new CustomPlayerElytraLayer<>(this));
     }
 
     @Override

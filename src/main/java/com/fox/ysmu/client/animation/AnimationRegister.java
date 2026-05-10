@@ -13,7 +13,6 @@ import net.minecraft.util.MathHelper;
 
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.compat.BackhandCompat;
-import com.fox.ysmu.compat.EtfuturumCompat;
 
 import software.bernie.geckolib3.core.builder.ILoopType;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
@@ -37,7 +36,6 @@ public class AnimationRegister {
 
     private static void registerHighPriorityStates() {
         register("death", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.HIGHEST, (player, event) -> player.isDead);
-        register("riptide", Priority.HIGHEST, (player, event) -> EtfuturumCompat.isAutoSpinAttack(player));
         // TODO 睡觉站着睡，爬梯子躺着爬
         register("sleep", Priority.HIGHEST, (player, event) -> player.isPlayerSleeping());
         register("swim", Priority.HIGHEST, (player, event) -> player.isInWater() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
@@ -54,7 +52,6 @@ public class AnimationRegister {
         register("boat", Priority.HIGH, (player, event) -> player.ridingEntity instanceof EntityBoat);
         register("sit", Priority.HIGH, (player, event) -> player.isRiding());
         register("fly", Priority.HIGH, (player, event) -> isPlayerFlying(player));
-        register("elytra_fly", Priority.HIGH, (player, event) -> EtfuturumCompat.isFallFlying(player));
         register("swim_stand", Priority.NORMAL, (player, event) -> player.isInWater());
     }
 
@@ -218,7 +215,6 @@ public class AnimationRegister {
         parser.setValue("query.is_riding", () -> MolangUtils.booleanToFloat(player.isRiding()));
         parser.setValue("query.is_sleeping", () -> MolangUtils.booleanToFloat(player.isPlayerSleeping()));
         parser.setValue("query.is_sneaking", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player) && player.isSneaking()));
-        parser.setValue("query.is_spectator", () -> MolangUtils.booleanToFloat(EtfuturumCompat.isSpectator(player)));
         parser.setValue("query.is_sprinting", () -> MolangUtils.booleanToFloat(player.isSprinting()));
         parser.setValue("query.is_swimming", () -> MolangUtils.booleanToFloat(player.isInWater()));
         parser.setValue("query.is_using_item", () -> MolangUtils.booleanToFloat(player.isUsingItem()));
@@ -249,15 +245,10 @@ public class AnimationRegister {
         parser.setValue("ysm.has_boots", () -> getSlotValue(player, 1));
         parser.setValue("ysm.has_mainhand", () -> getSlotValue(player, 0));
         parser.setValue("ysm.has_offhand", () -> getSlotValue(player, 5));
-        parser.setValue("ysm.has_elytra", () -> MolangUtils.booleanToFloat(EtfuturumCompat.hasElytra(player)));
-        parser.setValue("ysm.elytra_rot_x", () -> EtfuturumCompat.getElytraRot(player, "x"));
-        parser.setValue("ysm.elytra_rot_y", () -> EtfuturumCompat.getElytraRot(player, "y"));
-        parser.setValue("ysm.elytra_rot_z", () -> EtfuturumCompat.getElytraRot(player, "z"));
         parser.setValue("ysm.is_close_eyes", () -> getEyeCloseState(animationEvent, player));
         parser.setValue("ysm.is_passenger", () -> MolangUtils.booleanToFloat(player.isRiding()));
         parser.setValue("ysm.is_sleep", () -> MolangUtils.booleanToFloat(player.isPlayerSleeping()));
         parser.setValue("ysm.is_sneak", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player) && player.isSneaking()));
-        parser.setValue("ysm.is_riptide", () -> MolangUtils.booleanToFloat(EtfuturumCompat.isAutoSpinAttack(player)));
         parser.setValue("ysm.on_ladder", () -> MolangUtils.booleanToFloat(player.isOnLadder()));
         parser.setValue("ysm.is_fishing", () -> MolangUtils.booleanToFloat(player.fishEntity != null));
         parser.setValue("ysm.swinging", () -> MolangUtils.booleanToFloat(player.isSwingInProgress));

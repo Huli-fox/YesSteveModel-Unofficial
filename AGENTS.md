@@ -20,7 +20,7 @@ When writing complex features or significant refactors, use an ExecPlan (as desc
 - `src/main/java/com/fox/ysmu/network`: Forge `SimpleNetworkWrapper` setup and packet classes.
 - `src/main/java/com/fox/ysmu/eep`: 1.7.10 `IExtendedEntityProperties` state for selected model/texture, active animation, and starred models.
 - `src/main/java/com/fox/ysmu/event`: GTNHLib event subscribers for common player sync and client rendering events.
-- `src/main/java/com/fox/ysmu/compat`: optional-mod compatibility wrappers. Keep Backhand, Et Futurum, and similar direct calls behind these wrappers.
+- `src/main/java/com/fox/ysmu/compat`: optional-mod compatibility wrappers. Keep Backhand and similar direct calls behind these wrappers.
 - `src/main/java/com/fox/ysmu/mixin`: Mixins only. `gradle.properties` restricts Mixins to package `com.fox.ysmu.mixin`.
 - `src/main/java/software/bernie`, `src/main/java/com/eliotlash`, and `src/main/java/net/geckominecraft`: vendored/ported GeckoLib, Molang/math, and legacy adapter code. Treat these as third-party compatibility code and keep edits narrow.
 - `src/main/resources/assets/ysmu/custom`: built-in model assets copied into `config/ysmu/custom` during reload.
@@ -59,11 +59,11 @@ The model password must be available before cached model files can decrypt. Pres
 
 ## Compatibility Notes
 
-Runtime prerequisites from the README are UniMixins and GTNHLib. Development/runtime extras include NotEnoughItems, Nashorn, Angelica, Backhand, Et Futurum, Jackson, and JUnit as declared in `dependencies.gradle`.
+Runtime prerequisites from the README are UniMixins and GTNHLib. Development/runtime extras include NotEnoughItems, Nashorn, Angelica, Backhand, Jackson, and JUnit as declared in `dependencies.gradle`.
 
 Use `@EventBusSubscriber` from GTNHLib for event subscribers following the existing pattern. Client-only subscribers should specify `side = Side.CLIENT`.
 
-Use `BackhandCompat`, `EtfuturumCompat`, and `AngelicaCompat` rather than scattering optional-mod API calls through core logic. Keep compatibility checks resilient when the optional mod is absent.
+Use `BackhandCompat` and `AngelicaCompat` rather than scattering optional-mod API calls through core logic. Keep compatibility checks resilient when the optional mod is absent.
 
 ## Coding Conventions
 

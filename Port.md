@@ -12,7 +12,7 @@
 - 玩家状态：用 `IExtendedEntityProperties` 实现 `ExtendedModelInfo` 和 `ExtendedStarModels`，保存模型、贴图、播放动画和收藏列表。
 - 渲染：`ClientEventHandler` 取消 `RenderPlayerEvent.Pre` 的原版渲染，交给 `CustomPlayerRenderer`；第一人称手臂通过 `RenderHandEvent` 与 Angelica 兼容 Mixin 分流。
 - 动画经验：已有基础状态优先级、条件动画名分类、主副手/护甲/使用/挥手判断、远端玩家运动状态同步和一批 Molang query/ysm 变量。
-- 兼容边界：Backhand、Et Futurum、Angelica 调用已经放在 compat 包中，应继续沿用这个边界。
+- 兼容边界：Backhand、Angelica 调用已经放在 compat 包中，应继续沿用这个边界。
 
 ### OpenYSM 侧新增能力
 
@@ -34,7 +34,7 @@
 4. 保留旧版文件夹和旧版 `.ysm` 的兼容路径；新版 `ysm.json` 与 format 32 `.ysm` 作为新增路径并行接入。
 5. 不重编号现有网络包 id。新增协议包只能追加 id，并在 `NetworkHandler` 中清楚标注方向。
 6. 任何重 IO、解密、压缩、模型解析都放入 `ThreadTools.THREAD_POOL`，只在必须注册模型或贴图时回到 Minecraft 客户端线程。
-7. 所有可选 Mod 调用继续通过 compat 包隔离。OpenYSM 中对 1.20.1 物品标签、姿态、双持和鞘/背包定位的判断，要映射到 1.7.10 原版能力或现有 Backhand/Et Futurum 能力。
+7. 所有可选 Mod 调用继续通过 compat 包隔离。OpenYSM 中对 1.20.1 物品标签、姿态、双持和鞘/背包定位的判断，要映射到 1.7.10 原版能力或现有 Backhand 能力。
 8. 产物仍面向 JVM 8。Jabel 只解决语法，不解决 Java 9+ 标准库 API；OpenYSM 中的 `record`、`Files.readString/writeString`、`List.of`、`Objects.requireNonNullElse*`、`VarHandle` 等需要替换或封装。
 
 ## 模块映射
@@ -117,7 +117,7 @@
 
 目标是让 OpenYSM 的控制器、blend、timeline 和模型自定义函数逐步可用。
 
-- 先补齐当前 `AnimationRegister` 的状态名和 1.7.10 映射：`riptide` 仅在 Et Futurum 或其他兼容路径可判断时启用；`climb/climbing` 映射到 1.7.10 ladder 行为；双持依赖 Backhand。
+- 先补齐当前 `AnimationRegister` 的状态名和 1.7.10 映射：`climb/climbing` 映射到 1.7.10 ladder 行为；双持依赖 Backhand；1.7.10 无对应原版能力的现代状态保持不可触发。
 - 移植 `AnimationControllerFile`、controller state、blend transition、on_entry/on_exit、sound_effects 的数据结构，但先只在玩家主模型路径启用。
 - 选择一个 Molang 运行时策略：要么扩展当前 `software.bernie.geckolib3.core.molang`，要么并行移植 OpenYSM 的 `molang/runtime` 和 `geckolib3/core/molang`。不要在同一阶段同时替换解析器和渲染器。
 - 将 OpenYSM 的 query/ysm/ctrl/fn 函数按 1.7.10 能力分级：基础玩家/世界/物品 query 优先，方块标签、附魔等级、相对方块、天气、维度名、输入检测、物理函数后置。
@@ -152,7 +152,7 @@
 
 目标是补齐 OpenYSM 相比旧版 YSM 最大的新功能面，但这些不应阻塞玩家模型 MVP。
 
-- 投射物：先处理箭、钓鱼浮标、药水等 1.7.10 原版实体；跨版本不存在的三叉戟、弩等只在 Et Futurum 或兼容 Mod 存在时启用。
+- 投射物：先处理箭、钓鱼浮标、药水等 1.7.10 原版实体；跨版本不存在的三叉戟、弩等保持禁用，除非后续新增明确的独立兼容层。
 - 载具：先处理船、矿车、猪/马骑乘视觉；OpenYSM 的 passenger locator 需要和 1.7.10 骑乘偏移分别验收。
 - 音效：先支持短 OGG/Vorbis timeline 音效；Opus、seek、音量配置、对象池清理后续补齐。
 - 额外图片：PNG 为必选；JPEG/WebP/AVIF 取决于 ImageStream 在 1.7.10 客户端纹理路径中的实际接入效果，必要时再回退到替代解码方案。
@@ -198,4 +198,4 @@
 - 格式基础：`.\gradlew.bat test`，重点看 `YSMByteBuf`、`YsmCrypt`、`YSMFolderDeserializer`、`YSMBinaryDeserializer` fixture。
 - 客户端渲染：`.\gradlew.bat runClient`，放入旧式模型、转换后的 OpenYSM 文件夹、原生 `ysm.json` 文件夹，逐个检查模型列表和渲染。
 - 多人同步：一个 `runServer` 加两个客户端，第一次进服应下载模型，第二次应命中缓存。
-- 兼容环境：分别在无可选 Mod、带 Backhand、带 Et Futurum、带 Angelica 的客户端验证主副手、鞘/特殊物品、第一人称手臂和 shader hand path。
+- 兼容环境：分别在无可选 Mod、带 Backhand、带 Angelica 的客户端验证主副手、鞘/特殊物品、第一人称手臂和 shader hand path。
