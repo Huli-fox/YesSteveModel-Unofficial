@@ -1,5 +1,7 @@
 package com.fox.ysmu.compat;
 
+import java.lang.reflect.Method;
+
 import net.minecraft.entity.player.EntityPlayer;
 
 import cpw.mods.fml.common.Loader;
@@ -28,6 +30,19 @@ public class EtfuturumCompat {
             return SpectatorMode.isSpectator(entityPlayer);
         }
         return false;
+    }
+
+    public static boolean isAutoSpinAttack(EntityPlayer entityPlayer) {
+        if (!ETFUTURUM_LOADED || entityPlayer == null) {
+            return false;
+        }
+        try {
+            Method method = entityPlayer.getClass().getMethod("isAutoSpinAttack");
+            Object value = method.invoke(entityPlayer);
+            return Boolean.TRUE.equals(value);
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            return false;
+        }
     }
 
     public static boolean hasElytra(EntityPlayer entityPlayer) {

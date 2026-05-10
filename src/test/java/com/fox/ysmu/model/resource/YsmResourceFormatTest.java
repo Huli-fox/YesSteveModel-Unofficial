@@ -41,12 +41,14 @@ class YsmResourceFormatTest {
         Files.createDirectories(modelDir.resolve("models"));
         Files.createDirectories(modelDir.resolve("textures"));
         Files.createDirectories(modelDir.resolve("animations"));
+        Files.createDirectories(modelDir.resolve("controller"));
         Files.createDirectories(modelDir.resolve("lang"));
         Files.write(modelDir.resolve("ysm.json"), ysmJson().getBytes(StandardCharsets.UTF_8));
         Files.write(modelDir.resolve("models/main.json"), geometryJson("geometry.test.main").getBytes(StandardCharsets.UTF_8));
         Files.write(modelDir.resolve("models/arm.json"), geometryJson("geometry.test.arm").getBytes(StandardCharsets.UTF_8));
         Files.write(modelDir.resolve("textures/default.png"), PNG_1X1);
         Files.write(modelDir.resolve("animations/main.animation.json"), animationJson().getBytes(StandardCharsets.UTF_8));
+        Files.write(modelDir.resolve("controller/main_controllers.json"), controllerJson().getBytes(StandardCharsets.UTF_8));
         Files.write(
             modelDir.resolve("lang/en_us.json"),
             "{\"model.ysm.test\":\"Test Model\",\"properties.extra_animation.extra0\":\"Wave\"}"
@@ -64,6 +66,7 @@ class YsmResourceFormatTest {
         assertNotNull(raw.mainEntity.armModel.sourceJson);
         assertTrue(raw.mainEntity.textures.containsKey("default"));
         assertTrue(raw.languageFiles.containsKey("en_us"));
+        assertEquals(1, raw.mainEntity.animationControllerFiles.size());
         assertTrue(RawYsmModelAdapter.isBridgeable(raw));
 
         RawYsmModel.RawTexture jpegTexture = new RawYsmModel.RawTexture();
@@ -88,6 +91,7 @@ class YsmResourceFormatTest {
         assertTrue(data.getAnimation().containsKey("main"));
         assertTrue(data.getAnimation().containsKey("arm"));
         assertTrue(data.getAnimation().containsKey("extra"));
+        assertTrue(data.getAnimation().containsKey(YsmControllerResources.ANIMATION_MAP_PREFIX + "main_controllers"));
     }
 
     @Test
@@ -375,7 +379,8 @@ class YsmResourceFormatTest {
             + "\"files\":{\"player\":{"
             + "\"model\":{\"main\":\"models/main.json\",\"arm\":\"models/arm.json\"},"
             + "\"texture\":[\"textures/default.png\"],"
-            + "\"animation\":{\"main\":\"animations/main.animation.json\"}"
+            + "\"animation\":{\"main\":\"animations/main.animation.json\"},"
+            + "\"animation_controllers\":[\"controller/main_controllers.json\"]"
             + "}}"
             + "}";
     }
@@ -397,5 +402,15 @@ class YsmResourceFormatTest {
             + "\"format_version\":\"1.8.0\","
             + "\"animations\":{\"idle\":{\"loop\":true,\"animation_length\":1.0,\"bones\":{\"root\":{\"rotation\":[0,0,0]}}}}"
             + "}";
+    }
+
+    private static String controllerJson() {
+        return "{"
+            + "\"format_version\":\"1.19.0\","
+            + "\"animation_controllers\":{\"player.main\":{\"initial_state\":\"default\",\"states\":{"
+            + "\"default\":{\"animations\":[\"idle\"],\"transitions\":[{\"walk\":\"q.ground_speed>0.05\"}]},"
+            + "\"walk\":{\"animations\":[\"walk\"],\"transitions\":[{\"default\":\"q.ground_speed<=0.05\"}],"
+            + "\"blend_transition\":0.15,\"on_entry\":[\"v.entered_walk=1;\"]}"
+            + "}}}}";
     }
 }

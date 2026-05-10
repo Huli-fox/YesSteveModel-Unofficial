@@ -6,6 +6,7 @@
 package software.bernie.geckolib3.core.manager;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -16,7 +17,7 @@ import software.bernie.geckolib3.core.snapshot.BoneSnapshot;
 public class AnimationData {
 
     private HashMap<String, Pair<IBone, BoneSnapshot>> boneSnapshotCollection;
-    private HashMap<String, AnimationController> animationControllers = new HashMap<>();
+    private HashMap<String, AnimationController> animationControllers = new LinkedHashMap<>();
     public double tick;
     public boolean isFirstTick = true;
     private double resetTickLength = 1;

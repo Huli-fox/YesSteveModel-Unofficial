@@ -1,8 +1,10 @@
 package com.fox.ysmu.client.animation.condition;
 
 import java.util.List;
+import java.util.Locale;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -31,19 +33,24 @@ public class ConditionalHold {
     private final int preSize;
     private final String idPre;
     private final String oreDictPre; // 在1.7.10中，我们用它来表示矿物词典的前缀
+    private final String extraPre;
     // 1.7.10: 不再使用 ResourceLocation，直接用 String 存储物品ID ("modid:name")
     private final List<String> idTest = Lists.newArrayList();
     // 1.7.10: 不再使用 TagKey，直接用 String 存储矿物词典的名称
     private final List<String> oreDictTest = Lists.newArrayList();
+    private final List<EnumAction> extraTest = Lists.newArrayList();
+    private final List<String> innerTest = Lists.newArrayList();
 
     public ConditionalHold(boolean isMainHand) {
         if (isMainHand) {
             idPre = "hold_mainhand$";
             oreDictPre = "hold_mainhand#";
+            extraPre = "hold_mainhand:";
             preSize = 14;
         } else {
             idPre = "hold_offhand$";
             oreDictPre = "hold_offhand#";
+            extraPre = "hold_offhand:";
             preSize = 13;
         }
     }
@@ -63,6 +70,22 @@ public class ConditionalHold {
             // 1.7.10: 这里处理的是矿物词典名称
             oreDictTest.add(substring);
         }
+        if (name.startsWith(extraPre)) {
+            if (substring.equals(
+                EnumAction.none.name()
+                    .toLowerCase(Locale.US))) {
+                return;
+            }
+            for (EnumAction action : EnumAction.values()) {
+                if (action.name()
+                    .toLowerCase(Locale.US)
+                    .equals(substring)) {
+                    extraTest.add(action);
+                    break;
+                }
+            }
+            innerTest.add(name);
+        }
     }
 
     public String doTest(EntityPlayer player, boolean isMainHand) {
@@ -71,7 +94,10 @@ public class ConditionalHold {
         }
         String result = doIdTest(player, isMainHand);
         if (result.isEmpty()) {
-            return doOreDictTest(player, isMainHand);
+            result = doOreDictTest(player, isMainHand);
+            if (result.isEmpty()) {
+                return doExtraTest(player, isMainHand);
+            }
         }
         return result;
     }
@@ -115,5 +141,22 @@ public class ConditionalHold {
         }
 
         return EMPTY; // 未找到匹配
+    }
+
+    private String doExtraTest(EntityPlayer player, boolean isMainHand) {
+        if (extraTest.isEmpty() && innerTest.isEmpty()) {
+            return EMPTY;
+        }
+        String innerName = InnerClassify.doClassifyTest(extraPre, player, isMainHand);
+        if (!innerName.isEmpty() && innerTest.contains(innerName)) {
+            return innerName;
+        }
+        ItemStack itemInHand = BackhandCompat.getItemInHand(player, isMainHand);
+        EnumAction action = itemInHand.getItemUseAction();
+        if (extraTest.contains(action)) {
+            return extraPre + action.name()
+                .toLowerCase(Locale.US);
+        }
+        return EMPTY;
     }
 }

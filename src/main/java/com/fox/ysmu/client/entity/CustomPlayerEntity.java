@@ -53,13 +53,29 @@ public class CustomPlayerEntity implements IAnimatable {
             data.addAnimationController(
                 new AnimationController<>(this, controllerName, 0, e -> manager.predicateParallel(e, animationName)));
         }
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_PRE_MAIN_CONTROLLER, 0, manager::predicateOpenYsmSlot));
         data.addAnimationController(new AnimationController(this, MAIN_CONTROLLER, 2, manager::predicateMain));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_POST_MAIN_CONTROLLER, 0, manager::predicateOpenYsmSlot));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_PRE_HOLD_CONTROLLER, 0, manager::predicateOpenYsmSlot));
         data.addAnimationController(
             new AnimationController(this, HOLD_OFFHAND_CONTROLLER, 0, manager::predicateOffhandHold));
         data.addAnimationController(
             new AnimationController(this, HOLD_MAINHAND_CONTROLLER, 0, manager::predicateMainhandHold));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_POST_HOLD_CONTROLLER, 0, manager::predicateOpenYsmSlot));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_PRE_SWING_CONTROLLER, 0, manager::predicateOpenYsmSlot));
         data.addAnimationController(new AnimationController(this, SWING_CONTROLLER, 2, manager::predicateSwing));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_POST_SWING_CONTROLLER, 0, manager::predicateOpenYsmSlot));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_PRE_USE_CONTROLLER, 0, manager::predicateOpenYsmSlot));
         data.addAnimationController(new AnimationController(this, USE_CONTROLLER, 2, manager::predicateUse));
+        data.addAnimationController(
+            new AnimationController(this, OPENYSM_POST_USE_CONTROLLER, 0, manager::predicateOpenYsmSlot));
         for (int i = 0; i < 8; i++) {
             String controllerName = String.format("parallel_%d_controller", i);
             String animationName = String.format("parallel%d", i);

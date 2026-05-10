@@ -100,6 +100,7 @@ public final class RawYsmModelAdapter {
                 animations.put(entry.getKey(), entry.getValue().sourceJson);
             }
         }
+        putAnimationControllers(animations, raw);
 
         return new ModelData(modelId, Type.FOLDER, model, textures, animations);
     }
@@ -511,6 +512,97 @@ public final class RawYsmModelAdapter {
             return Files.readAllBytes(defaultPath);
         }
         return EMPTY_ANIMATION;
+    }
+
+    private static void putAnimationControllers(Map<String, byte[]> animations, RawYsmModel raw) {
+        int index = 0;
+        for (RawYsmModel.RawAnimationControllerFile file : raw.mainEntity.animationControllerFiles) {
+            if (file == null || (file.sourceJson == null && file.controllers.isEmpty())) {
+                index++;
+                continue;
+            }
+            byte[] data = file.sourceJson == null ? createControllerJson(file) : file.sourceJson;
+            animations.put(YsmControllerResources.resourceName(file.name, index), data);
+            index++;
+        }
+    }
+
+    private static byte[] createControllerJson(RawYsmModel.RawAnimationControllerFile file) {
+        JsonObject root = new JsonObject();
+        root.addProperty("format_version", "1.19.0");
+        JsonObject controllers = new JsonObject();
+        for (RawYsmModel.RawAnimationController controller : file.controllers.values()) {
+            controllers.add(controller.animationName, createControllerJson(controller));
+        }
+        root.add("animation_controllers", controllers);
+        return ysmu.GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static JsonObject createControllerJson(RawYsmModel.RawAnimationController controller) {
+        JsonObject json = new JsonObject();
+        if (StringUtils.isNotBlank(controller.initialState)) {
+            json.addProperty("initial_state", controller.initialState);
+        }
+        JsonObject states = new JsonObject();
+        for (RawYsmModel.RawControllerState state : controller.states) {
+            states.add(state.name, createStateJson(state));
+        }
+        json.add("states", states);
+        return json;
+    }
+
+    private static JsonObject createStateJson(RawYsmModel.RawControllerState state) {
+        JsonObject json = new JsonObject();
+        JsonArray animations = new JsonArray();
+        for (Map.Entry<String, String> entry : state.animations.entrySet()) {
+            if (StringUtils.isBlank(entry.getValue())) {
+                animations.add(new JsonPrimitive(entry.getKey()));
+            } else {
+                JsonObject conditional = new JsonObject();
+                conditional.addProperty(entry.getKey(), entry.getValue());
+                animations.add(conditional);
+            }
+        }
+        if (animations.size() > 0) {
+            json.add("animations", animations);
+        }
+
+        JsonArray transitions = new JsonArray();
+        for (Map.Entry<String, String> entry : state.transitions.entrySet()) {
+            JsonObject transition = new JsonObject();
+            transition.addProperty(entry.getKey(), entry.getValue());
+            transitions.add(transition);
+        }
+        if (transitions.size() > 0) {
+            json.add("transitions", transitions);
+        }
+        putStringArray(json, "on_entry", state.onEntry);
+        putStringArray(json, "on_exit", state.onExit);
+        putStringArray(json, "sound_effects", state.soundEffects);
+        if (!state.blendTransitions.isEmpty()) {
+            JsonObject blendTransitions = new JsonObject();
+            for (Map.Entry<Float, Float> entry : state.blendTransitions.entrySet()) {
+                blendTransitions.addProperty(Float.toString(entry.getKey()), entry.getValue());
+            }
+            json.add("blend_transition", blendTransitions);
+        } else if (state.blendTransitionValue > 0f) {
+            json.addProperty("blend_transition", state.blendTransitionValue);
+        }
+        if (state.blendViaShortestPath) {
+            json.addProperty("blend_via_shortest_path", true);
+        }
+        return json;
+    }
+
+    private static void putStringArray(JsonObject json, String name, List<String> values) {
+        if (values.isEmpty()) {
+            return;
+        }
+        JsonArray array = new JsonArray();
+        for (String value : values) {
+            array.add(new JsonPrimitive(value));
+        }
+        json.add(name, array);
     }
 
     private static final class Bounds {

@@ -1,8 +1,10 @@
 package com.fox.ysmu.client.animation.condition;
 
 import java.util.List;
+import java.util.Locale;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.EnumAction;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -15,12 +17,15 @@ public class ConditionalSwing {
 
     private static final String ID_PRE = "swing$";
     private static final String OD_PRE = "swing#";
+    private static final String EXTRA_PRE = "swing:";
     private static final String EMPTY = "";
     private static final int PRE_SIZE = 6;
     // 1.7.10: 使用String存储物品ID ("modid:name")
     private final List<String> idTest = Lists.newArrayList();
     // 1.7.10: 使用String存储矿物词典名称
     private final List<String> oreDictTest = Lists.newArrayList();
+    private final List<EnumAction> extraTest = Lists.newArrayList();
+    private final List<String> innerTest = Lists.newArrayList();
 
     public void addTest(String name) {
         if (name.length() <= PRE_SIZE) {
@@ -37,6 +42,22 @@ public class ConditionalSwing {
             // 1.7.10: 这里处理的是矿物词典名称
             oreDictTest.add(substring);
         }
+        if (name.startsWith(EXTRA_PRE)) {
+            if (substring.equals(
+                EnumAction.none.name()
+                    .toLowerCase(Locale.US))) {
+                return;
+            }
+            for (EnumAction action : EnumAction.values()) {
+                if (action.name()
+                    .toLowerCase(Locale.US)
+                    .equals(substring)) {
+                    extraTest.add(action);
+                    break;
+                }
+            }
+            innerTest.add(name);
+        }
     }
 
     public String doTest(EntityPlayer player, boolean isMainHand) {
@@ -45,7 +66,10 @@ public class ConditionalSwing {
         }
         String result = doIdTest(player, isMainHand);
         if (result.isEmpty()) {
-            return doOreDictTest(player, isMainHand);
+            result = doOreDictTest(player, isMainHand);
+            if (result.isEmpty()) {
+                return doExtraTest(player, isMainHand);
+            }
         }
         return result;
     }
@@ -88,5 +112,22 @@ public class ConditionalSwing {
         }
 
         return EMPTY; // 未找到匹配
+    }
+
+    private String doExtraTest(EntityPlayer player, boolean isMainHand) {
+        if (extraTest.isEmpty() && innerTest.isEmpty()) {
+            return EMPTY;
+        }
+        String innerName = InnerClassify.doClassifyTest(EXTRA_PRE, player, isMainHand);
+        if (!innerName.isEmpty() && innerTest.contains(innerName)) {
+            return innerName;
+        }
+        ItemStack itemInHand = BackhandCompat.getItemInHand(player, isMainHand);
+        EnumAction action = itemInHand.getItemUseAction();
+        if (extraTest.contains(action)) {
+            return EXTRA_PRE + action.name()
+                .toLowerCase(Locale.US);
+        }
+        return EMPTY;
     }
 }

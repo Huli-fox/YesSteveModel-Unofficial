@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,11 +22,13 @@ import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fox.ysmu.client.animation.condition.ConditionManager;
+import com.fox.ysmu.client.animation.controller.OpenYsmAnimationControllerRegistry;
 import com.fox.ysmu.client.sync.OpenYsmModelSyncClient;
 import com.fox.ysmu.client.texture.OuterFileTexture;
 import com.fox.ysmu.data.ModelData;
 import com.fox.ysmu.model.ServerModelManager;
 import com.fox.ysmu.model.format.FolderFormat;
+import com.fox.ysmu.model.resource.YsmControllerResources;
 import com.fox.ysmu.network.NetworkHandler;
 import com.fox.ysmu.network.message.SyncModelFiles;
 import com.fox.ysmu.util.GsonHelper;
@@ -175,7 +178,12 @@ public class ClientModelManager {
         Map<ResourceLocation, AnimationFile> animations = GeckoLibCache.getInstance()
             .getAnimations();
         AnimationFile main = new AnimationFile();
+        Map<String, byte[]> controllerFiles = new LinkedHashMap<>();
         for (Map.Entry<String, byte[]> entry : mapData.entrySet()) {
+            if (isControllerResource(entry.getKey(), entry.getValue())) {
+                controllerFiles.put(entry.getKey(), entry.getValue());
+                continue;
+            }
             try {
                 AnimationFile other = getAnimationFile(new String(entry.getValue(), StandardCharsets.UTF_8));
                 mergeAnimationFile(main, other);
@@ -201,7 +209,26 @@ public class ClientModelManager {
             }
         });
         animations.put(id, main);
+        OpenYsmAnimationControllerRegistry.register(id, controllerFiles.values());
         ysmu.LOG.info("YSM client registered animations for {}: count={}", id, main.animations.size());
+    }
+
+    private static boolean isControllerResource(String name, byte[] data) {
+        if (YsmControllerResources.isControllerResource(name)) {
+            return true;
+        }
+        if (data == null || data.length == 0) {
+            return false;
+        }
+        try {
+            JsonObject jsonObject = GsonHelper.fromJson(
+                ysmu.GSON,
+                new String(data, StandardCharsets.UTF_8),
+                JsonObject.class);
+            return jsonObject != null && jsonObject.has("animation_controllers");
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private static AnimationFile getAnimationFile(String file) {
@@ -301,6 +328,7 @@ public class ClientModelManager {
         EXTRA_INFO.clear();
         EXTRA_ANIMATION_NAME.clear();
         ConditionManager.clear();
+        OpenYsmAnimationControllerRegistry.clear();
     }
 
     public static void rememberCachedModel(String md5) {

@@ -30,6 +30,7 @@ import software.bernie.geckolib3.core.PlayState;
 import software.bernie.geckolib3.core.builder.Animation;
 import software.bernie.geckolib3.core.builder.AnimationBuilder;
 import software.bernie.geckolib3.core.builder.ILoopType;
+import software.bernie.geckolib3.core.builder.ILoopType.EDefaultLoopTypes;
 import software.bernie.geckolib3.core.easing.EasingManager;
 import software.bernie.geckolib3.core.easing.EasingType;
 import software.bernie.geckolib3.core.event.CustomInstructionKeyframeEvent;
@@ -248,6 +249,43 @@ public class AnimationController<T extends IAnimatable> {
                     needsAnimationReload = false;
                 }
         }
+    }
+
+    public boolean setAnimationPreservingTick(AnimationBuilder builder, double absoluteTick, double elapsedTick) {
+        IAnimatableModel<T> model = getModel(this.animatable);
+        if (model == null || builder == null || builder.getRawAnimationList()
+            .isEmpty()) {
+            return false;
+        }
+        AtomicBoolean encounteredError = new AtomicBoolean(false);
+        LinkedList<Animation> animations = builder.getRawAnimationList()
+            .stream()
+            .map((rawAnimation) -> {
+                Animation animation = model.getAnimation(rawAnimation.animationName, animatable);
+                if (animation == null) {
+                    System.out.printf("Could not load animation: %s. Is it missing?", rawAnimation.animationName);
+                    encounteredError.set(true);
+                }
+                if (animation != null && rawAnimation.loopType != null) {
+                    animation.loop = rawAnimation.loopType;
+                }
+                return animation;
+            })
+            .collect(Collectors.toCollection(LinkedList::new));
+        if (encounteredError.get() || animations.isEmpty()) {
+            return false;
+        }
+        this.animationQueue = animations;
+        this.currentAnimationBuilder = builder;
+        this.currentAnimation = this.animationQueue.poll();
+        this.tickOffset = absoluteTick - Math.max(0.0D, elapsedTick);
+        this.shouldResetTick = false;
+        this.animationState = AnimationState.Running;
+        this.justStartedTransition = false;
+        this.justStopped = false;
+        this.needsAnimationReload = false;
+        resetEventKeyFrames();
+        return this.currentAnimation != null;
     }
 
     /**
@@ -621,10 +659,10 @@ public class AnimationController<T extends IAnimatable> {
         assert currentAnimation != null;
         // Animation has ended
         if (tick >= currentAnimation.animationLength) {
-            resetEventKeyFrames();
-            // If the current animation is set to loop, keep it as the current animation and
-            // just start over
-            if (!currentAnimation.loop.isRepeatingAfterEnd()) {
+            if (currentAnimation.loop == EDefaultLoopTypes.HOLD_ON_LAST_FRAME) {
+                tick = Math.max(0.0D, currentAnimation.animationLength);
+            } else if (!currentAnimation.loop.isRepeatingAfterEnd()) {
+                resetEventKeyFrames();
                 // Pull the next animation from the queue
                 Animation peek = animationQueue.peek();
                 if (peek == null) {
@@ -639,6 +677,7 @@ public class AnimationController<T extends IAnimatable> {
                     currentAnimation = this.animationQueue.peek();
                 }
             } else {
+                resetEventKeyFrames();
                 // Reset the adjusted tick so the next animation starts at tick 0
                 shouldResetTick = true;
                 tick = adjustTick(actualTick);

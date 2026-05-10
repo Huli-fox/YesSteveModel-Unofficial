@@ -37,10 +37,12 @@ public class AnimationRegister {
 
     private static void registerHighPriorityStates() {
         register("death", ILoopType.EDefaultLoopTypes.PLAY_ONCE, Priority.HIGHEST, (player, event) -> player.isDead);
-        // register("riptide", Priority.HIGHEST, (player, event) -> player.isAutoSpinAttack());
+        register("riptide", Priority.HIGHEST, (player, event) -> EtfuturumCompat.isAutoSpinAttack(player));
         // TODO 睡觉站着睡，爬梯子躺着爬
         register("sleep", Priority.HIGHEST, (player, event) -> player.isPlayerSleeping());
         register("swim", Priority.HIGHEST, (player, event) -> player.isInWater() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
+        register("climb", Priority.HIGHEST, (player, event) -> player.isOnLadder() && Math.abs(event.getLimbSwingAmount()) > MIN_SPEED);
+        register("climbing", Priority.HIGHEST, (player, event) -> player.isOnLadder());
         register("ladder_up", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == 1);
         register("ladder_stillness", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == 0);
         register("ladder_down", Priority.HIGHEST, (player, event) -> player.isOnLadder() && motionYState(player, 0.1D) == -1);
@@ -150,7 +152,14 @@ public class AnimationRegister {
         parser.register(new LazyVariable("ysm.is_passenger", MolangUtils.FALSE));
         parser.register(new LazyVariable("ysm.is_sleep", MolangUtils.FALSE));
         parser.register(new LazyVariable("ysm.is_sneak", MolangUtils.FALSE));
-        // parser.register(new LazyVariable("ysm.is_riptide", MolangUtils.FALSE));
+        parser.register(new LazyVariable("ysm.is_riptide", MolangUtils.FALSE));
+        parser.register(new LazyVariable("ysm.on_ladder", MolangUtils.FALSE));
+        parser.register(new LazyVariable("ysm.is_fishing", MolangUtils.FALSE));
+        parser.register(new LazyVariable("ysm.swinging", MolangUtils.FALSE));
+        parser.register(new LazyVariable("ysm.swing_time", 0));
+        parser.register(new LazyVariable("ysm.swinging_arm", 0));
+        parser.register(new LazyVariable("ysm.mainhand_charged_crossbow", MolangUtils.FALSE));
+        parser.register(new LazyVariable("ysm.offhand_charged_crossbow", MolangUtils.FALSE));
 
         parser.register(new LazyVariable("ysm.armor_value", 0));
         parser.register(new LazyVariable("ysm.hurt_time", 0));
@@ -248,7 +257,14 @@ public class AnimationRegister {
         parser.setValue("ysm.is_passenger", () -> MolangUtils.booleanToFloat(player.isRiding()));
         parser.setValue("ysm.is_sleep", () -> MolangUtils.booleanToFloat(player.isPlayerSleeping()));
         parser.setValue("ysm.is_sneak", () -> MolangUtils.booleanToFloat(isPlayerOnGround(player) && player.isSneaking()));
-        // parser.setValue("ysm.is_riptide", () -> MolangUtils.booleanToFloat(player.isAutoSpinAttack()));
+        parser.setValue("ysm.is_riptide", () -> MolangUtils.booleanToFloat(EtfuturumCompat.isAutoSpinAttack(player)));
+        parser.setValue("ysm.on_ladder", () -> MolangUtils.booleanToFloat(player.isOnLadder()));
+        parser.setValue("ysm.is_fishing", () -> MolangUtils.booleanToFloat(player.fishEntity != null));
+        parser.setValue("ysm.swinging", () -> MolangUtils.booleanToFloat(player.isSwingInProgress));
+        parser.setValue("ysm.swing_time", () -> player.swingProgressInt);
+        parser.setValue("ysm.swinging_arm", () -> BackhandCompat.swingingArm(player) ? 0.0d : 1.0d);
+        parser.setValue("ysm.mainhand_charged_crossbow", MolangUtils.FALSE);
+        parser.setValue("ysm.offhand_charged_crossbow", MolangUtils.FALSE);
         parser.setValue("ysm.armor_value", player::getTotalArmorValue);
         parser.setValue("ysm.hurt_time", () -> player.hurtTime);
         parser.setValue("ysm.food_level", () -> player.getFoodStats().getFoodLevel());

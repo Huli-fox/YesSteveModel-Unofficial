@@ -26,6 +26,7 @@ public class ConditionalUse {
     private final List<String> oreDictTest = Lists.newArrayList();
     // 1.7.10: 使用EnumAction替代UseAnim
     private final List<EnumAction> extraTest = Lists.newArrayList();
+    private final List<String> innerTest = Lists.newArrayList();
 
     public ConditionalUse(boolean isMainHand) {
         if (isMainHand) {
@@ -72,6 +73,7 @@ public class ConditionalUse {
                     break;
                 }
             }
+            innerTest.add(name);
         }
     }
 
@@ -131,8 +133,12 @@ public class ConditionalUse {
 
     // 1.7.10: 使用EnumAction替代UseAnim
     private String doExtraTest(EntityPlayer player, boolean isMainHand) {
-        if (extraTest.isEmpty()) {
+        if (extraTest.isEmpty() && innerTest.isEmpty()) {
             return EMPTY;
+        }
+        String innerName = InnerClassify.doClassifyTest(extraPre, player, isMainHand);
+        if (!innerName.isEmpty() && innerTest.contains(innerName)) {
+            return innerName;
         }
         // 1.7.10: 使用getItemUseAction替代getUseAnimation
         EnumAction action = BackhandCompat.getItemInHand(player, isMainHand)

@@ -1,6 +1,9 @@
 package com.fox.ysmu.client.animation;
 
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -11,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import com.fox.ysmu.client.animation.condition.*;
+import com.fox.ysmu.client.animation.controller.OpenYsmPlayerControllerRuntime;
 import com.fox.ysmu.client.entity.CustomPlayerEntity;
 import com.fox.ysmu.compat.BackhandCompat;
 import com.fox.ysmu.eep.ExtendedModelInfo;
@@ -28,6 +32,8 @@ public final class AnimationManager {
 
     private static AnimationManager MANAGER;
     private final Int2ObjectOpenHashMap<LinkedList<AnimationState>> data = new Int2ObjectOpenHashMap<>();
+    private final Map<UUID, Integer> swingProgressByPlayer = new ConcurrentHashMap<>();
+    private final Map<UUID, Integer> useDurationByPlayer = new ConcurrentHashMap<>();
 
     public static AnimationManager getInstance() {
         if (MANAGER == null) {
@@ -72,7 +78,20 @@ public final class AnimationManager {
             .isGamePaused()) {
             return PlayState.STOP;
         }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
+        }
         return playLoopAnimation(event, animationName);
+    }
+
+    public PlayState predicateOpenYsmSlot(AnimationEvent<CustomPlayerEntity> event) {
+        if (Minecraft.getMinecraft()
+            .isGamePaused()) {
+            return PlayState.STOP;
+        }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        return controllerState == null ? PlayState.STOP : controllerState;
     }
 
     public PlayState predicateCap(AnimationEvent<CustomPlayerEntity> event) {
@@ -99,6 +118,10 @@ public final class AnimationManager {
         if (player == null) {
             return PlayState.STOP;
         }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
+        }
         for (int i = Priority.HIGHEST; i <= Priority.LOWEST; i++) {
             if (!data.containsKey(i)) {
                 continue;
@@ -121,11 +144,15 @@ public final class AnimationManager {
         if (player == null) {
             return PlayState.STOP;
         }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
+        }
 
         // 修改为使用BackhandCompat兼容层
         ItemStack offhandItem = BackhandCompat.getOffhandItem(player);
         if (offhandItem != null && checkSwingAndUse(player, false)) {
-            return playLoopIfPresent(event, findHoldAnimation(event, player, false));
+            return playIfPresent(event, findHoldAnimation(event, player, false));
         }
         return PlayState.STOP;
     }
@@ -135,6 +162,10 @@ public final class AnimationManager {
             .getPlayer();
         if (player == null) {
             return PlayState.STOP;
+        }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
         }
         if (!player.isSwingInProgress && !player.isUsingItem()) {
             // ItemStack mainHandItem = player.getHeldItem();
@@ -151,7 +182,7 @@ public final class AnimationManager {
         }
 
         if (player.getHeldItem() != null && checkSwingAndUse(player, true)) {
-            return playLoopIfPresent(event, findHoldAnimation(event, player, true));
+            return playIfPresent(event, findHoldAnimation(event, player, true));
         }
         return PlayState.STOP;
     }
@@ -162,19 +193,39 @@ public final class AnimationManager {
         if (player == null) {
             return PlayState.STOP;
         }
-        if (player.isSwingInProgress && !player.isPlayerSleeping()) {
-            if (player.swingProgressInt == 0) {
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
+        }
+        if (!player.isSwingInProgress) {
+            swingProgressByPlayer.remove(player.getUniqueID());
+            return PlayState.STOP;
+        }
+        if (!player.isPlayerSleeping()) {
+            if (markSwingStart(player)) {
                 event.getController().shouldResetTick = true;
+                event.getController().markNeedsReload();
                 event.getController()
                     .adjustTick(0);
             }
             String conditionalAnimation = findSwingAnimation(event, player);
             if (StringUtils.isNoneBlank(conditionalAnimation)) {
-                return playLoopAnimation(event, conditionalAnimation);
+                return playAnimation(event, conditionalAnimation, ILoopType.EDefaultLoopTypes.PLAY_ONCE);
             }
-            return playAnimation(event, "swing_hand", ILoopType.EDefaultLoopTypes.LOOP);
+            return playAnimation(event, "swing_hand", ILoopType.EDefaultLoopTypes.PLAY_ONCE);
         }
         return PlayState.STOP;
+    }
+
+    private boolean markSwingStart(EntityPlayer player) {
+        UUID playerId = player.getUniqueID();
+        if (!player.isSwingInProgress) {
+            swingProgressByPlayer.remove(playerId);
+            return false;
+        }
+        int currentProgress = player.swingProgressInt;
+        Integer previousProgress = swingProgressByPlayer.put(playerId, currentProgress);
+        return previousProgress == null || currentProgress < previousProgress;
     }
 
     public PlayState predicateUse(AnimationEvent<CustomPlayerEntity> event) {
@@ -183,20 +234,37 @@ public final class AnimationManager {
         if (player == null) {
             return PlayState.STOP;
         }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
+        }
         if (player.isUsingItem() && !player.isPlayerSleeping()) {
-            if (player.getItemInUseDuration() == 1) { // TODO getItemInUseCount可能与高版本逻辑相反
+            if (markUseStart(player)) {
                 event.getController().shouldResetTick = true;
+                event.getController().markNeedsReload();
                 event.getController()
                     .adjustTick(0);
             }
             boolean isMainHand = BackhandCompat.getUsedItemHand(player);
             String conditionalAnimation = findUseAnimation(event, player, isMainHand);
             if (StringUtils.isNoneBlank(conditionalAnimation)) {
-                return playLoopAnimation(event, conditionalAnimation);
+                return playAnimation(event, conditionalAnimation);
             }
             return playAnimation(event, isMainHand ? "use_mainhand" : "use_offhand", ILoopType.EDefaultLoopTypes.LOOP);
         }
+        useDurationByPlayer.remove(player.getUniqueID());
         return PlayState.STOP;
+    }
+
+    private boolean markUseStart(EntityPlayer player) {
+        UUID playerId = player.getUniqueID();
+        if (!player.isUsingItem()) {
+            useDurationByPlayer.remove(playerId);
+            return false;
+        }
+        int currentDuration = player.getItemInUseDuration();
+        Integer previousDuration = useDurationByPlayer.put(playerId, currentDuration);
+        return previousDuration == null || currentDuration < previousDuration;
     }
 
     public PlayState predicateArmor(AnimationEvent<CustomPlayerEntity> event, int slotIndex) {
@@ -204,6 +272,10 @@ public final class AnimationManager {
             .getPlayer();
         if (player == null) {
             return PlayState.STOP;
+        }
+        PlayState controllerState = OpenYsmPlayerControllerRuntime.tryApply(event);
+        if (controllerState != null) {
+            return controllerState;
         }
         ItemStack itemBySlot = player.getEquipmentInSlot(slotIndex);
         if (itemBySlot == null) {
@@ -231,9 +303,9 @@ public final class AnimationManager {
             .getAnimation();
     }
 
-    private static PlayState playLoopIfPresent(AnimationEvent<CustomPlayerEntity> event, String animationName) {
+    private static PlayState playIfPresent(AnimationEvent<CustomPlayerEntity> event, String animationName) {
         if (StringUtils.isNoneBlank(animationName)) {
-            return playLoopAnimation(event, animationName);
+            return playAnimation(event, animationName);
         }
         return PlayState.STOP;
     }
