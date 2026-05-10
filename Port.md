@@ -23,7 +23,7 @@
 - 客户端模型组装：`ClientModelManager`、`ModelAssembly`、`ModelAssemblyFactory`、`PlayerModelBundle` 等把 RawYsmModel 组装成运行时模型、贴图、动画控制器、额外资源和 GUI 展示资产。
 - 动画与 Molang：新增动画控制器、状态机、blend transition、timeline/on_entry/on_exit、Molang runtime、query 绑定、YSM 函数、物理函数、roaming 变量同步和反馈。
 - 渲染范围：除玩家外，还覆盖第一人称背景/手、投射物、载具、护甲、鞘/背包/腰部等定位骨骼、加载状态和调试 overlay。
-- 音频与图片：包含 Ogg Vorbis/Opus 解析、音频缓存/播放、JPEG/WebP/AVIF 转 PNG 入口；其中 ImageStream 解码依赖不在当前 `OpenYSM` 源码树内，但本仓库构建层已按上游坐标通过 JitPack 接入，后续只需要在客户端解码路径消费它。
+- 音频与图片：包含 Ogg Vorbis/Opus 解析、音频缓存/播放、JPEG/WebP/AVIF 转 PNG 入口；其中 ImageStream 解码依赖不在当前 `OpenYSM` 源码树内，且在直连解码路径完成前不要打包进 1.7.10 产物。
 - 现代 Capabilities：模型信息、收藏模型、玩家客户端模型、载具、投射物状态均使用 Forge Capability，1.7.10 必须改写为 EEP 或实体 ID 映射。
 
 ## 移植原则
@@ -97,7 +97,7 @@
 - 对 `ysm.json` 文件夹模型，优先读取其引用的 `models/main.json`、`models/arm.json`、玩家贴图和主要动画文件，转换为当前 `ModelData`，注册到现有 `ClientModelManager` / `GeckoLibCache`。
 - 把 metadata、作者、license、height_scale、width_scale、extra animation 名称映射到当前 `ClientModelManager.EXTRA_INFO`、`SCALE_INFO` 和 `EXTRA_ANIMATION_NAME`。
 - 对新版 binary `.ysm`，先通过 RawYsmModel 还原 main/arm 几何。这里有两个可选实现路径：第一，把 RawYsmModel 的几何转换为当前 GeckoLib 可消费的 RawGeoModel/GeoBone；第二，移植 OpenYSM 的 baked mesh 渲染器。优先做最小桥接，只有当转换丢失关键几何信息时再进入渲染器移植。
-- 对 JPEG/WebP/AVIF 贴图先保留降级开关：PNG 必须支持；虽然 ImageStream 依赖已经接入构建，但在解码/注册路径完成前，其他格式仍应日志提示并跳过，而不是静默失败。
+- 对 JPEG/WebP/AVIF 贴图先保留降级开关：PNG 必须支持；在 ImageStream 解码/注册路径完成前，其他格式仍应日志提示并跳过，而不是静默失败。
 
 验收标准：OpenYSM 内置默认包和至少一个 `misc` 包能在 1.7.10 客户端模型列表中显示并渲染；旧式模型和转换脚本产物继续可用。
 
@@ -178,7 +178,7 @@
 - **新版 binary `.ysm` 几何不是简单旧 JSON。** OpenYSM 反序列化后得到 baked face 数据。若不能无损转换为当前 GeoModel，就必须单独移植 OpenYSM mesh renderer 的核心，而不是继续堆转换脚本。
 - **Capabilities 必须重写。** 1.7.10 不存在现代 Capability 生命周期；玩家持久状态用 EEP，客户端临时状态用 manager/map，实体扩展按需求拆分。
 - **Java 17 语法和 Java 9+ API 要分开处理。** Jabel 可以保留部分现代语法，但不能在 JVM 8 上调用不存在的标准库方法。
-- **OpenYSM ImageStream 依赖不在当前源码树中，但已在本仓库构建层通过 JitPack 声明。** 在确认 1.7.10 客户端能稳定加载这些 ImageIO 插件前，非 PNG 图片仍应作为降级能力处理。
+- **OpenYSM ImageStream 依赖不在当前源码树中，暂不应打包进 1.7.10 产物。** 在确认 1.7.10 客户端能稳定加载解码器前，非 PNG 图片仍应作为降级能力处理。
 - **网络协议不能阻塞 Netty/主线程。** 新版加密、zstd、模型解析和大文件 IO 都必须异步，并在客户端线程只做最终资源注册。
 - **1.20.1 物品标签无法直接搬到 1.7.10。** `data/yes_steve_model/tags/items` 只能作为分类参考，实际判断要使用 1.7.10 item、ore dictionary 或兼容 Mod 包装。
 
