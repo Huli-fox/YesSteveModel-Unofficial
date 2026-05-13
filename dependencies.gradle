@@ -35,4 +35,7 @@
  */
 dependencies {
     //runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
+    compileOnly('org.jetbrains:annotations:26.0.1')
+    compileOnly('it.unimi.dsi:fastutil:8.5.15')
+    devOnlyNonPublishable("com.github.GTNewHorizons:GTNHLib:0.9.66:dev")
 }
