@@ -1,0 +1,9 @@
+package com.gts.ysmu.client.upload;
+
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.Optional;
+
+public interface IResourceLocatable {
+    Optional<ResourceLocation> getResourceLocation();
+}

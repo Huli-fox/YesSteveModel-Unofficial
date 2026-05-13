@@ -1,0 +1,104 @@
+package com.gts.ysmu.client.entity;
+
+import com.gts.ysmu.client.model.VehicleModelBundle;
+import com.gts.ysmu.geckolib3.geo.render.built.GeoModel;
+import com.gts.ysmu.geckolib3.core.builder.AnimationController;
+import com.gts.ysmu.client.model.ModelAssembly;
+import com.gts.ysmu.client.upload.UploadManager;
+import com.gts.ysmu.geckolib3.core.builder.Animation;
+import com.gts.ysmu.client.upload.IResourceLocatable;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class GeckoVehicleEntity extends GeoEntity<Entity> {
+
+    private VehicleModelBundle vehicleModel;
+
+    public GeckoVehicleEntity(Entity entity) {
+        super(entity, true);
+    }
+
+    @Override
+    public void registerAnimationControllers() {
+        if (this.vehicleModel != null) {
+            this.vehicleModel.getAnimatableConsumer().accept(this);
+        }
+    }
+
+    @Override
+    @Nullable
+    public GeoEntity.ModelWrapper buildRenderShape(ModelAssembly modelAssembly, boolean isDefault) {
+        VehicleModelBundle modelBundle = modelAssembly.getVehicleModels().get(this.entity.getType().builtInRegistryHolder().key().location());
+        if (modelBundle != null) {
+            return new EntityModelWrapper(modelAssembly, isDefault, modelBundle);
+        }
+        return null;
+    }
+
+    @Override
+    public void onModelLoaded(ModelAssembly modelAssembly) {
+        super.onModelLoaded(modelAssembly);
+        this.vehicleModel = modelAssembly.getVehicleModels().get(this.entity.getType().builtInRegistryHolder().key().location());
+    }
+
+    @Override
+    public void clearModel() {
+        super.clearModel();
+        this.vehicleModel = null;
+    }
+
+    @Override
+    public GeoModel getAnimationProcessor() {
+        return this.vehicleModel.getModel();
+    }
+
+    @Override
+    @NotNull
+    public ResourceLocation getTextureLocation() {
+        return ((EntityModelWrapper) getRenderShape()).textureLocatable.getResourceLocation().orElseGet(MissingTextureAtlasSprite::getLocation);
+    }
+
+    @Override
+    public Animation getAnimation(String str) {
+        return this.vehicleModel.getAnimations().get(str);
+    }
+
+    @Override
+    @Nullable
+    public AnimationController getAnimationEntries(String str) {
+        return this.vehicleModel.getAnimationControllers().get(str);
+    }
+
+    @Override
+    public boolean isModelReady() {
+        return super.isModelReady() && this.vehicleModel != null && getRenderShape().isValid();
+    }
+
+    @Override
+    public float getHeightScale() {
+        return 0.7f;
+    }
+
+    @Override
+    public float getWidthScale() {
+        return 0.7f;
+    }
+
+    private static class EntityModelWrapper extends ModelWrapper {
+
+        private final IResourceLocatable textureLocatable;
+
+        public EntityModelWrapper(ModelAssembly modelAssembly, boolean isDefault, VehicleModelBundle modelBundle) {
+            super(modelAssembly, isDefault);
+            this.textureLocatable = UploadManager.getOrCreateLocatable(modelBundle.getTexture(), true);
+        }
+
+        @Override
+        public boolean isValid() {
+            return this.textureLocatable.getResourceLocation().isPresent();
+        }
+    }
+}

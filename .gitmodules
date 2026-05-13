@@ -1,0 +1,3 @@
+[submodule "OpenYSM"]
+	path = OpenYSM
+	url = https://github.com/Huli-fox/OpenYSM.git
